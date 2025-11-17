@@ -52,6 +52,8 @@ const authFetch = (url, options = {}) => {
 };
 
 
+
+
 export const register = createAsyncThunk(
   "auth/register",
   async (payload, { rejectWithValue }) => {

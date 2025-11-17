@@ -2,7 +2,7 @@
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import Navbar from "../Navbar/Navbar";
+import Navbar from "../DashboardNavbar/DahsboardNavbar";
 
 const DashboardPage = () => {
   return (

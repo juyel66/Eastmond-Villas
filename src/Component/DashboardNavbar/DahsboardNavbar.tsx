@@ -3,40 +3,40 @@ import { CgProfile } from "react-icons/cg";
 import { IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineNotifications, MdSearch } from "react-icons/md";
 import { useLocation } from "react-router-dom";
-import { IoMdNotificationsOutline } from "react-icons/io";
+
 import { useState, useRef, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const { pathname } = useLocation();
 
-  const isAdmin = pathname.includes("/admin");
-  const isAgent = pathname.includes("/agent");
+  // ------------------------------
+  // GET CURRENT USER FROM REDUX
+  // ------------------------------
+  const currentUser = useSelector((state: any) => state?.auth?.user);
 
-  console.log("locations", pathname);
-
-  const userInfo = isAdmin
-    ? { name: "Admin User", role: "Super Admin" }
-    : { name: "Juyel", role: "Agent" };
+  const displayName = currentUser?.name || "Unknown User";
+  const displayRole = currentUser?.role || "No Role";
 
   // ------------------------------
-  // Dropdown state & ref
+  // DROPDOWN
+  // ------------------------------
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   // ------------------------------
 
   return (
@@ -59,20 +59,23 @@ const Navbar = () => {
 
         <div className="navbar-end">
           <div className="flex items-center gap-4 pb-2 pt-2" ref={dropdownRef}>
-            {/* Notification Icon with Dropdown */}
-            <div className="relative text-4xl mb-2 cursor-pointer" onClick={toggleDropdown}>
-              {/* <IoMdNotificationsOutline /> */}
-              <img className="h-12 w-12" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761005969/Button_2_hee1qa.png" alt="" />
-              {/* {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
-                 <p className="p-5">do not have any notifications</p>
-                </div>
-              )} */}
+            <div
+              className="relative text-4xl mb-2 cursor-pointer"
+              onClick={toggleDropdown}
+            >
+              <img
+                className="h-12 w-12"
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761005969/Button_2_hee1qa.png"
+                alt="avatar"
+              />
             </div>
 
+            {/* ------------------------------
+                SHOW REAL USER NAME + ROLE
+            ------------------------------ */}
             <div>
-              <p className="text-xl">{userInfo.name}</p>
-              <p className="text-gray-500">{userInfo.role}</p>
+              <p className="text-xl font-semibold">{displayName}</p>
+              <p className="text-gray-500">{displayRole}</p>
             </div>
           </div>
 
