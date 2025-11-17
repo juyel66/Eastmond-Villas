@@ -1,6 +1,5 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from "react-router-dom";
+
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import "./index.css";
 
 // --- Main Website Pages ---
@@ -57,6 +56,7 @@ import AdminAnnouncements from "./Component/Admin/AdminDashboard/AdminAnnounceme
 import AdminResources from "./Component/Admin/AdminDashboard/AdminResources";
 import BookingManagement from "./Component/Admin/AdminDashboard/BookingManagement";
 import UserManagement from "./Component/Admin/AdminDashboard/UserManagement";
+import ErrorPage from "./pages/ErrorPage/ErrorPage";
 
 
 // --- Protected Route Wrapper ---
@@ -70,6 +70,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <Root />,
+    errorElement: <ErrorPage />,
     children: [
       { path: "/", element: <Home /> },
       { path: "/rents", element: <Rents /> },
@@ -115,6 +116,8 @@ export const router = createBrowserRouter([
           { path: "admin-resources", element: <AdminResources /> },
           { path: "admin-booking-management", element: <BookingManagement /> },
           { path: "admin-user-management", element: <UserManagement /> },
+            { path: "admin-faqs", element: <FAQs /> },
+            { path: "admin-profile", element: <Profile /> },
           
         ],
       },
@@ -149,10 +152,3 @@ export const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <div className="pl-2 pr-2">
-      <RouterProvider router={router} />
-    </div>
-  </StrictMode>
-);
