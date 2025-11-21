@@ -172,9 +172,10 @@ const EditProfileModal = ({ isOpen, onClose, currentInfo = {}, onSave }) => {
             </div>
 
             <div className="relative">
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Email Address</label>
+              <label  className="text-sm read-only: font-medium  text-gray-700 mb-1 block">Email Address</label>
               <div className="relative">
                 <input
+                disabled
                   type="email"
                   name="emailAddress"
                   value={formData.emailAddress}

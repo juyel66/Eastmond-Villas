@@ -1,3 +1,4 @@
+// LocationCreateProperty.tsx
 import React, { useState, useMemo, useRef } from "react";
 import GoogleMapReact from "google-map-react";
 import { PiMapPinBold } from "react-icons/pi";
@@ -31,6 +32,11 @@ interface LocationsProps {
     name: string;
     description: string;
   }) => void;
+  /**
+   * Optional: how many decimals to preserve when sending coords to backend.
+   * Default 6.
+   */
+  coordDecimals?: number;
 }
 
 // Marker Component
@@ -69,6 +75,7 @@ interface AddVillaModalProps {
     name: string;
     description: string;
   }) => void;
+  coordDecimals: number;
 }
 
 const AddVillaModal: React.FC<AddVillaModalProps> = ({
@@ -76,14 +83,26 @@ const AddVillaModal: React.FC<AddVillaModalProps> = ({
   lng,
   onClose,
   onAddVilla,
+  coordDecimals,
 }) => {
   const [villaName, setVillaName] = useState("");
   const [description, setDescription] = useState("");
 
+  const roundToDecimals = (v: number, d = 6) => {
+    const factor = Math.pow(10, d);
+    return Math.round(v * factor) / factor;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!villaName.trim()) return;
-    onAddVilla({ lat, lng, name: villaName, description });
+    // send rounded coordinates to parent callback
+    onAddVilla({
+      lat: roundToDecimals(lat, coordDecimals),
+      lng: roundToDecimals(lng, coordDecimals),
+      name: villaName,
+      description,
+    });
     setVillaName("");
     setDescription("");
   };
@@ -103,10 +122,12 @@ const AddVillaModal: React.FC<AddVillaModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="text-sm text-gray-600 space-y-1">
           <p>
-            <strong>Latitude:</strong> {lat.toFixed(6)}
+            <strong>Latitude:</strong>{" "}
+            {roundToDecimals(lat, coordDecimals).toFixed(coordDecimals)}
           </p>
           <p>
-            <strong>Longitude:</strong> {lng.toFixed(6)}
+            <strong>Longitude:</strong>{" "}
+            {roundToDecimals(lng, coordDecimals).toFixed(coordDecimals)}
           </p>
         </div>
 
@@ -171,6 +192,7 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
   lng,
   text,
   onLocationAdd,
+  coordDecimals = 6,
 }) => {
   const [savedVillas, setSavedVillas] = useState<SavedLocation[]>([
     { lat, lng, key: "default_villa", text },
@@ -191,8 +213,15 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
     [lat, lng]
   );
 
+  const roundToDecimals = (v: number, d = coordDecimals) => {
+    const factor = Math.pow(10, d);
+    return Math.round(v * factor) / factor;
+  };
+
   const handleMapClick = (e: MapClickEvent) => {
-    setNewLocation({ lat: e.lat, lng: e.lng });
+    // round newLocation for display & modal input (the final send is additionally rounded in AddVillaModal)
+    const rounded = { lat: roundToDecimals(e.lat), lng: roundToDecimals(e.lng) };
+    setNewLocation(rounded);
     setIsModalOpen(true);
   };
 
@@ -202,6 +231,7 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
     name: string;
     description: string;
   }) => {
+    // data.lat / data.lng are already rounded by modal to coordDecimals
     const newVilla: SavedLocation = {
       lat: data.lat,
       lng: data.lng,
@@ -212,7 +242,7 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
     setIsModalOpen(false);
     setNewLocation(null);
     setSearchMarker(null);
-    if (onLocationAdd) onLocationAdd(data);
+    if (onLocationAdd) onLocationAdd(data); // backend receives rounded coords
   };
 
   const handleSearch = () => {
@@ -223,8 +253,15 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
         const location = results[0].geometry.location;
         const newLat = location.lat();
         const newLng = location.lng();
-        setSearchMarker({ lat: newLat, lng: newLng });
-        mapRef.current.panTo({ lat: newLat, lng: newLng });
+
+        // round search result coordinates
+        const roundedLat = roundToDecimals(newLat);
+        const roundedLng = roundToDecimals(newLng);
+
+        setSearchMarker({ lat: roundedLat, lng: roundedLng });
+        if (mapRef.current && typeof mapRef.current.panTo === "function") {
+          mapRef.current.panTo({ lat: roundedLat, lng: roundedLng });
+        }
       } else {
         alert("Location not found!");
       }
@@ -233,14 +270,6 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
 
   return (
     <div>
-      {/* <div className="text-center mb-10">
-        <p className="text-5xl font-semibold text-gray-800">Location</p>
-        <p className="text-lg mt-4 text-gray-600">
-          {text} — Click on the map or search any place worldwide
-        </p>
-      </div> */}
-
-      {/* 🔍 Search Bar */}
       <div className="flex justify-start mb-5">
         <input
           type="text"
@@ -288,7 +317,8 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
               lng={searchMarker.lng}
               color="green"
               onClick={() => {
-                setNewLocation(searchMarker);
+                // clicking the green search marker opens modal with rounded coords
+                setNewLocation({ lat: searchMarker.lat, lng: searchMarker.lng });
                 setIsModalOpen(true);
               }}
             />
@@ -303,10 +333,10 @@ const LocationCreateProperty: React.FC<LocationsProps> = ({
           <AddVillaModal
             lat={newLocation.lat}
             lng={newLocation.lng}
+            coordDecimals={coordDecimals}
             onClose={() => {
               setIsModalOpen(false);
               setNewLocation(null);
-              
               setSearchMarker(null);
             }}
             onAddVilla={handleAddVilla}

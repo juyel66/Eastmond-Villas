@@ -29,6 +29,8 @@ const Navbar = () => {
   );
   const currentUser = useSelector((state: any) => state?.auth?.user);
 
+  console.log('current user is:' , currentUser);
+
   useEffect(() => {
     localStorage.setItem("theme", theme);
     document.documentElement.setAttribute("data-theme", theme);
