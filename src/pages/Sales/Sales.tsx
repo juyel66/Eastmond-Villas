@@ -1,6 +1,4 @@
-// File: Rents.tsx
 import React, { useEffect, useState } from "react";
-
 import FilterSystem from "@/shared/FilterSystem";
 import SalesCard from "./SalesCard";
 
@@ -17,6 +15,7 @@ interface VillaType {
   amenities: string[];
   rateType: string;
   imageUrl: string;
+  listing_type?: string; // added so filter can check sale/rent
 }
 
 interface PaginationProps {
@@ -93,12 +92,12 @@ const PLACEHOLDER_IMG =
 const Sales: React.FC = () => {
   const resultsPerPage = 2;
 
-  // data & status
+  // master list from API (only sale items will be passed to filter via allowedType, but we still store listing_type)
   const [villas, setVillas] = useState<VillaType[]>([]);
+  // filtered results produced by FilterSystem
+  const [filtered, setFiltered] = useState<VillaType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // pagination UI
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -114,23 +113,17 @@ const Sales: React.FC = () => {
           throw new Error(`API error: ${res.status} ${text}`);
         }
         const data = await res.json();
-
-        // data might be an object with results or a plain array depending on your backend
         const items: any[] = Array.isArray(data) ? data : (data.results ?? data.items ?? []);
 
-        // filter for rentals (server sample had listing_type: "rent")
-        const rentals = items.filter((it) => (it.listing_type || "").toLowerCase() === "sale");
-
-        // map server item to VillaType used by RentsCard
-        const mapped: VillaType[] = rentals.map((it) => {
+        // Map every item but include listing_type on the object so FilterSystem can check it.
+        const mapped: VillaType[] = items.map((it) => {
           const firstImage =
             (it.media_images && Array.isArray(it.media_images) && it.media_images[0]?.image) ||
             (it.bedrooms_images && Array.isArray(it.bedrooms_images) && it.bedrooms_images[0]?.image) ||
             PLACEHOLDER_IMG;
 
           const amenities: string[] = [];
-          if (it.signature_distinctions && typeof it.signature_distinctions === "object") {
-            // if server returns object, try to flatten values; otherwise if array, use it directly
+          if (it.signature_distinctions) {
             if (Array.isArray(it.signature_distinctions)) amenities.push(...it.signature_distinctions);
             else amenities.push(...Object.values(it.signature_distinctions || {}).map(String));
           }
@@ -145,29 +138,35 @@ const Sales: React.FC = () => {
 
           return {
             id: Number(it.id),
-            title: it.title || it.slug || "Untitled",
-            location: (it.city && it.city.replace(/(^"|"$)/g, "")) || it.address || "Unknown location",
-            price: Number(it.price) || 0,
+            title: it.title || it.slug || it.name || "Untitled",
+            location: (it.city && String(it.city).replace(/(^"|"$)/g, "")) || it.address || "Unknown location",
+            price: Number(it.price) || parseFloat(String(it.price_display || "0").replace(/[^0-9.-]/g, "")) || 0,
             rating: Number(it.property_stats?.average_rating) || 0,
             reviewCount: Number(it.property_stats?.total_bookings) || 0,
             beds: Number(it.bedrooms) || 0,
             baths: Number(it.bathrooms) || 0,
             pool: Number(it.pool) || 0,
             amenities: amenities.filter(Boolean),
-            rateType: (it.listing_type === "rent" ? "per night" : "sale"),
+            rateType: (String(it.listing_type || "").toLowerCase() === "rent" ? "per night" : "sale"),
             imageUrl: firstImage,
+            listing_type: it.listing_type ?? "",
           } as VillaType;
         });
 
         if (!cancelled) {
+          // keep full mapped list but filtered state will be controlled by FilterSystem
           setVillas(mapped);
-          setCurrentPage(1); // reset to first page after fresh load
+          // pre-filter to only show sale items initially (sales page)
+          const onlySales = mapped.filter((m) => String(m.listing_type ?? "").toLowerCase() === "sale");
+          setFiltered(onlySales);
+          setCurrentPage(1);
         }
       } catch (err: any) {
         if (!cancelled) {
           console.error("Failed to fetch villas:", err);
-          setError(err?.message || "Failed to load rentals");
+          setError(err?.message || "Failed to load properties");
           setVillas([]);
+          setFiltered([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -175,36 +174,39 @@ const Sales: React.FC = () => {
     };
 
     fetchVillas();
-
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const totalResults = villas.length;
+  const totalResults = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalResults / resultsPerPage));
 
-  // keep currentPage valid when data changes
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
 
-  const currentVillas = villas.slice(
-    (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage
-  );
+  const currentVillas = filtered.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage);
 
   return (
     <div
       className="relative bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage:
-          "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
+        backgroundImage: "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
         marginBottom: "620px",
       }}
     >
       <div className="container mx-auto mb-10">
-        <FilterSystem />
+        {/* Pass full mapped data into FilterSystem and tell it allowedType="sale" */}
+        <FilterSystem
+          data={villas}
+          allowedType="sale"
+          onResults={(results) => {
+            // results from FilterSystem are already filtered to allowedType
+            setFiltered(results ?? []);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       {/* Top pagination */}
@@ -219,14 +221,14 @@ const Sales: React.FC = () => {
       <div className="space-y-8 container mx-auto">
         {loading && (
           <div className="py-12 flex justify-center">
-            <div className="text-gray-600">Loading rentals…</div>
+            <div className="text-gray-600">Loading properties…</div>
           </div>
         )}
 
         {error && (
           <div className="py-6">
             <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded">
-              <div className="font-semibold">Failed to load rentals</div>
+              <div className="font-semibold">Failed to load properties</div>
               <div className="text-sm mt-1">{error}</div>
             </div>
           </div>
@@ -234,17 +236,14 @@ const Sales: React.FC = () => {
 
         {!loading && !error && currentVillas.length === 0 && (
           <div className="py-12 flex justify-center">
-            <div className="text-gray-600">No rentals found.</div>
+            <div className="text-gray-600">No properties found.</div>
           </div>
         )}
 
         {!loading &&
           !error &&
           currentVillas.map((villa) => (
-            <div
-              key={villa.id}
-              className="pl-5 pr-5"
-            >
+            <div key={villa.id} className="pl-5 pr-5">
               <SalesCard property={villa} />
             </div>
           ))}
