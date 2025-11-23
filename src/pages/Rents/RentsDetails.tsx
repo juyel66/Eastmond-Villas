@@ -129,6 +129,7 @@ const RentsDetails = () => {
  
   return (
     <div>
+      
       {/* pass single villa object down to children so you can destructure there */}
       <RentsDetailsBanner villa={villa} />
       <SpotlightDetails villa={villa} />

@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 interface Property {
+  id:number,
   price: number;
   beds: number;
   baths: number;
@@ -137,7 +138,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
           {/* CTA Button */}
           <Link
-            to="/RentsDetails"
+            to={`/property/${property.id}`} 
             className="mt-6 w-full py-3 sm:py-4 text-center bg-teal-50 text-emerald-700 font-bold text-base sm:text-lg md:text-xl border-2 border-[#009689] rounded-xl hover:bg-gray-200 transition duration-150"
           >
             View Details

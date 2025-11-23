@@ -1,41 +1,22 @@
 // File: Rents.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import RentsCard from "./RentsCard";
 import FilterSystem from "@/shared/FilterSystem";
 
-const villaData = [
-  {
-    id: 1,
-    title: "Skyline Residences",
-    location: "Downtown, NY",
-    price: 850000,
-    rating: 4.9,
-    reviewCount: 127,
-    beds: 4,
-    baths: 1,
-    pool: 1,
-    amenities: ["Ocean View", "Private Pool", "Chef Available"],
-    rateType: "per night", // ✅ Added this
-    imageUrl:
-      "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760924064/img_5_sd6ueh.png",
-  },
-  {
-    id: 2,
-    title: "Mountain Escape Villa",
-    location: "Aspen, CO",
-    price: 920000,
-    rating: 4.8,
-    reviewCount: 101,
-    beds: 1,
-    baths: 4,
-    pool: 11,
-    amenities: ["Mountain View", "Fireplace", "Hot Tub"],
-    rateType: "per night", // ✅ Added this
-    imageUrl:
-      "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760924064/img_5_sd6ueh.png",
-
-  },
-];
+interface VillaType {
+  id: number;
+  title: string;
+  location: string;
+  price: number;
+  rating: number;
+  reviewCount: number;
+  beds: number;
+  baths: number;
+  pool: number;
+  amenities: string[];
+  rateType: string;
+  imageUrl: string;
+}
 
 interface PaginationProps {
   totalResults: number;
@@ -55,7 +36,7 @@ const Pagination: React.FC<PaginationProps> = ({
   const start = (currentPage - 1) * resultsPerPage + 1;
   const end = Math.min(currentPage * resultsPerPage, totalResults);
 
-  const pagesToShow = [];
+  const pagesToShow: number[] = [];
   let startPage = Math.max(1, currentPage - 2);
   let endPage = Math.min(totalPages, currentPage + 3);
 
@@ -64,12 +45,10 @@ const Pagination: React.FC<PaginationProps> = ({
 
   for (let i = startPage; i <= endPage; i++) pagesToShow.push(i);
 
- 
-
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center py-6 container mx-auto">
       <div className="text-sm font-medium text-gray-600 mb-4 sm:mb-0">
-        Showing {start} to {end} of {totalResults} results
+        {totalResults === 0 ? "Showing 0 results" : `Showing ${start} to ${end} of ${totalResults} results`}
       </div>
       <div className="flex items-center">
         <button
@@ -92,8 +71,6 @@ const Pagination: React.FC<PaginationProps> = ({
           >
             {String(page).padStart(2, "0")}
           </button>
-
-      
         ))}
 
         <button
@@ -108,13 +85,116 @@ const Pagination: React.FC<PaginationProps> = ({
   );
 };
 
-const Rents = () => {
+const API_BASE = import.meta.env.VITE_API_BASE || "http://10.10.13.60:8000/api";
+const PLACEHOLDER_IMG =
+  "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760924064/img_5_sd6ueh.png";
+
+const Rents: React.FC = () => {
   const resultsPerPage = 2;
-  const totalResults = villaData.length;
-  const totalPages = Math.ceil(totalResults / resultsPerPage);
+
+  // master list from API (mapped)
+  const [allVillas, setAllVillas] = useState<VillaType[]>([]);
+  // filtered results returned from FilterSystem (initially same as allVillas)
+  const [filteredVillas, setFilteredVillas] = useState<VillaType[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // pagination UI
   const [currentPage, setCurrentPage] = useState(1);
 
-  const currentVillas = villaData.slice(
+  // Fetch + map on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchVillas = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE}/villas/properties/`);
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`API error: ${res.status} ${text}`);
+        }
+        const data = await res.json();
+
+        // data might be an object with results or a plain array depending on your backend
+        const items: any[] = Array.isArray(data) ? data : (data.results ?? data.items ?? []);
+
+        // filter for rentals (server sample had listing_type: "rent")
+        const rentals = items.filter((it) => (String(it.listing_type || "")).toLowerCase() === "rent");
+
+        // map server item to VillaType used by RentsCard
+        const mapped: VillaType[] = rentals.map((it) => {
+          const firstImage =
+            (it.media_images && Array.isArray(it.media_images) && it.media_images[0]?.image) ||
+            (it.bedrooms_images && Array.isArray(it.bedrooms_images) && it.bedrooms_images[0]?.image) ||
+            PLACEHOLDER_IMG;
+
+          const amenities: string[] = [];
+          if (it.signature_distinctions && typeof it.signature_distinctions === "object") {
+            if (Array.isArray(it.signature_distinctions)) amenities.push(...it.signature_distinctions);
+            else amenities.push(...Object.values(it.signature_distinctions || {}).map(String));
+          }
+          if (it.outdoor_amenities) {
+            if (Array.isArray(it.outdoor_amenities)) amenities.push(...it.outdoor_amenities);
+            else amenities.push(...Object.values(it.outdoor_amenities || {}).map(String));
+          }
+          if (it.interior_amenities) {
+            if (Array.isArray(it.interior_amenities)) amenities.push(...it.interior_amenities);
+            else amenities.push(...Object.values(it.interior_amenities || {}).map(String));
+          }
+
+          return {
+            id: Number(it.id),
+            title: it.title || it.slug || "Untitled",
+            location: (it.city && String(it.city).replace(/(^"|"$)/g, "")) || it.address || "Unknown location",
+            price: Number(it.price) || 0,
+            rating: Number(it.property_stats?.average_rating) || 0,
+            reviewCount: Number(it.property_stats?.total_bookings) || 0,
+            beds: Number(it.bedrooms) || 0,
+            baths: Number(it.bathrooms) || 0,
+            pool: Number(it.pool) || 0,
+            amenities: amenities.filter(Boolean),
+            rateType: (String(it.listing_type).toLowerCase() === "rent" ? "per night" : "sale"),
+            imageUrl: firstImage,
+          } as VillaType;
+        });
+
+        if (!cancelled) {
+          setAllVillas(mapped);
+          setFilteredVillas(mapped); // seed filtered with master list
+          setCurrentPage(1); // reset pagination to page 1
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error("Failed to fetch villas:", err);
+          setError(err?.message || "Failed to load rentals");
+          setAllVillas([]);
+          setFilteredVillas([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchVillas();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // total & pages are driven by filtered results now
+  const totalResults = filteredVillas.length;
+  const totalPages = Math.max(1, Math.ceil(totalResults / resultsPerPage));
+
+  // keep currentPage valid when filtered data changes
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const currentVillas = filteredVillas.slice(
     (currentPage - 1) * resultsPerPage,
     currentPage * resultsPerPage
   );
@@ -128,35 +208,72 @@ const Rents = () => {
         marginBottom: "620px",
       }}
     >
+      {/* pass master data into FilterSystem and receive filtered results via onResults */}
       <div className="container mx-auto mb-10">
-        <FilterSystem />
+        <FilterSystem
+          data={allVillas}
+          onResults={(results: VillaType[]) => {
+            setFilteredVillas(results ?? []);
+            setCurrentPage(1); // reset to first page for new search results
+          }}
+          // optional: you can handle search params if FilterSystem forwards them
+          onSearchParams={(params: any) => {
+            // console.log("Search params:", params);
+            // You can optionally do server-side search here using params
+          }}
+        />
       </div>
 
+      {/* Top pagination */}
       <Pagination
         totalResults={totalResults}
         resultsPerPage={resultsPerPage}
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={(p) => setCurrentPage(p)}
       />
 
       <div className="space-y-8 container mx-auto">
-        {currentVillas.map((villa) => (
-          <div
-            key={villa.id}
-            className="bg-white/90 rounded-xl shadow-md overflow-hidden backdrop-blur-md"
-          >
-            <RentsCard property={villa} />
+        {loading && (
+          <div className="py-12 flex justify-center">
+            <div className="text-gray-600">Loading rentals…</div>
           </div>
-        ))}
+        )}
+
+        {error && (
+          <div className="py-6">
+            <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded">
+              <div className="font-semibold">Failed to load rentals</div>
+              <div className="text-sm mt-1">{error}</div>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && currentVillas.length === 0 && (
+          <div className="py-12 flex justify-center">
+            <div className="text-gray-600">No rentals found.</div>
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          currentVillas.map((villa) => (
+            <div
+              key={villa.id}
+              className="bg-white/90 rounded-xl shadow-md overflow-hidden backdrop-blur-md"
+            >
+              <RentsCard property={villa} />
+            </div>
+          ))}
       </div>
 
+      {/* Bottom pagination */}
       <Pagination
         totalResults={totalResults}
         resultsPerPage={resultsPerPage}
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={(p) => setCurrentPage(p)}
       />
     </div>
   );

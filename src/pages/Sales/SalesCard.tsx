@@ -2,22 +2,9 @@ import { CiShare2 } from "react-icons/ci";
 import React from "react";
 import { Link } from "react-router-dom";
 
-const propertyData = {
-  id: 2,
-  title: "Skyline Residences",
-  location: "Downtown, NY",
-  price: "850000", // ✅ keep as string, we'll convert to number
-  rateType: "/night",
-  rating: 4.9,
-  reviewCount: 127,
-  beds: 4,
-  baths: 3,
-  pool: 2,
-  imageUrl: "https://i.ibb.co.com/ZpG7JcPk/img-5.png",
-};
-
 interface Property {
-  price: string;
+  id: number;
+  price: number;
   beds: number;
   baths: number;
   pool: number;
@@ -30,10 +17,9 @@ interface Property {
 }
 
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
-  // ✅ convert price to number before formatting
   const formattedPrice = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
-  }).format(Number(property.price));
+  }).format(property.price);
 
   const amenities = [
     {
@@ -44,7 +30,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           className="w-5 h-5"
         />
       ),
-      value: `${property.beds} Beds`,
+      value: `${property.beds} ${property.beds === 1 ? "Bed" : "Beds"}`,
     },
     {
       icon: (
@@ -54,7 +40,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           className="w-5 h-5"
         />
       ),
-      value: `${property.baths} Baths`,
+      value: `${property.baths} ${property.baths === 1 ? "Bath" : "Baths"}`,
     },
     {
       icon: (
@@ -64,13 +50,14 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           className="w-5 h-5"
         />
       ),
-      value: `${property.pool} Pools`,
+      value: `${property.pool} ${property.pool === 1 ? "Pool" : "Pools"}`,
     },
   ];
 
   return (
     <div className="container relative mx-auto my-8 sm:my-10 bg-white p-4 sm:p-6 rounded-2xl border overflow-hidden font-sans">
       <div className="flex flex-col items-center md:flex-row bg-white rounded-2xl overflow-hidden">
+
         {/* Image Section */}
         <div
           className="relative w-full md:w-3/5 h-64 sm:h-80 md:h-[400px] lg:h-[450px] bg-cover bg-center rounded-2xl"
@@ -103,55 +90,52 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               </svg>
             </div>
 
-            <div className="absolute p-2 rounded-full bg-white top-43 -right-14">
+            <div className="absolute p-2 rounded-full bg-white top-50 -right-14">
               <img
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
-                alt="logo"
+                alt=""
               />
             </div>
 
             <div className="w-9 h-9 flex items-center justify-center bg-white rounded-full text-gray-700 hover:bg-gray-100 transition duration-150">
-              <div className="text-black font-bold">
-                <CiShare2 />
-              </div>
+              <CiShare2 className="w-5 h-5" />
             </div>
           </div>
         </div>
 
         {/* Details Section */}
         <div className="w-full ml-5 md:w-2/5 flex flex-col px-4 sm:px-6 md:px-8 mt-4 md:mt-0">
-          <div>
-            <h3 className="text-[16px] sm:text-2xl md:text-3xl font-extrabold text-gray-900">
-              {property.title}
-            </h3>
-            <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
-              <img
-                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760829803/Frame_6_keemxx.png"
-                alt="location"
-                className="w-5 h-5 mr-1"
-              />{" "}
-              {property.location}
-            </p>
+          <h3 className="text-[16px] sm:text-2xl md:text-3xl font-extrabold text-gray-900">
+            {property.title}
+          </h3>
 
-            <p className="text-[16px] sm:text-xl md:text-2xl text-emerald-700 font-bold mt-4">
-              From <span>USD${formattedPrice}</span>
-              {property.rateType}
-            </p>
+          <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
+            <img
+              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760829803/Frame_6_keemxx.png"
+              alt="location"
+              className="w-5 h-5 mr-1"
+            />{" "}
+            {property.location}
+          </p>
 
-            {/* Amenities */}
-            <div className="flex flex-wrap items-center text-gray-500 text-xs sm:text-sm md:text-base font-medium mt-4 space-x-4">
-              {amenities.map((item, index) => (
-                <div key={index} className="flex items-center space-x-1">
-                  {item.icon}
-                  <span className="text-gray-700">{item.value}</span>
-                </div>
-              ))}
-            </div>
+          <p className="text-[16px] sm:text-xl md:text-2xl text-emerald-700 font-bold mt-4">
+            From <span>USD${formattedPrice}</span>
+            {property.rateType || "/night"}
+          </p>
+
+          {/* Amenities */}
+          <div className="flex flex-wrap items-center text-gray-500 text-xs sm:text-sm md:text-base font-medium mt-4 space-x-4">
+            {amenities.map((item, index) => (
+              <div key={index} className="flex items-center space-x-1">
+                {item.icon}
+                <span className="text-gray-700">{item.value}</span>
+              </div>
+            ))}
           </div>
 
           {/* CTA Button */}
           <Link
-            to="/SalesDetails"
+            to={`/property/${property.id}`}  // 🔥 ID-based routing added
             className="mt-6 w-full py-3 sm:py-4 text-center bg-teal-50 text-emerald-700 font-bold text-base sm:text-lg md:text-xl border-2 border-[#009689] rounded-xl hover:bg-gray-200 transition duration-150"
           >
             View Details
@@ -162,10 +146,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
-const SalesCard = () => (
-  <div>
-    <PropertyCard property={propertyData} />
-  </div>
+const SalesCard: React.FC<{ property: Property }> = ({ property }) => (
+  <PropertyCard property={property} />
 );
 
 export default SalesCard;

@@ -379,11 +379,6 @@
 
 
 
-
-
-
-
-
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 
@@ -463,14 +458,13 @@ const ImageGallerySection = ({ villa }) => {
       : [];
 
   const rules_and_etiquette =
-    Array.isArray(villa.rules_and_etiquette)
-      ? villa.rules_and_etiquette
-      : [];
+    Array.isArray(villa.rules_and_etiquette) ? villa.rules_and_etiquette : [];
 
+  // Accept both nested check_in_out_time or root-level check_in / check_out
   const check_in_out_time = villa.check_in_out_time || {
-    check_in: "",
-    check_out: "",
-    description: "",
+    check_in: villa.check_in || "",
+    check_out: villa.check_out || "",
+    description: villa.check_in_out_time?.description || "",
   };
 
   const staffArray = Array.isArray(villa.staff)
@@ -480,23 +474,50 @@ const ImageGallerySection = ({ villa }) => {
     : [];
 
   const concierge_service =
-    Array.isArray(villa.concierge_service)
-      ? villa.concierge_service
-      : [];
+    Array.isArray(villa.concierge_service) ? villa.concierge_service : [];
 
   const security_deposit = villa.security_deposit || "";
 
   const description = villa.description || "";
-  const description_image_url =
-    villa.description_image_url || LOCAL_FALLBACK;
+  const description_image_url = villa.description_image_url || LOCAL_FALLBACK;
 
   const booking_rate_start = villa.booking_rate_start || [];
 
+  // ===== UPDATED: Build location object robustly (use top-level latitude/longitude,
+  // or location_coords object if present; if both missing, leave null so Locations can fallback)
   const location = {
-  lat: villa.latitude || villa.location_coords?.lat,
-  lng: villa.longitude || villa.location_coords?.lng,
-  address: villa.address || "",
-};
+    lat:
+      typeof villa.latitude === "number"
+        ? villa.latitude
+        : villa.location_coords?.lat ?? null,
+    lng:
+      typeof villa.longitude === "number"
+        ? villa.longitude
+        : villa.location_coords?.lng ?? null,
+    address: villa.address || villa.city || "",
+  };
+
+  // Villa name (title or name)
+  const villaName = villa.title || villa.name || "";
+
+  // Determine listing type (forgiving)
+  const listingType = String(villa.listing_type ?? "").toLowerCase();
+  const isRentType =
+    listingType === "rent" ||
+    listingType === "rental" ||
+    listingType === "rentals" ||
+    listingType === "let";
+  const isSaleType = listingType === "sale" || listingType === "sales";
+
+  // Debug logs so you can confirm in console
+  console.log("→ Location values extracted for Locations component:", {
+    lat: location.lat,
+    lng: location.lng,
+    address: location.address,
+    villaName,
+    fullApiResponse: villa,
+    listingType,
+  });
 
   const [showAll, setShowAll] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -589,7 +610,7 @@ const ImageGallerySection = ({ villa }) => {
               descriptionImage={
                 media_images?.[1]?.url ||
                 description_image_url ||
-                "/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png"
+                LOCAL_FALLBACK
               }
             />
           </div>
@@ -613,47 +634,116 @@ const ImageGallerySection = ({ villa }) => {
             ))}
           </ul>
 
-          <h4 className="font-semibold text-lg mt-6 mb-2">
-            Outdoor Amenities
-          </h4>
+          <h4 className="font-semibold text-lg mt-6 mb-2">Outdoor Amenities</h4>
           <ul>
             {outdoor_amenities.map((item, i) => (
               <AmenityItem key={i} name={item} />
             ))}
           </ul>
 
-          <h3 className="text-2xl font-bold mt-10 mb-4">Rules & Etiquette</h3>
-          <ul>
-            {rules_and_etiquette.map((item, i) => (
-              <AmenityItem key={i} name={item} />
-            ))}
-          </ul>
+          {/* Rules & Check-in/out & Staff: render only for rent-type */}
+          {isRentType && (
+            <>
+              <h3 className="text-2xl font-bold mt-10 mb-4">Rules & Etiquette</h3>
+              <ul>
+                {rules_and_etiquette.map((item, i) => (
+                  <AmenityItem key={i} name={item} />
+                ))}
+              </ul>
 
-          <h3 className="text-2xl font-bold mt-10 mb-4">Check-in/out</h3>
-          <p>Check-In: {check_in_out_time.check_in}</p>
-          <p>Check-Out: {check_in_out_time.check_out}</p>
-          <p>{check_in_out_time.description}</p>
+              <h3 className="text-2xl font-bold mt-10 mb-4">Check-in/out</h3>
+              {check_in_out_time.check_in ? (
+                <p>Check-In: {check_in_out_time.check_in}</p>
+              ) : (
+                <p>Check-In: —</p>
+              )}
+              {check_in_out_time.check_out ? (
+                <p>Check-Out: {check_in_out_time.check_out}</p>
+              ) : (
+                <p>Check-Out: —</p>
+              )}
+              {check_in_out_time.description ? (
+                <p>{check_in_out_time.description}</p>
+              ) : null}
 
-          <h3 className="text-2xl font-bold mt-10 mb-4">Staff</h3>
-          <ul>
-            {staffArray.map((s, i) => (
-              <StaffItem key={i} name={s.name} details={s.details} />
-            ))}
-          </ul>
+              <h3 className="text-2xl font-bold mt-10 mb-4">Staff</h3>
+              <ul>
+                {staffArray.map((s, i) => (
+                  <StaffItem key={i} name={s.name} details={s.details} />
+                ))}
+              </ul>
+            </>
+          )}
 
-          <BedRoomsSliders bedrooms_images={bedrooms_images} />
+          {/* Bedrooms slider ALWAYS shown */}
+          <div className="mt-8">
+            <BedRoomsSliders bedrooms_images={bedrooms_images} />
+          </div>
 
-          <h3 className="text-2xl font-bold mt-10 mb-4">
-            Concierge Service
-          </h3>
+
+            {isRentType && (
+        <>
+
+
+                  <h3 className="text-2xl font-bold mt-10 mb-4">Concierge Service</h3>
+
+          {/* Existing concierge items (if any) */}
           <ul>
             {concierge_service.map((item, i) => (
               <AmenityItem key={i} name={item} />
             ))}
+
+            {/* --- STATIC LINES REQUESTED --- */}
+            <li className="flex items-start text-gray-700 text-sm mb-2 mt-4">
+              <img
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
+                alt="icon"
+                className="w-4 h-4 mr-2 mt-0.5"
+              />
+              <span>
+                Our concierge team offers a bunch of luxury services, making sure
+                you enjoy every moment.
+              </span>
+            </li>
+
+            <li className="flex items-start text-gray-700 text-sm mb-2">
+              <img
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
+                alt="icon"
+                className="w-4 h-4 mr-2 mt-0.5"
+              />
+              <span>
+                We handle your Arrival, Transfers, Car Rentals, and Chauffeur
+                Services.
+              </span>
+            </li>
+
+            <li className="flex items-start text-gray-700 text-sm mb-2">
+              <img
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
+                alt="icon"
+                className="w-4 h-4 mr-2 mt-0.5"
+              />
+              <span>
+                We can stock your villa, help with menus, provide household
+                support, and spa services.
+              </span>
+            </li>
           </ul>
 
+
+         
+        </>
+      )}
+
+
+
+
+
+
           <h3 className="text-2xl font-bold mt-10 mb-4">Security Deposit</h3>
-          <p className="text-3xl font-bold">{security_deposit}</p>
+
+          <p className="text-3xl font-bold">{security_deposit || "US$ 10,000.00"}</p>
 
           <button
             onClick={handleDownloadPDF}
@@ -664,32 +754,25 @@ const ImageGallerySection = ({ villa }) => {
         </div>
       </div>
 
-      {/* ---- HERE: pass lat, lng, text, full location object and villa name ---- */}
-      {/*
-        Debug log so you can verify what's sent to Locations (open console)
-      */}
-      {console.log("→ Passing to Locations:", {
-        lat: location.lat,
-        lng: location.lng,
-        text: location.address,
-        locationObj: location,
-        villaName: villa.title || villa.name || "",
-      })}
+      {/* Rates & Calendar: only show for rent-type */}
+      {isRentType && (
+        <>
+          <RatesBookingInformation booking_rate_start={booking_rate_start} price={villa.price} />
+        <div className="">
+            <Calendar />
+        </div>
+        </>
+      )}
 
-      <RatesBookingInformation
-        booking_rate_start={booking_rate_start}
-        price={villa.price}
+    <div className="mt-15 mb-20">
+        <Locations
+        lat={location.lat}
+        lng={location.lng}
+        text={location.address}
+        locationObj={location}
+        villaName={villaName}
       />
-
-      <Calendar />
-
- <Locations
-  lat={location.lat}
-  lng={location.lng}
-  text={location.address}
-  locationObj={location}          
-  villaName={villa.title || villa.name || ""}
-/>
+    </div>
 
       <AddReviewForm />
 
@@ -710,3 +793,4 @@ const ImageGallerySection = ({ villa }) => {
 };
 
 export default ImageGallerySection;
+

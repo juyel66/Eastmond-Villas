@@ -1,182 +1,123 @@
-import React, { useState, useMemo, useRef } from "react";
+// Locations.tsx (view-only, markers show villa name on hover with small popup)
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import GoogleMapReact from "google-map-react";
 import { PiMapPinBold } from "react-icons/pi";
-import { IoClose } from "react-icons/io5";
+import { Map, MapPin } from "lucide-react";
 
 const googleMapAPIKey = "AIzaSyAdOzx1k0BNNGVgPaK7po6TcMz46MVeiY4";
+
+// Local thumbnail (you uploaded this file; using the local path as requested)
+const LOCAL_THUMBNAIL = "/mnt/data/3c732c81-93ba-460a-bc0c-4418a9864cd0.png";
 
 interface Coords {
   lat: number;
   lng: number;
 }
 
-interface MapClickEvent {
-  lat: number;
-  lng: number;
-}
-
 interface SavedLocation extends Coords {
   key: string;
-  text: string;
-  isSearch?: boolean;
+  text: string; // villa name or address shown on hover
+  details?: string; // extra details shown in popup
+  thumb?: string; // thumbnail url
 }
 
 interface LocationsProps {
-  lat: number;
-  lng: number;
-  text: string;
-  onLocationAdd?: (villaData: {
-    lat: number;
-    lng: number;
-    name: string;
-    description: string;
-  }) => void;
+  lat?: number | null;
+  lng?: number | null;
+  text?: string; // villa name / address to show on hover
+  locationObj?: { lat?: number | null; lng?: number | null; address?: string } | null;
+  villaName?: string;
+  onSearchSelect?: (lat: number, lng: number, address?: string) => void;
+  onMapReady?: (map: any, maps: any) => void;
 }
 
-// Marker Component
-const CustomMarker = ({
-  lat,
-  lng,
-  color,
-  onClick,
-}: {
+/**
+ * CustomMarker
+ * - shows a small popup above the pin on hover (modal-like)
+ * - popup contains thumbnail, label and details (lat/lng)
+ * - uses inline mouse events (works inside GoogleMapReact children)
+ */
+const CustomMarker: React.FC<{
   lat: number;
   lng: number;
-  color: string;
-  onClick?: () => void;
-}) => (
-  <div
-    style={{
-      position: "absolute",
-      transform: "translate(-50%, -100%)",
-      cursor: "pointer",
-      zIndex: 900,
-    }}
-    onClick={onClick}
-  >
-    <PiMapPinBold style={{ color, fontSize: "2rem" }} />
-  </div>
-);
-
-// Modal Component
-interface AddVillaModalProps {
-  lat: number;
-  lng: number;
-  onClose: () => void;
-  onAddVilla: (data: {
-    lat: number;
-    lng: number;
-    name: string;
-    description: string;
-  }) => void;
-}
-
-const AddVillaModal: React.FC<AddVillaModalProps> = ({
-  lat,
-  lng,
-  onClose,
-  onAddVilla,
-}) => {
-  const [villaName, setVillaName] = useState("");
-  const [description, setDescription] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!villaName.trim()) return;
-    onAddVilla({ lat, lng, name: villaName, description });
-    setVillaName("");
-    setDescription("");
-  };
+  color?: string;
+  label?: string | null;
+  details?: string | null;
+  thumb?: string | null;
+}> = ({ color = "red", label, details, thumb }) => {
+  const [hover, setHover] = useState(false);
 
   return (
     <div
-      className="absolute top-10 left-1/2 -translate-x-1/2 bg-white p-5 rounded-xl shadow-2xl w-80 z-[1100]"
-      onClick={(e) => e.stopPropagation()}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        position: "absolute",
+        transform: "translate(-50%, -100%)",
+        zIndex: 900,
+        display: "flex",
+        alignItems: "center",
+        flexDirection: "column",
+        pointerEvents: "auto",
+      }}
+      aria-hidden={false}
     >
-      <div className="flex justify-between items-center border-b pb-2 mb-4">
-        <h2 className="text-lg font-bold text-gray-800">Add New Villa</h2>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
-          <IoClose size={22} />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="text-sm text-gray-600 space-y-1">
-          <p>
-            <strong>Latitude:</strong> {lat.toFixed(6)}
-          </p>
-          <p>
-            <strong>Longitude:</strong> {lng.toFixed(6)}
-          </p>
+      {/* Popup shown when hover === true */}
+      {hover && (
+        <div
+          className="mb-2 w-64 p-4 rounded-lg bg-white shadow-md border border-gray-200 text-left"
+          style={{ pointerEvents: "none" }} // keep popup passive
+        >
+          <div className="flex items-start gap-3 h-20">
+         <div className="mt-5">  <MapPin /></div>
+          
+            <div>
+              <div className="font-semibold mt-5 text-sm text-gray-800">
+                {label || "Location"}
+              </div>
+              {details && (
+                <div className="text-xs text-gray-500 mt-1">{details}</div>
+              )}
+            </div>
+          </div>
         </div>
+      )}
 
-        <div>
-          <label
-            htmlFor="villaName"
-            className="block text-sm font-semibold text-gray-700 mb-1"
-          >
-            Villa Name
-          </label>
-          <input
-            id="villaName"
-            type="text"
-            placeholder="e.g., Paradise Villa"
-            value={villaName}
-            onChange={(e) => setVillaName(e.target.value)}
-            className="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-semibold text-gray-700 mb-1"
-          >
-            Description (Optional)
-          </label>
-          <textarea
-            id="description"
-            placeholder="Add villa details..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
-          />
-        </div>
-
-        <div className="flex justify-end space-x-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded hover:bg-gray-300"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-teal-500 text-white font-semibold py-1.5 px-4 rounded hover:bg-teal-600"
-          >
-            Add
-          </button>
-        </div>
-      </form>
+      {/* Pin */}
+      <PiMapPinBold style={{ color, fontSize: "2rem", cursor: "default" }} />
     </div>
   );
 };
 
-// --- Main Component ---
 const Locations: React.FC<LocationsProps> = ({
   lat,
   lng,
   text,
-  onLocationAdd,
+  locationObj,
+  villaName,
+  onSearchSelect,
+  onMapReady,
 }) => {
-  const [savedVillas, setSavedVillas] = useState<SavedLocation[]>([
-    { lat, lng, key: "default_villa", text },
+  // prefer locationObj over individual lat/lng props
+  const initialLat = locationObj?.lat ?? lat ?? 0;
+  const initialLng = locationObj?.lng ?? lng ?? 0;
+  const initialText = locationObj?.address ?? text ?? villaName ?? "";
+
+  // savedVillas holds the single villa (or more if you pass them later)
+  const [savedVillas, setSavedVillas] = useState<SavedLocation[]>(() => [
+    {
+      lat: initialLat,
+      lng: initialLng,
+      key: "default_villa",
+      text: initialText,
+      details:
+        typeof initialLat === "number" && typeof initialLng === "number"
+          ? `Lat: ${Number(initialLat).toFixed(6)}, Lng: ${Number(initialLng).toFixed(6)}`
+          : "Coordinates not provided",
+      thumb: LOCAL_THUMBNAIL,
+    },
   ]);
-  const [newLocation, setNewLocation] = useState<Coords | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMarker, setSearchMarker] = useState<Coords | null>(null);
 
@@ -185,36 +126,67 @@ const Locations: React.FC<LocationsProps> = ({
 
   const defaultProps = useMemo(
     () => ({
-      center: { lat, lng },
+      center: { lat: initialLat, lng: initialLng },
       zoom: 13,
     }),
-    [lat, lng]
+    [initialLat, initialLng]
   );
 
-  const handleMapClick = (e: MapClickEvent) => {
-    setNewLocation({ lat: e.lat, lng: e.lng });
-    setIsModalOpen(true);
-  };
+  // Keep savedVillas reactive to prop changes (e.g., when API data arrives)
+  useEffect(() => {
+    const updatedLat = locationObj?.lat ?? lat ?? null;
+    const updatedLng = locationObj?.lng ?? lng ?? null;
+    const updatedText = locationObj?.address ?? text ?? villaName ?? "";
 
-  const handleAddVilla = (data: {
-    lat: number;
-    lng: number;
-    name: string;
-    description: string;
-  }) => {
-    const newVilla: SavedLocation = {
-      lat: data.lat,
-      lng: data.lng,
-      key: Date.now().toString(),
-      text: data.name,
-    };
-    setSavedVillas((prev) => [...prev, newVilla]);
-    setIsModalOpen(false);
-    setNewLocation(null);
-    setSearchMarker(null);
-    if (onLocationAdd) onLocationAdd(data);
-  };
+    // console log for debugging
+    console.log("Locations component received:", {
+      lat: updatedLat,
+      lng: updatedLng,
+      text: updatedText,
+      locationObj,
+      villaName,
+    });
 
+    if (typeof updatedLat === "number" && typeof updatedLng === "number") {
+      setSavedVillas([
+        {
+          lat: updatedLat,
+          lng: updatedLng,
+          key: "default_villa",
+          text: updatedText,
+          details: `Lat: ${Number(updatedLat).toFixed(6)}, Lng: ${Number(
+            updatedLng
+          ).toFixed(6)}`,
+          thumb: LOCAL_THUMBNAIL,
+        },
+      ]);
+
+      if (mapRef.current && typeof mapRef.current.panTo === "function") {
+        try {
+          mapRef.current.panTo({ lat: updatedLat, lng: updatedLng });
+        } catch (e) {
+          // ignore pan errors if map not ready
+        }
+      }
+    } else {
+      // When coordinates are missing, keep fallback marker with text
+      setSavedVillas([
+        {
+          lat: initialLat,
+          lng: initialLng,
+          key: "default_villa",
+          text: updatedText,
+          details:
+            initialLat && initialLng
+              ? `Lat: ${Number(initialLat).toFixed(6)}, Lng: ${Number(initialLng).toFixed(6)}`
+              : "Coordinates not provided",
+          thumb: LOCAL_THUMBNAIL,
+        },
+      ]);
+    }
+  }, [lat, lng, text, locationObj, villaName, initialLat, initialLng]);
+
+  // Search: use Google geocoder to show a temporary search marker and pan map
   const handleSearch = () => {
     if (!searchQuery.trim() || !mapsRef.current) return;
     const geocoder = new mapsRef.current.Geocoder();
@@ -223,8 +195,12 @@ const Locations: React.FC<LocationsProps> = ({
         const location = results[0].geometry.location;
         const newLat = location.lat();
         const newLng = location.lng();
+        const address = results[0].formatted_address || searchQuery;
         setSearchMarker({ lat: newLat, lng: newLng });
-        mapRef.current.panTo({ lat: newLat, lng: newLng });
+        if (mapRef.current && typeof mapRef.current.panTo === "function") {
+          mapRef.current.panTo({ lat: newLat, lng: newLng });
+        }
+        if (onSearchSelect) onSearchSelect(newLat, newLng, address);
       } else {
         alert("Location not found!");
       }
@@ -233,15 +209,16 @@ const Locations: React.FC<LocationsProps> = ({
 
   return (
     <div>
-      <div className="text-center mb-10">
+      {/* Top static location header */}
+       <div className="text-center mb-10">
         <p className="text-5xl font-semibold text-gray-800">Location</p>
         <p className="text-lg mt-4 text-gray-600">
           {text} — Click on the map or search any place worldwide
         </p>
       </div>
 
-      {/* 🔍 Search Bar */}
-      <div className="flex justify-center mb-5">
+      {/* Search Bar (kept optional — comment out if you want) */}
+      {/* <div className="flex justify-center mb-5">
         <input
           type="text"
           value={searchQuery}
@@ -256,7 +233,7 @@ const Locations: React.FC<LocationsProps> = ({
         >
           Search
         </button>
-      </div>
+      </div> */}
 
       <div
         className="relative mx-auto"
@@ -266,12 +243,15 @@ const Locations: React.FC<LocationsProps> = ({
           bootstrapURLKeys={{ key: googleMapAPIKey }}
           defaultCenter={defaultProps.center}
           defaultZoom={defaultProps.zoom}
+          center={defaultProps.center}
           yesIWantToUseGoogleMapApiInternals
           onGoogleApiLoaded={({ map, maps }) => {
             mapRef.current = map;
             mapsRef.current = maps;
+            console.log("Google maps loaded, centering map to:", defaultProps.center);
+            if (onMapReady) onMapReady(map, maps);
           }}
-          onClick={handleMapClick}
+          // view-only: no click-to-add handlers
         >
           {savedVillas.map((villa) => (
             <CustomMarker
@@ -279,39 +259,30 @@ const Locations: React.FC<LocationsProps> = ({
               lat={villa.lat}
               lng={villa.lng}
               color="red"
+              label={villa.text}
+              details={villa.details}
+              thumb={villa.thumb}
             />
           ))}
 
           {searchMarker && (
             <CustomMarker
+              key="search_marker"
               lat={searchMarker.lat}
               lng={searchMarker.lng}
               color="green"
-              onClick={() => {
-                setNewLocation(searchMarker);
-                setIsModalOpen(true);
-              }}
+              label={searchQuery}
+              details={`Lat: ${Number(searchMarker.lat).toFixed(6)}, Lng: ${Number(
+                searchMarker.lng
+              ).toFixed(6)}`}
+              thumb={LOCAL_THUMBNAIL}
             />
           )}
-
-          {newLocation && isModalOpen && (
-            <CustomMarker lat={newLocation.lat} lng={newLocation.lng} color="blue" />
-          )}
         </GoogleMapReact>
-
-        {isModalOpen && newLocation && (
-          <AddVillaModal
-            lat={newLocation.lat}
-            lng={newLocation.lng}
-            onClose={() => {
-              setIsModalOpen(false);
-              setNewLocation(null);
-              setSearchMarker(null);
-            }}
-            onAddVilla={handleAddVilla}
-          />
-        )}
       </div>
+
+
+
     </div>
   );
 };
