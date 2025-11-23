@@ -194,7 +194,7 @@ const SignatureCard = ({ villa }) => {
     const pluralize = (count, singular) => `${count} ${count === 1 ? singular : singular + 's'}`;
 
     // Build the details URL — prefer numeric id, fallback to slug, otherwise base page
-    const detailsPath = v.id ? `/RentsDetails/${encodeURIComponent(v.id)}` : (v.slug ? `/RentsDetails/${encodeURIComponent(v.slug)}` : `/RentsDetails`);
+    const detailsPath = v.id ? `/property/${encodeURIComponent(v.id)}` : (v.slug ? `/property/${encodeURIComponent(v.slug)}` : `/property`);
 
     return (
         <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl w-full">
