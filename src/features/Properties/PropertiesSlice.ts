@@ -118,12 +118,47 @@ function buildAnnouncementFormData(announcementData: any = {}, files: File[] = [
 }
 
 /* --------------------------------
+   Resource helpers (new)
+----------------------------------- */
+/**
+ * buildResourceFormData
+ * - Appends scalar fields, and appends files using:
+ *    - 'file' when there is exactly one file (backend often expects 'file' singular)
+ *    - 'files' when multiple files provided
+ */
+function buildResourceFormData(resourceData: any = {}, files: File[] = []) {
+  const fd = new FormData();
+
+  for (const [k, v] of Object.entries(resourceData)) {
+    if (v === undefined || v === null) continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean")
+      fd.append(k, String(v));
+    else fd.append(k, JSON.stringify(v));
+  }
+
+  if (files && files.length > 0) {
+    if (files.length === 1) {
+      // Many backends expect the single uploaded file under 'file'
+      fd.append("file", files[0]);
+    } else {
+      // multi-file case: send under 'files' (array)
+      files.forEach((f) => fd.append("files", f));
+    }
+  }
+
+  return fd;
+}
+
+/* --------------------------------
    Helper: URL builders
 ----------------------------------- */
 // Build normalized endpoints even if API_BASE may or may not already include '/api'
 const API_ROOT = API_BASE.replace(/\/api\/?$/, "");
 const ANNOUNCEMENTS_URL = `${API_ROOT}/api/announcements/announcement/`;
 const ACTIVITY_LOGS_URL = `${API_ROOT}/api/activity-log/list/`;
+
+/* NEW: resources endpoint */
+const RESOURCES_URL = `${API_ROOT}/api/resources/`;
 
 /* --------------------------------
    Properties Thunks
@@ -412,6 +447,81 @@ export const fetchActivityLogs = createAsyncThunk(
 );
 
 /* --------------------------------
+   Resources Thunks (NEW)
+   - GET  /api/resources/
+   - POST /api/resources/
+   - Accepts JSON or files (FormData)
+----------------------------------- */
+export const fetchResources = createAsyncThunk(
+  "propertyBooking/fetchResources",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await authFetch(RESOURCES_URL);
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = await res.text();
+      }
+
+      if (!res.ok) {
+        const message =
+          (data && (data.detail || data.message)) || (typeof data === "string" ? data : `HTTP ${res.status}`);
+        return rejectWithValue({ status: res.status, message });
+      }
+
+      return data;
+    } catch (err: any) {
+      return rejectWithValue({ message: String(err?.message ?? err) });
+    }
+  }
+);
+
+/**
+ * createResource
+ * - payload: { resourceData: any, files?: File[] }
+ * - if files present it uses FormData, otherwise sends JSON
+ */
+export const createResource = createAsyncThunk(
+  "propertyBooking/createResource",
+  async ({ resourceData, files }: { resourceData: any; files?: File[] }, { rejectWithValue }) => {
+    try {
+      let options: any;
+      if (files && files.length > 0) {
+        const fd = buildResourceFormData(resourceData ?? {}, files);
+        options = { method: "POST", body: fd };
+      } else {
+        options = {
+          method: "POST",
+          body: JSON.stringify(resourceData ?? {}),
+          headers: { "Content-Type": "application/json" },
+        };
+      }
+
+      const res = await authFetch(RESOURCES_URL, options);
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = await res.text();
+      }
+
+      if (!res.ok) {
+        const message =
+          (data && (data.detail || data.message)) || (typeof data === "string" ? data : `HTTP ${res.status}`);
+        return rejectWithValue({ status: res.status, message });
+      }
+
+      return data;
+    } catch (err: any) {
+      return rejectWithValue({ message: String(err?.message ?? err) });
+    }
+  }
+);
+
+/* --------------------------------
    Bookings Thunks (unchanged)
 ----------------------------------- */
 export const fetchMyBookings = createAsyncThunk(
@@ -503,6 +613,7 @@ type InitialState = {
   currentBooking: any | null;
   announcements: Announcement[];
   activityLogs: any[]; // objects from activity-log/li
+  resources: any[]; // NEW
   loading: boolean;
   error: any;
 };
@@ -516,6 +627,9 @@ const initialState: InitialState = {
 
   announcements: [],
   activityLogs: [],
+
+  // NEW
+  resources: [],
 
   loading: false,
   error: null,
@@ -588,6 +702,20 @@ const propertyBookingSlice = createSlice({
     builder.addCase(fetchActivityLogs.fulfilled, (state, action) => {
       state.loading = false;
       state.activityLogs = action.payload?.results ?? action.payload ?? [];
+    });
+
+    /* -------- Resources (NEW) -------- */
+    builder.addCase(fetchResources.fulfilled, (state, action) => {
+      state.loading = false;
+      state.resources = action.payload?.results ?? action.payload ?? [];
+    });
+
+    builder.addCase(createResource.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload) {
+        // push or unshift depending on your preference; I'll unshift to show newest first
+        state.resources.unshift(action.payload);
+      }
     });
 
     /* -------- Bookings -------- */
