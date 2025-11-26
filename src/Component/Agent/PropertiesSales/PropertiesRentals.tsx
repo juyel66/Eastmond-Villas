@@ -19,9 +19,11 @@ interface Property {
   calendar_link?: string | null;
   // raw server object (for debugging if needed)
   _raw?: any;
+  // new: listing type to ensure we only show rents
+  listing_type?: "rent" | "sale" | "other";
 }
 
-// --- DEMO PROPERTY DATA (fallback) ---
+// --- DEMO PROPERTY DATA (fallback, rent-only) ---
 const initialProperties: Property[] = [
   {
     id: 23523542342,
@@ -34,6 +36,7 @@ const initialProperties: Property[] = [
     status: "published",
     imageUrl:
       "https://images.unsplash.com/photo-1560448073-4119a5a86f5e?auto=format&fit=crop&w=400&q=80",
+    listing_type: "rent",
   },
   {
     id: 3234234234,
@@ -46,6 +49,7 @@ const initialProperties: Property[] = [
     status: "published",
     imageUrl:
       "https://images.unsplash.com/photo-1600585154512-441fea2b5c0f?auto=format&fit=crop&w=400&q=80",
+    listing_type: "rent",
   },
   {
     id: 5234234234,
@@ -58,6 +62,7 @@ const initialProperties: Property[] = [
     status: "published",
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80",
+    listing_type: "rent",
   },
 ];
 
@@ -77,7 +82,7 @@ const formatPrice = (amount: number) => {
 
 // --- PROPERTY CARD ---
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
-  const { id, title, address, price, bedrooms, bathrooms, pool, status, imageUrl } = // Destructure ID
+  const { id, title, address, price, bedrooms, bathrooms, pool, status, imageUrl } =
     property;
 
   const StatusBadge = ({ status }: { status: Property["status"] }) => {
@@ -204,9 +209,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             rowGap: "8px",
           }}
         >
-          {/* MODIFIED: Use template literal to insert the actual property ID */}
+          {/* Use template literal to insert the actual property ID */}
           <Link
-            to={`/dashboard/agent-property-rentals-details/${id}`} 
+            to={`/dashboard/agent-property-rentals-details/${id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
             <img
@@ -262,7 +267,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
-// --- MAIN COMPONENT (Unchanged) ---
+// --- MAIN COMPONENT (Rentals only) ---
 const PropertiesRentals: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -324,6 +329,7 @@ const PropertiesRentals: React.FC = () => {
             description: p.description ?? p.short_description ?? null,
             calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
             _raw: p,
+            listing_type: p.listing_type ?? "rent",
           };
         });
 
@@ -347,8 +353,9 @@ const PropertiesRentals: React.FC = () => {
     const lower = searchTerm.toLowerCase();
     return properties.filter(
       (p) =>
-        p.title.toLowerCase().includes(lower) ||
-        p.address.toLowerCase().includes(lower)
+        (p.listing_type ?? "rent") === "rent" && // ensure only rents
+        (p.title.toLowerCase().includes(lower) ||
+          p.address.toLowerCase().includes(lower))
     );
   }, [searchTerm, properties]);
 
@@ -368,7 +375,7 @@ const PropertiesRentals: React.FC = () => {
           <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search properties..."
+            placeholder="Search rental properties..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-blue-500 focus:border-blue-500 transition"
@@ -384,7 +391,7 @@ const PropertiesRentals: React.FC = () => {
         ))}
 
         {!loading && filteredProperties.length === 0 && (
-          <div className="text-center text-gray-500">No properties found.</div>
+          <div className="text-center text-gray-500">No rental properties found.</div>
         )}
       </div>
 

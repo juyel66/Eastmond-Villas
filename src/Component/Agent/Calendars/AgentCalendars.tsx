@@ -241,10 +241,13 @@ export default function Calendars({
             <p className="text-sm text-gray-500">Select month & year, then click green days to book</p>
           </div>
 
+         
+
           {/* selectors */}
           <div className="flex items-center gap-3">
             <label className="text-sm text-gray-600">Month</label>
             <select
+            
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="px-2 py-1 border rounded"

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+// src/features/Properties/PropertiesSales.tsx
+import React, { useState, useMemo, useEffect } from "react";
 import { Search, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -13,48 +14,61 @@ interface Property {
   pool: number;
   status: "published" | "draft" | "pending";
   imageUrl: string;
+  // keep optional server-backed fields so we can copy description/calendar
+  description?: string | null;
+  calendar_link?: string | null;
+  // raw server object (for debugging if needed)
+  _raw?: any;
+  listing_type?: "sale" | "rent" | "other";
 }
 
-// --- DEMO PROPERTY DATA ---
+// --- DEMO PROPERTY DATA (fallback) ---
 const initialProperties: Property[] = [
-    {
-    id: 5234234234,
-    title: "Modern Downtown Penthouse",
-    address: "10 Heritage Lane, Boston, MA",
-    price: 3100000,
+  {
+    id: 111111111,
+    title: "Seaside Luxury Villa",
+    address: "12 Ocean View Blvd, Malibu, CA",
+    price: 5200000,
     bedrooms: 6,
-    bathrooms: 5,
-    pool: 3,
-    status: "published",
-    imageUrl:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: 23523542342,
-    title: "Historic Victorian Home",
-    address: "456 Sky Tower, New York, NY",
-    price: 2800000,
-    bedrooms: 3,
-    bathrooms: 4,
-    pool: 6,
-    status: "published",
-    imageUrl:
-      "https://images.unsplash.com/photo-1560448073-4119a5a86f5e?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: 3234234234,
-    title: "Stylish City Apartment",
-    address: "200 Urban Street, Seattle, WA",
-    price: 850000,
-    bedrooms: 3,
-    bathrooms: 5,
+    bathrooms: 7,
     pool: 2,
     status: "published",
     imageUrl:
-      "https://images.unsplash.com/photo-1600585154512-441fea2b5c0f?auto=format&fit=crop&w=400&q=80",
+      "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80",
+    listing_type: "sale",
   },
-
+  {
+    id: 222222222,
+    title: "Urban Loft Penthouse",
+    address: "88 Skyline Ave, San Francisco, CA",
+    price: 3200000,
+    bedrooms: 3,
+    bathrooms: 3,
+    pool: 0,
+    status: "published",
+    imageUrl:
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=400&q=80",
+    listing_type: "sale",
+  },
+  {
+    id: 333333333,
+    title: "Country Estate with Grounds",
+    address: "450 Meadow Lane, Austin, TX",
+    price: 2150000,
+    bedrooms: 5,
+    bathrooms: 4,
+    pool: 1,
+    status: "published",
+    imageUrl:
+      "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=400&q=80",
+    listing_type: "sale",
+  },
 ];
+
+// --- API base (use env var if available) ---
+const API_BASE =
+  (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/, "") ||
+  "http://localhost:8888/api";
 
 // --- PRICE FORMATTER ---
 const formatPrice = (amount: number) => {
@@ -67,7 +81,7 @@ const formatPrice = (amount: number) => {
 
 // --- PROPERTY CARD ---
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
-  const { title, address, price, bedrooms, bathrooms, pool, status, imageUrl } =
+  const { id, title, address, price, bedrooms, bathrooms, pool, status, imageUrl } =
     property;
 
   const StatusBadge = ({ status }: { status: Property["status"] }) => {
@@ -84,14 +98,59 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     );
   };
 
-  const copyToClipboard = (text: string, action: string) => {
-    const el = document.createElement("textarea");
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand("copy");
-    document.body.removeChild(el);
-    alert(`${action} copied for ${title}`);
+  const copyToClipboard = async (text: string, action: string) => {
+    try {
+      if (!text || String(text).trim() === "") {
+        alert(`${action} is not available for ${title}`);
+        return;
+      }
+      await navigator.clipboard.writeText(String(text));
+      alert(`${action} copied for ${title}`);
+    } catch (err) {
+      // fallback using textarea
+      try {
+        const el = document.createElement("textarea");
+        el.value = String(text);
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        alert(`${action} copied for ${title}`);
+      } catch (e) {
+        alert(`Failed to copy ${action}`);
+      }
+    }
+  };
+
+  const downloadImage = async (imgUrl?: string | null) => {
+    if (!imgUrl) {
+      alert("No image available to download.");
+      return;
+    }
+    try {
+      // if relative path (starts with /), prefix API_BASE (no double slash)
+      const url =
+        String(imgUrl).startsWith("http") || String(imgUrl).startsWith("//")
+          ? String(imgUrl)
+          : `${API_BASE.replace(/\/api\/?$/, "")}${imgUrl.startsWith("/") ? imgUrl : "/" + imgUrl}`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      // build friendly filename
+      const ext = blob.type.split("/")[1] || "jpg";
+      a.download = `${title.replace(/\s+/g, "-").toLowerCase() || "image"}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download error:", err);
+      alert("Failed to download image.");
+    }
   };
 
   return (
@@ -149,8 +208,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             rowGap: "8px",
           }}
         >
+          {/* Sales details route (inserts the actual property ID) */}
           <Link
-            to="/dashboard/agent-property-sales-details"
+            to={`/dashboard/agent-property-sales-details/${id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
             <img
@@ -162,7 +222,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           </Link>
 
           <button
-            onClick={() => copyToClipboard("Description copied", "Description")}
+            onClick={() =>
+              copyToClipboard(property.description ?? `${title} - ${address}`, "Description")
+            }
             className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
             <img
@@ -175,7 +237,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
           <button
             onClick={() =>
-              copyToClipboard("Calendar link copied", "Calendar Link")
+              copyToClipboard(property.calendar_link ?? "", "Calendar Link")
             }
             className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
@@ -187,7 +249,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             Copy Calendar Link
           </button>
 
-          <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap">
+          <button
+            onClick={() => downloadImage(property.imageUrl)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
+          >
             <img
               src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_32_a4vr39.png"
               alt=""
@@ -201,18 +266,94 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
-// --- MAIN COMPONENT ---
-const PropertiesRentals: React.FC = () => {
+// --- MAIN COMPONENT (Sales) ---
+const PropertiesSales: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [properties, setProperties] = useState<Property[]>(initialProperties);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Fetch sale-only properties from your API; fallback to demo data
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const url = `${API_BASE.replace(/\/+$/, "")}/villas/properties/?listing_type=sale`;
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!res.ok) {
+          console.warn("Properties API fetch failed:", res.status);
+          setProperties(initialProperties);
+          return;
+        }
+        const data = await res.json();
+        // accept paginated or array:
+        const list = Array.isArray(data) ? data : data?.results ?? data?.items ?? [];
+        // map server objects to our Property shape with safe fallbacks
+        const mapped: Property[] = list.map((p: any) => {
+          // find image: prefer explicit main_image_url, then media_images array
+          let img = p.main_image_url ?? p.imageUrl ?? null;
+          if (!img && Array.isArray(p.media_images) && p.media_images.length > 0) {
+            img = p.media_images[0]?.image ?? null;
+          }
+          // make image absolute if starts with '/'
+          if (img && img.startsWith("/")) {
+            img = `${API_BASE.replace(/\/api\/?$/, "")}${img}`;
+          }
+
+          // parse price numeric
+          const priceVal =
+            Number(p.price ?? p.price_display ?? p.total_price ?? 0) || 0;
+
+          const address =
+            p.address ?? (p.location ? (typeof p.location === "string" ? p.location : "") : "") ?? p.city ?? "";
+
+          return {
+            id: Number(p.id ?? p.pk ?? Math.floor(Math.random() * 1e9)),
+            title: p.title ?? p.name ?? p.slug ?? "Untitled",
+            address: address || "—",
+            price: priceVal,
+            bedrooms: Number(p.bedrooms ?? p.num_bedrooms ?? 0),
+            bathrooms: Number(p.bathrooms ?? p.num_bathrooms ?? 0),
+            pool: Number(p.pool ?? 0),
+            status:
+              (String(p.status ?? p.state ?? "draft").toLowerCase() as
+                | "published"
+                | "draft"
+                | "pending") ?? "draft",
+            imageUrl: img || initialProperties[0].imageUrl,
+            description: p.description ?? p.short_description ?? null,
+            calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
+            _raw: p,
+            listing_type: p.listing_type ?? "sale",
+          };
+        });
+
+        if (!cancelled) setProperties(mapped.length ? mapped : initialProperties);
+      } catch (err) {
+        console.error("Failed to load properties", err);
+        if (!cancelled) setProperties(initialProperties);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredProperties = useMemo(() => {
     const lower = searchTerm.toLowerCase();
-    return initialProperties.filter(
+    return properties.filter(
       (p) =>
-        p.title.toLowerCase().includes(lower) ||
-        p.address.toLowerCase().includes(lower)
+        (p.listing_type ?? "sale") === "sale" && // ensure only sales
+        (p.title.toLowerCase().includes(lower) ||
+          p.address.toLowerCase().includes(lower))
     );
-  }, [searchTerm]);
+  }, [searchTerm, properties]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -222,7 +363,7 @@ const PropertiesRentals: React.FC = () => {
             Properties - Sales
           </h1>
           <p className="text-gray-600 text-sm">
-            Access your assigned rental properties and marketing materials.
+            Access your assigned sales properties and marketing materials.
           </p>
         </header>
 
@@ -230,19 +371,27 @@ const PropertiesRentals: React.FC = () => {
           <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search properties..."
+            placeholder="Search sales properties..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-blue-500 focus:border-blue-500 transition"
           />
         </div>
 
+        {loading && (
+          <div className="text-center text-gray-500 mb-6">Loading properties…</div>
+        )}
+
         {filteredProperties.map((property) => (
           <PropertyCard key={property.id} property={property} />
         ))}
+
+        {!loading && filteredProperties.length === 0 && (
+          <div className="text-center text-gray-500">No sales properties found.</div>
+        )}
       </div>
 
-      {/* Extra responsive tuning for mid-size devices */}
+      {/* Extra responsive tuning for mid-size devices (Unchanged) */}
       <style>
         {`
           @media (min-width: 1200px) and (max-width: 1450px) {
@@ -265,4 +414,4 @@ const PropertiesRentals: React.FC = () => {
   );
 };
 
-export default PropertiesRentals;
+export default PropertiesSales;

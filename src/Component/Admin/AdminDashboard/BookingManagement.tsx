@@ -43,7 +43,6 @@ function capitalize(s?: string) {
 
 /**
  * Return tailwind classes to style the <select> element based on status.
- * The class includes background and text colors, plus border to keep consistent sizing.
  */
 function getSelectStatusClass(status?: string) {
   switch (status) {
@@ -127,7 +126,7 @@ export default function BookingManagement(): JSX.Element {
     const phone = String(b.phone ?? "").toLowerCase();
     const checkIn = String(b.check_in ?? "").toLowerCase();
     const checkOut = String(b.check_out ?? "").toLowerCase();
-    const prop = String(b.property_details?.title ?? "").toLowerCase();
+    const prop = String(b.property_details?.title ?? b.property_details?.id ?? "").toLowerCase();
 
     return (
       idStr.includes(q) ||
@@ -239,7 +238,7 @@ export default function BookingManagement(): JSX.Element {
         Authorization: `Bearer ${token}`,
       };
 
-      // FIXED: use BOOKINGS_ENDPOINT (already normalized) to avoid double /api
+      // use BOOKINGS_ENDPOINT (already normalized)
       const patchUrl = `${BOOKINGS_ENDPOINT}${id}/`;
 
       const res = await fetch(patchUrl, {
@@ -291,7 +290,7 @@ export default function BookingManagement(): JSX.Element {
       console.error("Status update error:", err);
       await Swal.fire({
         title: "Error",
-        text: "This date already  booking approved",
+        text: "This date already booking approved",
         icon: "error",
       });
     } finally {
@@ -337,6 +336,7 @@ export default function BookingManagement(): JSX.Element {
                 <th className="px-6 py-3">Name</th>
                 <th className="px-6 py-3">Email</th>
                 <th className="px-6 py-3">Phone</th>
+                <th className="px-6 py-3">Property</th> {/* NEW: Property column */}
                 <th className="px-6 py-3">Check In</th>
                 <th className="px-6 py-3">Check Out</th>
                 <th className="px-6 py-3">Status</th>
@@ -347,7 +347,7 @@ export default function BookingManagement(): JSX.Element {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                  <td colSpan={9} className="px-6 py-6 text-center text-gray-500">
                     Loading bookings...
                   </td>
                 </tr>
@@ -360,6 +360,12 @@ export default function BookingManagement(): JSX.Element {
                     <td className="px-6 py-4">{b.full_name ?? b.user_details?.name}</td>
                     <td className="px-6 py-4 text-gray-600">{b.email ?? b.user_details?.email}</td>
                     <td className="px-6 py-4">{b.phone}</td>
+
+                    {/* NEW: display property title or fallback to id or em-dash */}
+                    <td className="px-6 py-4">
+                      {b.property_details?.title ?? (b.property_details?.id ? `#${b.property_details.id}` : "—")}
+                    </td>
+
                     <td className="px-6 py-4">{b.check_in}</td>
                     <td className="px-6 py-4">{b.check_out}</td>
 
@@ -399,7 +405,7 @@ export default function BookingManagement(): JSX.Element {
 
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                  <td colSpan={9} className="px-6 py-6 text-center text-gray-500">
                     No bookings found.
                   </td>
                 </tr>
@@ -437,7 +443,7 @@ export default function BookingManagement(): JSX.Element {
 
                   <div>
                     <div className="text-xs text-gray-500">Property</div>
-                    <div>{b.property_details?.title ?? "—"}</div>
+                    <div>{b.property_details?.title ?? (b.property_details?.id ? `#${b.property_details.id}` : "—")}</div>
                   </div>
 
                   <div className="col-span-2 mt-3">

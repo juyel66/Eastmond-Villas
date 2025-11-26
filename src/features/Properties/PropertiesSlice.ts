@@ -80,6 +80,52 @@ function buildPropertyFormData(propertyData: any = {}, mediaFiles: File[] = []) 
 }
 
 /* --------------------------------
+   Announcements helpers & types
+----------------------------------- */
+interface AnnouncementFile {
+  id: number;
+  file: string;
+  created_at: string;
+}
+interface Announcement {
+  id: number;
+  title: string;
+  date: string;
+  priority: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  files: AnnouncementFile[];
+}
+
+/**
+ * buildAnnouncementFormData
+ * - Accepts announcementData (plain object) and files array (File[])
+ * - Appends fields and files as `files`
+ */
+function buildAnnouncementFormData(announcementData: any = {}, files: File[] = []) {
+  const fd = new FormData();
+
+  for (const [k, v] of Object.entries(announcementData)) {
+    if (v === undefined || v === null) continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean")
+      fd.append(k, String(v));
+    else fd.append(k, JSON.stringify(v));
+  }
+
+  files.forEach((f) => fd.append("files", f));
+  return fd;
+}
+
+/* --------------------------------
+   Helper: URL builders
+----------------------------------- */
+// Build normalized endpoints even if API_BASE may or may not already include '/api'
+const API_ROOT = API_BASE.replace(/\/api\/?$/, "");
+const ANNOUNCEMENTS_URL = `${API_ROOT}/api/announcements/announcement/`;
+const ACTIVITY_LOGS_URL = `${API_ROOT}/api/activity-log/list/`;
+
+/* --------------------------------
    Properties Thunks
 ----------------------------------- */
 export const fetchProperties = createAsyncThunk(
@@ -137,9 +183,6 @@ export const createProperty = createAsyncThunk(
 
 /**
  * updateProperty
- * - payload: { propertyId, updates, mediaFiles?, useJson? }
- * - default: use FormData (many backends expect multipart for PATCH)
- * - if useJson === true, send JSON (Content-Type: application/json)
  */
 export const updateProperty = createAsyncThunk(
   "propertyBooking/updateProperty",
@@ -193,9 +236,6 @@ export const updateProperty = createAsyncThunk(
 
 /**
  * updateMultipleProperties
- * - payload: Array<{ propertyId, updates, mediaFiles?, useJson? }>
- * - Performs sequential PATCH requests and returns array of results.
- * - If any item fails, we collect the error object in the results array (so caller can inspect per-item)
  */
 export const updateMultipleProperties = createAsyncThunk(
   "propertyBooking/updateMultipleProperties",
@@ -206,7 +246,6 @@ export const updateMultipleProperties = createAsyncThunk(
     try {
       const results: any[] = [];
 
-      // perform sequentially to avoid overloading backend and make consistent behaviour
       for (const it of items) {
         try {
           const { propertyId, updates, mediaFiles, useJson } = it;
@@ -232,7 +271,6 @@ export const updateMultipleProperties = createAsyncThunk(
           }
 
           if (!res.ok) {
-            // push an error object for that item (don't abort all)
             results.push({ propertyId, ok: false, error: data ?? { detail: `HTTP ${res.status}` } });
           } else {
             results.push({ propertyId, ok: true, payload: data });
@@ -264,6 +302,111 @@ export const deleteProperty = createAsyncThunk(
       throw data;
     } catch (err) {
       return rejectWithValue(err);
+    }
+  }
+);
+
+/* --------------------------------
+   Announcements Thunks (robust & fixed URL)
+----------------------------------- */
+export const fetchAnnouncements = createAsyncThunk(
+  "propertyBooking/fetchAnnouncements",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await authFetch(ANNOUNCEMENTS_URL);
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = await res.text();
+      }
+
+      if (!res.ok) {
+        const message =
+          (data && (data.detail || data.message)) || (typeof data === "string" ? data : `HTTP ${res.status}`);
+        return rejectWithValue({ status: res.status, message });
+      }
+
+      return data;
+    } catch (err: any) {
+      return rejectWithValue({ message: String(err?.message ?? err) });
+    }
+  }
+);
+
+export const createAnnouncement = createAsyncThunk(
+  "propertyBooking/createAnnouncement",
+  async ({ announcementData, files }: { announcementData: any; files?: File[] }, { rejectWithValue }) => {
+    try {
+      let options: any;
+
+      if (files && files.length > 0) {
+        const fd = buildAnnouncementFormData(announcementData ?? {}, files);
+        options = { method: "POST", body: fd };
+      } else {
+        options = {
+          method: "POST",
+          body: JSON.stringify({
+            title: announcementData.title,
+            date: announcementData.date,
+            priority: announcementData.priority,
+            description: announcementData.description ?? announcementData.details,
+          }),
+          headers: { "Content-Type": "application/json" },
+        };
+      }
+
+      const res = await authFetch(ANNOUNCEMENTS_URL, options);
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = await res.text();
+      }
+
+      if (!res.ok) {
+        const message =
+          (data && (data.detail || data.message)) || (typeof data === "string" ? data : `HTTP ${res.status}`);
+        return rejectWithValue({ status: res.status, message });
+      }
+
+      return data as Announcement;
+    } catch (err: any) {
+      return rejectWithValue({ message: String(err?.message ?? err) });
+    }
+  }
+);
+
+/* --------------------------------
+   Activity Logs Thunk (new)
+   - GET list of activity logs from ACTIVITY_LOGS_URL
+   - returns either array or { results: [...] }
+----------------------------------- */
+export const fetchActivityLogs = createAsyncThunk(
+  "propertyBooking/fetchActivityLogs",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await authFetch(ACTIVITY_LOGS_URL);
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = await res.text();
+      }
+
+      if (!res.ok) {
+        const message =
+          (data && (data.detail || data.message)) || (typeof data === "string" ? data : `HTTP ${res.status}`);
+        return rejectWithValue({ status: res.status, message });
+      }
+
+      // Expect either plain array or { results: [...] } pagination
+      return data;
+    } catch (err: any) {
+      return rejectWithValue({ message: String(err?.message ?? err) });
     }
   }
 );
@@ -352,26 +495,41 @@ export const deleteBooking = createAsyncThunk(
 /* --------------------------------
    Combined Slice
 ----------------------------------- */
+
+type InitialState = {
+  properties: any[];
+  currentProperty: any | null;
+  bookings: any[];
+  currentBooking: any | null;
+  announcements: Announcement[];
+  activityLogs: any[]; // objects from activity-log/li
+  loading: boolean;
+  error: any;
+};
+
+const initialState: InitialState = {
+  properties: [],
+  currentProperty: null,
+
+  bookings: [],
+  currentBooking: null,
+
+  announcements: [],
+  activityLogs: [],
+
+  loading: false,
+  error: null,
+};
+
 const propertyBookingSlice = createSlice({
   name: "propertyBooking",
-  initialState: {
-    properties: [] as any[],
-    currentProperty: null as any | null,
-
-    bookings: [] as any[],
-    currentBooking: null as any | null,
-
-    loading: false,
-    error: null as any,
-  },
-
+  initialState,
   reducers: {},
 
   extraReducers: (builder) => {
     /* -------- Properties -------- */
     builder.addCase(fetchProperties.fulfilled, (state, action) => {
       state.loading = false;
-      // normalize paginated or plain responses
       state.properties = action.payload?.results ?? action.payload ?? [];
     });
 
@@ -396,7 +554,6 @@ const propertyBookingSlice = createSlice({
       state.currentProperty = updated;
     });
 
-    // handle the result of updateMultipleProperties (array of results)
     builder.addCase(updateMultipleProperties.fulfilled, (state, action) => {
       state.loading = false;
       const results = action.payload ?? [];
@@ -412,6 +569,25 @@ const propertyBookingSlice = createSlice({
       state.loading = false;
       const id = action.payload;
       state.properties = state.properties.filter((p: any) => p.id !== id);
+    });
+
+    /* -------- Announcements -------- */
+    builder.addCase(fetchAnnouncements.fulfilled, (state, action) => {
+      state.loading = false;
+      state.announcements = action.payload?.results ?? action.payload ?? [];
+    });
+
+    builder.addCase(createAnnouncement.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload) {
+        state.announcements.unshift(action.payload as Announcement);
+      }
+    });
+
+    /* -------- Activity Logs -------- */
+    builder.addCase(fetchActivityLogs.fulfilled, (state, action) => {
+      state.loading = false;
+      state.activityLogs = action.payload?.results ?? action.payload ?? [];
     });
 
     /* -------- Bookings -------- */
@@ -448,11 +624,19 @@ const propertyBookingSlice = createSlice({
       }
     );
 
+    // ensure we store only serializable error values
     builder.addMatcher(
       (action) => action.type.startsWith("propertyBooking") && action.type.endsWith("rejected"),
       (state, action) => {
         state.loading = false;
-        state.error = action.payload || action.error;
+        const payload = action.payload;
+        if (payload) {
+          state.error = payload;
+        } else if (action.error && action.error.message) {
+          state.error = action.error.message;
+        } else {
+          state.error = String(action.error ?? "Unknown error");
+        }
       }
     );
   },
