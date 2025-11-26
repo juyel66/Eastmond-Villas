@@ -313,8 +313,7 @@
 
 
 
-
-File: ActivityLogsExactPDF_NoBorders.jsx
+// File: ActivityLogsExactPDF_NoBorders.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import { jsPDF } from "jspdf";
@@ -346,10 +345,11 @@ async function urlToDataUrl(url) {
 }
 
 function typeBadgeColor(type) {
-  switch (type) {
+  switch (String(type ?? "").toLowerCase()) {
     case "download":
       return { bg: "#5b21b6", txt: "#ffffff" };
     case "edit":
+    case "update":
       return { bg: "#6b7280", txt: "#ffffff" };
     case "upload":
       return { bg: "#0f172a", txt: "#ffffff" };
@@ -371,15 +371,30 @@ function typeBadgeColor(type) {
 function mapActivityItemToRow(item) {
   if (!item) return null;
 
-  // coerce timestamp to string to avoid runtime errors in .toLowerCase()
-  const timestampRaw = item.created_at ?? item.changes?.created_at ?? "-";
+  // timestamp: many possible keys
+  const timestampRaw =
+    item.created_at ??
+    item.timestamp ??
+    item.time ??
+    item.date ??
+    (item.changes && (item.changes.created_at ?? item.changes.timestamp)) ??
+    "-";
   const timestamp = String(timestampRaw ?? "-");
 
+  // user: many possible places (changes.user, user, user_name, created_by, object_repr)
   let user = "-";
   try {
     if (item.changes && item.changes.user) {
       const u = item.changes.user;
-      if (Array.isArray(u)) user = `User ${u[1]}`; else user = String(u);
+      user = Array.isArray(u) ? String(u[1] ?? u[0]) : String(u);
+    } else if (item.user) {
+      user = String(item.user);
+    } else if (item.user_name) {
+      user = String(item.user_name);
+    } else if (item.created_by) {
+      user = String(item.created_by);
+    } else if (item.created_by_name) {
+      user = String(item.created_by_name);
     } else if (item.object_repr) {
       const repr = String(item.object_repr);
       const emailMatch = repr.match(/[\w.+-]+@[\w-]+\.[\w-.]+/);
@@ -391,33 +406,35 @@ function mapActivityItemToRow(item) {
   }
   user = String(user ?? "-");
 
-  let action = item.object_repr ?? (typeof item.action !== "undefined" ? `Action ${item.action}` : "-");
+  // action: prefer explicit action fields, fallback to type/object_repr
+  let action = item.action ?? item.action_text ?? item.type ?? item.object_repr ?? (typeof item.action !== "undefined" ? `Action ${item.action}` : "-");
   action = String(action ?? "-");
 
+  // determine type: numeric action map OR check strings
   let type = "info";
   if (typeof item.action === "number") {
     switch (item.action) {
-      case 0:
-        type = "create";
-        break;
-      case 1:
-        type = "update";
-        break;
-      case 2:
-        type = "delete";
-        break;
-      default:
-        type = "info";
+      case 0: type = "create"; break;
+      case 1: type = "update"; break;
+      case 2: type = "delete"; break;
+      default: type = "info";
     }
+  } else if (item.type && typeof item.type === "string") {
+    type = String(item.type).toLowerCase();
   } else {
-    if (String(action).toLowerCase().includes("delete")) type = "delete";
-    else if (String(action).toLowerCase().includes("edit") || String(action).toLowerCase().includes("updated")) type = "edit";
-    else if (String(action).toLowerCase().includes("download")) type = "download";
+    const low = String(action).toLowerCase();
+    if (low.includes("delete")) type = "delete";
+    else if (low.includes("edit") || low.includes("updated")) type = "edit";
+    else if (low.includes("download")) type = "download";
+    else if (low.includes("upload")) type = "upload";
     else type = "info";
   }
 
+  // details: many fallbacks, also tolerate misspelling "detials"
   let details = "";
-  if (item.changes_text) details = item.changes_text;
+  if (item.details) details = item.details;
+  else if (item.detials) details = item.detials; // handle misspelling
+  else if (item.changes_text) details = item.changes_text;
   else if (item.changes && item.changes.data) {
     try {
       const dataVal = item.changes.data[1] ?? item.changes.data;
@@ -444,7 +461,7 @@ function mapActivityItemToRow(item) {
       details = String(item.serialized_data);
     }
   } else {
-    details = item.object_repr ?? item.changes_text ?? "";
+    details = item.object_repr ?? item.action_text ?? "";
   }
   details = String(details ?? "");
 
