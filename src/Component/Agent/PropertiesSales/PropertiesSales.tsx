@@ -3,6 +3,16 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Search, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 
+/**
+ * PropertiesSales.tsx
+ * - Same UI/design as your Rentals page
+ * - Fetches sale properties from: http://10.10.13.60:8000/villas/properties/?listing_type=sale
+ * - Shows only assigned properties:
+ *     - If agentId prop is provided -> shows properties where assigned_agent === agentId
+ *     - If agentId prop is not provided -> shows properties where assigned_agent is present (any agent)
+ * - Adds small Agent # badge to the card (if assigned_agent available)
+ */
+
 // --- TYPE DEFINITIONS ---
 interface Property {
   id: number;
@@ -14,12 +24,11 @@ interface Property {
   pool: number;
   status: "published" | "draft" | "pending";
   imageUrl: string;
-  // keep optional server-backed fields so we can copy description/calendar
   description?: string | null;
   calendar_link?: string | null;
-  // raw server object (for debugging if needed)
   _raw?: any;
   listing_type?: "sale" | "rent" | "other";
+  assigned_agent?: number | null;
 }
 
 // --- DEMO PROPERTY DATA (fallback) ---
@@ -36,6 +45,7 @@ const initialProperties: Property[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=400&q=80",
     listing_type: "sale",
+    assigned_agent: null,
   },
   {
     id: 222222222,
@@ -49,26 +59,14 @@ const initialProperties: Property[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=400&q=80",
     listing_type: "sale",
-  },
-  {
-    id: 333333333,
-    title: "Country Estate with Grounds",
-    address: "450 Meadow Lane, Austin, TX",
-    price: 2150000,
-    bedrooms: 5,
-    bathrooms: 4,
-    pool: 1,
-    status: "published",
-    imageUrl:
-      "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=400&q=80",
-    listing_type: "sale",
+    assigned_agent: 87,
   },
 ];
 
-// --- API base (use env var if available) ---
+// --- API base (defaults to your server) ---
 const API_BASE =
   (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/, "") ||
-  "http://localhost:8888/api";
+  "http://10.10.13.60:8000";
 
 // --- PRICE FORMATTER ---
 const formatPrice = (amount: number) => {
@@ -79,9 +77,9 @@ const formatPrice = (amount: number) => {
   }).format(amount);
 };
 
-// --- PROPERTY CARD ---
+// --- PROPERTY CARD (same look as Rentals card) ---
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
-  const { id, title, address, price, bedrooms, bathrooms, pool, status, imageUrl } =
+  const { id, title, address, price, bedrooms, bathrooms, pool, status, imageUrl, assigned_agent } =
     property;
 
   const StatusBadge = ({ status }: { status: Property["status"] }) => {
@@ -107,7 +105,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       await navigator.clipboard.writeText(String(text));
       alert(`${action} copied for ${title}`);
     } catch (err) {
-      // fallback using textarea
       try {
         const el = document.createElement("textarea");
         el.value = String(text);
@@ -116,7 +113,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         document.execCommand("copy");
         document.body.removeChild(el);
         alert(`${action} copied for ${title}`);
-      } catch (e) {
+      } catch {
         alert(`Failed to copy ${action}`);
       }
     }
@@ -128,7 +125,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       return;
     }
     try {
-      // if relative path (starts with /), prefix API_BASE (no double slash)
       const url =
         String(imgUrl).startsWith("http") || String(imgUrl).startsWith("//")
           ? String(imgUrl)
@@ -140,7 +136,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      // build friendly filename
       const ext = blob.type.split("/")[1] || "jpg";
       a.download = `${title.replace(/\s+/g, "-").toLowerCase() || "image"}.${ext}`;
       document.body.appendChild(a);
@@ -173,7 +168,14 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         <div>
           <div className="flex justify-between items-start mb-2">
             <h2 className="text-lg font-bold text-gray-900 truncate">{title}</h2>
-            <StatusBadge status={status} />
+            <div className="flex items-center gap-2">
+              <StatusBadge status={status} />
+              {typeof assigned_agent !== "undefined" && assigned_agent !== null && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 whitespace-nowrap">
+                  Agent #{assigned_agent}
+                </span>
+              )}
+            </div>
           </div>
 
           <p className="text-sm text-gray-500 flex items-center mb-3">
@@ -208,7 +210,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             rowGap: "8px",
           }}
         >
-          {/* Sales details route (inserts the actual property ID) */}
           <Link
             to={`/dashboard/agent-property-sales-details/${id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
@@ -267,13 +268,36 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 };
 
 // --- MAIN COMPONENT (Sales) ---
-const PropertiesSales: React.FC = () => {
+// Props: optional agentId — if provided show only properties assigned to that agent.
+// If not provided, show only properties assigned to any agent.
+type Props = {
+  agentId?: number | null;
+};
+
+const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Resolve agentId (prop first, then localStorage if available)
+  const resolvedAgentId = useMemo(() => {
+    if (typeof propAgentId === "number" && !isNaN(propAgentId)) return propAgentId;
+    try {
+      const fromLS =
+        localStorage.getItem("agent_id") ??
+        localStorage.getItem("assigned_agent") ??
+        localStorage.getItem("agentId");
+      if (fromLS) {
+        const n = Number(fromLS);
+        if (!isNaN(n)) return n;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }, [propAgentId]);
+
   useEffect(() => {
-    // Fetch sale-only properties from your API; fallback to demo data
     let cancelled = false;
 
     const load = async () => {
@@ -283,31 +307,23 @@ const PropertiesSales: React.FC = () => {
         const res = await fetch(url, { headers: { Accept: "application/json" } });
         if (!res.ok) {
           console.warn("Properties API fetch failed:", res.status);
-          setProperties(initialProperties);
+          if (!cancelled) setProperties(initialProperties);
           return;
         }
         const data = await res.json();
-        // accept paginated or array:
         const list = Array.isArray(data) ? data : data?.results ?? data?.items ?? [];
-        // map server objects to our Property shape with safe fallbacks
         const mapped: Property[] = list.map((p: any) => {
-          // find image: prefer explicit main_image_url, then media_images array
           let img = p.main_image_url ?? p.imageUrl ?? null;
           if (!img && Array.isArray(p.media_images) && p.media_images.length > 0) {
             img = p.media_images[0]?.image ?? null;
           }
-          // make image absolute if starts with '/'
           if (img && img.startsWith("/")) {
             img = `${API_BASE.replace(/\/api\/?$/, "")}${img}`;
           }
-
-          // parse price numeric
           const priceVal =
             Number(p.price ?? p.price_display ?? p.total_price ?? 0) || 0;
-
           const address =
             p.address ?? (p.location ? (typeof p.location === "string" ? p.location : "") : "") ?? p.city ?? "";
-
           return {
             id: Number(p.id ?? p.pk ?? Math.floor(Math.random() * 1e9)),
             title: p.title ?? p.name ?? p.slug ?? "Untitled",
@@ -326,6 +342,7 @@ const PropertiesSales: React.FC = () => {
             calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
             _raw: p,
             listing_type: p.listing_type ?? "sale",
+            assigned_agent: p.assigned_agent ?? null,
           };
         });
 
@@ -345,26 +362,43 @@ const PropertiesSales: React.FC = () => {
     };
   }, []);
 
+  // Filter logic: only 'sale' listing_type, plus assigned_agent logic:
   const filteredProperties = useMemo(() => {
     const lower = searchTerm.toLowerCase();
-    return properties.filter(
-      (p) =>
-        (p.listing_type ?? "sale") === "sale" && // ensure only sales
-        (p.title.toLowerCase().includes(lower) ||
-          p.address.toLowerCase().includes(lower))
-    );
-  }, [searchTerm, properties]);
+    return properties.filter((p) => {
+      if ((p.listing_type ?? "sale") !== "sale") return false;
+
+      if (resolvedAgentId !== null) {
+        // show only properties assigned to this specific agent
+        if (Number(p.assigned_agent ?? -1) !== Number(resolvedAgentId)) return false;
+      } else {
+        // show only properties that are assigned to any agent
+        if (p.assigned_agent === null || typeof p.assigned_agent === "undefined") return false;
+      }
+
+      if (!lower) return true;
+      return p.title.toLowerCase().includes(lower) || p.address.toLowerCase().includes(lower);
+    });
+  }, [searchTerm, properties, resolvedAgentId]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto">
-        <header className="mb-8">
+        <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Properties - Sales
           </h1>
           <p className="text-gray-600 text-sm">
-            Access your assigned sales properties and marketing materials.
+            Access assigned sales properties and marketing materials.
           </p>
+
+          <div className="mt-3 text-sm text-gray-500">
+            {resolvedAgentId !== null ? (
+              <>Showing sales assigned to agent <strong>{resolvedAgentId}</strong>.</>
+            ) : (
+              <>Showing sales assigned to any agent.</>
+            )}
+          </div>
         </header>
 
         <div className="relative mb-8">
@@ -387,11 +421,15 @@ const PropertiesSales: React.FC = () => {
         ))}
 
         {!loading && filteredProperties.length === 0 && (
-          <div className="text-center text-gray-500">No sales properties found.</div>
+          <div className="text-center text-gray-500">
+            {resolvedAgentId !== null
+              ? "No sales properties found assigned to this agent."
+              : "No sales properties found that are assigned to any agent."}
+          </div>
         )}
       </div>
 
-      {/* Extra responsive tuning for mid-size devices (Unchanged) */}
+      {/* Responsive tweaks; keep design unchanged */}
       <style>
         {`
           @media (min-width: 1200px) and (max-width: 1450px) {

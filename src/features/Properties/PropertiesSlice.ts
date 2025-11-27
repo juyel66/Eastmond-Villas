@@ -603,6 +603,39 @@ export const deleteBooking = createAsyncThunk(
 );
 
 /* --------------------------------
+   NEW: Monthly Agent Bookings Thunk
+   - GET /villas/agent/bookings/monthly/?month=<1-12>&year=<yyyy>
+   - returns parsed object: { "<propertyId>-<year>-<month>": [1,2,3], ... } as payload
+----------------------------------- */
+export const fetchMonthlyAgentBookings = createAsyncThunk(
+  "propertyBooking/fetchMonthlyAgentBookings",
+  async (
+    { month, year, agent }: { month: number; year: number; agent?: number | string },
+    { rejectWithValue }
+  ) => {
+    try {
+      let url = `${API_BASE.replace(/\/$/, "")}/villas/agent/bookings/monthly/?month=${month}&year=${year}`;
+      if (agent !== undefined && agent !== null) {
+        // append agent query param if provided
+        url += `&agent=${encodeURIComponent(String(agent))}`;
+      }
+
+      const resp = await authFetch(url);
+      const data = await resp.json().catch(() => null);
+
+      if (!resp.ok) {
+        return rejectWithValue({ status: resp.status, data });
+      }
+
+      // Return both raw + parsed to reducer
+      return { raw: data ?? null, month, year };
+    } catch (err: any) {
+      return rejectWithValue({ message: String(err?.message ?? err) });
+    }
+  }
+);
+
+/* --------------------------------
    Combined Slice
 ----------------------------------- */
 
@@ -616,6 +649,10 @@ type InitialState = {
   resources: any[]; // NEW
   loading: boolean;
   error: any;
+
+  // NEW monthly bookings storage (serializable)
+  monthlyBookings: { [key: string]: number[] }; // key => array of days
+  monthlyRaw: any | null;
 };
 
 const initialState: InitialState = {
@@ -633,6 +670,10 @@ const initialState: InitialState = {
 
   loading: false,
   error: null,
+
+  // monthly bookings
+  monthlyBookings: {},
+  monthlyRaw: null,
 };
 
 const propertyBookingSlice = createSlice({
@@ -743,6 +784,85 @@ const propertyBookingSlice = createSlice({
       state.bookings = state.bookings.filter((b: any) => b.id !== id);
     });
 
+    /* -------- Monthly Agent Bookings (NEW) -------- */
+    builder.addCase(fetchMonthlyAgentBookings.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+
+    builder.addCase(fetchMonthlyAgentBookings.fulfilled, (state, action) => {
+      state.loading = false;
+      state.error = null;
+      const payload = action.payload as { raw: any; month: number; year: number } | any;
+      if (!payload) {
+        state.monthlyRaw = null;
+        state.monthlyBookings = {};
+        return;
+      }
+
+      state.monthlyRaw = payload.raw ?? payload;
+
+      // parse into serializable map: { "<propertyId>-<year>-<month>": [day, ...] }
+      const parsedMap: { [key: string]: number[] } = {};
+      const d = payload.raw ?? payload;
+
+      // robust extraction of data array
+      const dataArray: any[] = Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [];
+
+      for (const item of dataArray) {
+        // attempt to find property id
+        const idCandidates = [
+          item.property, item.propertyId, item.property_id,
+          item.id, item.pk, item.villa, item.villa_id, item.villaId
+        ];
+        let pid: number | null = null;
+        for (const c of idCandidates) {
+          if (c !== undefined && c !== null && !Number.isNaN(Number(c))) {
+            pid = Number(c);
+            break;
+          }
+        }
+
+        // collect days in various possible shapes
+        let days: number[] = [];
+        if (Array.isArray(item.bookedDays)) days = item.bookedDays as number[];
+        else if (Array.isArray(item.booked_days)) days = item.booked_days as number[];
+        else if (Array.isArray(item.days)) days = item.days as number[];
+        else if (Array.isArray(item.bookings)) {
+          days = item.bookings
+            .map((b: any) => {
+              if (typeof b === "number") return b;
+              if (b?.day) return Number(b.day);
+              if (b?.date) {
+                try { return new Date(b.date).getDate(); } catch { return null; }
+              }
+              return null;
+            })
+            .filter(Boolean);
+        } else if (Array.isArray(item.booked)) days = item.booked as number[];
+
+        // If days are in nested objects
+        if (!days.length && item.bookings && Array.isArray(item.bookings)) {
+          days = item.bookings.map((b: any) => (b?.day ? Number(b.day) : (b?.date ? new Date(b.date).getDate() : null))).filter(Boolean);
+        }
+
+        if (pid != null) {
+          const year = payload.year ?? (d?.year ?? null);
+          const month = payload.month ?? (d?.month ?? null);
+          const key = `${pid}-${year ?? "unknownYear"}-${month ?? "unknownMonth"}`;
+          parsedMap[key] = Array.from(new Set((days || []).map((v) => Number(v)).filter(Boolean)));
+        }
+      }
+
+      state.monthlyBookings = parsedMap;
+    });
+
+    builder.addCase(fetchMonthlyAgentBookings.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload ?? action.error ?? { message: "Failed to fetch monthly bookings" };
+      // keep monthlyBookings as-is on failure (or you can clear it)
+    });
+
     /* -------- Global Pending & Error -------- */
     builder.addMatcher(
       (action) => action.type.startsWith("propertyBooking") && action.type.endsWith("pending"),
@@ -771,3 +891,11 @@ const propertyBookingSlice = createSlice({
 });
 
 export const propertiesAndBookingReducer = propertyBookingSlice.reducer;
+
+/* ------------- Selectors (you can import these) ------------- */
+export const selectAllProperties = (state: any) => state.propertyBooking.properties;
+export const selectMonthlyBookings = (state: any) => state.propertyBooking.monthlyBookings;
+export const selectMonthlyRaw = (state: any) => state.propertyBooking.monthlyRaw;
+export const selectPropertyById = (state: any, id: number) => state.propertyBooking.properties.find((p: any) => p.id === id);
+
+export default propertyBookingSlice.reducer;

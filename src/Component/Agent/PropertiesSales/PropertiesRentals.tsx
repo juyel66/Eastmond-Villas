@@ -14,13 +14,11 @@ interface Property {
   pool: number;
   status: "published" | "draft" | "pending";
   imageUrl: string;
-  // keep optional server-backed fields so we can copy description/calendar
   description?: string | null;
   calendar_link?: string | null;
-  // raw server object (for debugging if needed)
   _raw?: any;
-  // new: listing type to ensure we only show rents
   listing_type?: "rent" | "sale" | "other";
+  assigned_agent?: number | null;
 }
 
 // --- DEMO PROPERTY DATA (fallback, rent-only) ---
@@ -37,6 +35,7 @@ const initialProperties: Property[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1560448073-4119a5a86f5e?auto=format&fit=crop&w=400&q=80",
     listing_type: "rent",
+    assigned_agent: 87,
   },
   {
     id: 3234234234,
@@ -50,6 +49,7 @@ const initialProperties: Property[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1600585154512-441fea2b5c0f?auto=format&fit=crop&w=400&q=80",
     listing_type: "rent",
+    assigned_agent: null,
   },
   {
     id: 5234234234,
@@ -63,6 +63,7 @@ const initialProperties: Property[] = [
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80",
     listing_type: "rent",
+    assigned_agent: 99,
   },
 ];
 
@@ -209,7 +210,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             rowGap: "8px",
           }}
         >
-          {/* Use template literal to insert the actual property ID */}
           <Link
             to={`/dashboard/agent-property-rentals-details/${id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
@@ -268,10 +268,34 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 };
 
 // --- MAIN COMPONENT (Rentals only) ---
-const PropertiesRentals: React.FC = () => {
+// Now accepts optional prop `agentId` to filter by assigned_agent
+type Props = {
+  agentId?: number | null;
+};
+
+const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Resolve current agent id:
+  // Priority: propAgentId -> localStorage.agent_id or localStorage.assigned_agent -> null
+  const resolvedAgentId = useMemo(() => {
+    if (typeof propAgentId === "number" && !isNaN(propAgentId)) return propAgentId;
+    try {
+      const fromLS =
+        localStorage.getItem("agent_id") ??
+        localStorage.getItem("assigned_agent") ??
+        localStorage.getItem("agentId");
+      if (fromLS) {
+        const n = Number(fromLS);
+        if (!isNaN(n)) return n;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  }, [propAgentId]);
 
   useEffect(() => {
     // Fetch rent-only properties from your API; fallback to demo data
@@ -307,8 +331,7 @@ const PropertiesRentals: React.FC = () => {
             Number(p.price ?? p.price_display ?? p.total_price ?? 0) || 0;
 
           const address =
-            p.address ??
-            (p.location ? (typeof p.location === "string" ? p.location : "") : "") ??
+            p.address ?? (p.location ? (typeof p.location === "string" ? p.location : "") : "") ??
             p.city ??
             "";
 
@@ -330,6 +353,7 @@ const PropertiesRentals: React.FC = () => {
             calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
             _raw: p,
             listing_type: p.listing_type ?? "rent",
+            assigned_agent: p.assigned_agent ?? null,
           };
         });
 
@@ -349,26 +373,51 @@ const PropertiesRentals: React.FC = () => {
     };
   }, []);
 
+  // Now filter:
+  // - Only listing_type === 'rent'
+  // - If resolvedAgentId is a number => show only properties assigned to that agent
+  // - If resolvedAgentId is null => show properties that have assigned_agent !== null (assigned to any agent)
   const filteredProperties = useMemo(() => {
     const lower = searchTerm.toLowerCase();
-    return properties.filter(
-      (p) =>
-        (p.listing_type ?? "rent") === "rent" && // ensure only rents
-        (p.title.toLowerCase().includes(lower) ||
-          p.address.toLowerCase().includes(lower))
-    );
-  }, [searchTerm, properties]);
+
+    return properties.filter((p) => {
+      if ((p.listing_type ?? "rent") !== "rent") return false;
+
+      // If we have a specific agent id, only show properties assigned to that agent
+      if (resolvedAgentId !== null) {
+        if (Number(p.assigned_agent ?? -1) !== Number(resolvedAgentId)) return false;
+      } else {
+        // No agent specified: show only properties that are assigned to any agent (assigned_agent not null)
+        if (p.assigned_agent === null || typeof p.assigned_agent === "undefined") return false;
+      }
+
+      // search filter
+      if (!lower) return true;
+      return (
+        p.title.toLowerCase().includes(lower) ||
+        p.address.toLowerCase().includes(lower)
+      );
+    });
+  }, [searchTerm, properties, resolvedAgentId]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto">
-        <header className="mb-8">
+        <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Properties - Rentals
           </h1>
           <p className="text-gray-600 text-sm">
-            Access your assigned rental properties and marketing materials.
+            Access assigned rental properties and marketing materials.
           </p>
+
+          <div className="mt-3 text-sm text-gray-500">
+            {resolvedAgentId !== null ? (
+              <>Showing rentals assigned to agent <strong>{resolvedAgentId}</strong>.</>
+            ) : (
+              <>Showing rentals assigned to any agent.</>
+            )}
+          </div>
         </header>
 
         <div className="relative mb-8">
@@ -391,7 +440,11 @@ const PropertiesRentals: React.FC = () => {
         ))}
 
         {!loading && filteredProperties.length === 0 && (
-          <div className="text-center text-gray-500">No rental properties found.</div>
+          <div className="text-center text-gray-500">
+            {resolvedAgentId !== null
+              ? "No rental properties found assigned to this agent."
+              : "No rental properties found that are assigned to any agent."}
+          </div>
         )}
       </div>
 

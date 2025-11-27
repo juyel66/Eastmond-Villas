@@ -1,241 +1,480 @@
-import React, { useState } from 'react';
-import { Clock, Download, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+// File: AdminAnnouncements.tsx
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Clock,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Plus,
+  X,
+  UploadCloud,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../../store"; // adjust path to your store types if available
+import {
+  fetchAnnouncements,
+  createAnnouncement,
+} from "../../../features/Properties/PropertiesSlice";
+import { unwrapResult } from "@reduxjs/toolkit";
+// Import API_BASE only for file URL transformation
+import { API_BASE } from "../../../features/Auth/authSlice";
 
-// --- 1. JSON DATA ---
+/* ----------------------
+  Helper: auth header (used only for legacy behavior; not used now but kept)
+------------------------*/
+const getAuthToken = () => {
+  try {
+    return localStorage.getItem("auth_access");
+  } catch {
+    return null;
+  }
+};
+
+/* ----------------------
+  Helper: full file URL
+------------------------*/
+const getFileUrl = (filePath: string) => {
+  if (!filePath) return "";
+  if (filePath.startsWith("http://") || filePath.startsWith("https://")) return filePath;
+  try {
+    const root = API_BASE.replace(/\/api\/?$/, "");
+    return `${root}${filePath}`;
+  } catch {
+    return filePath;
+  }
+};
+
+/* ----------------------
+  Local fallback data (kept for first render)
+------------------------*/
 const updateData = [
   {
     id: 1,
-    title: 'New Marketing Guidelines Released',
-    date: 'October 11, 2025',
-    priority: 'high',
-    details: 'We have updated our marketing guidelines to reflect the latest brand standards. Please review the attached document for detailed information on approved messaging, logo usage, and social media best practices.',
-    attachments: [
-      { name: 'Marketing_Guidelines_2025.pdf', size: '2.3 MB', downloadUrl: '#' },
-    ],
+    title: "New Marketing Guidelines Released",
+    date: "2025-10-11",
+    priority: "high",
+    details:
+      "We have updated our marketing guidelines to reflect the latest brand standards. Please review the attached document for detailed information on approved messaging, logo usage, and social media best practices.",
+    attachments: [{ name: "Marketing_Guidelines_2025.pdf", size: "2.3 MB", downloadUrl: "#" }],
   },
   {
     id: 2,
-    title: 'Q4 Financial Report Available',
-    date: 'October 15, 2025',
-    priority: 'medium',
-    details: 'The official Q4 Financial Report is now available. This document contains key performance indicators, revenue analysis, and projections for the next quarter.',
+    title: "Q4 Financial Report Available",
+    date: "2025-10-15",
+    priority: "medium",
+    details:
+      "The official Q4 Financial Report is now available. This document contains key performance indicators, revenue analysis, and projections for the next quarter.",
     attachments: [
-      { name: 'Q4_Financial_Report.pdf', size: '5.1 MB', downloadUrl: '#' },
-      { name: 'Q4_Summary_Deck.pptx', size: '1.2 MB', downloadUrl: '#' },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Team Building Retreat Scheduled',
-    date: 'October 20, 2025',
-    priority: 'low',
-    details: 'The annual team building retreat has been scheduled for next month. Details regarding the location, activities, and required RSVPs are available in the attachments section.',
-    attachments: [],
-  },
-  {
-    id: 4,
-    title: 'New Product Launch Details',
-    date: 'October 25, 2025',
-    priority: 'high',
-    details: 'Finalized details for the upcoming new product launch have been approved. Review the attached files for updated timelines, press kit information, and internal training materials.',
-    attachments: [
-        { name: 'Launch_Timeline.xlsx', size: '0.8 MB', downloadUrl: '#' },
-        { name: 'Press_Release.docx', size: '0.3 MB', downloadUrl: '#' },
-        { name: 'Internal_Training.mp4', size: '25.0 MB', downloadUrl: '#' },
+      { name: "Q4_Financial_Report.pdf", size: "5.1 MB", downloadUrl: "#" },
+      { name: "Q4_Summary_Deck.pptx", size: "1.2 MB", downloadUrl: "#" },
     ],
   },
 ];
 
-// --- 2. COMPONENTS ---
-
-// Helper component for the priority badge styling
-const PriorityBadge = ({ priority }) => {
+/* ----------------------
+  Priority badge
+------------------------*/
+const PriorityBadge = ({ priority }: { priority: string }) => {
   let bgColor, textColor;
   switch (priority) {
-    case 'high':
-      bgColor = 'bg-red-100';
-      textColor = 'text-red-700';
+    case "high":
+      bgColor = "bg-red-100";
+      textColor = "text-red-700";
       break;
-    case 'medium':
-      bgColor = 'bg-amber-100';
-      textColor = 'text-amber-700';
+    case "medium":
+      bgColor = "bg-amber-100";
+      textColor = "text-amber-700";
       break;
-    case 'low':
     default:
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-700';
+      bgColor = "bg-blue-100";
+      textColor = "text-blue-700";
       break;
   }
   return (
-    <span className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor} ${textColor} capitalize`}>
+    <span className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor} ${textColor}`}>
       {priority} priority
     </span>
   );
 };
 
-// Component for a single downloadable attachment
-const AttachmentItem = ({ attachment }) => (
-    <div className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-teal-500 transition duration-150">
-        <div className="flex items-center space-x-3">
-            <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
-            <div>
-                <p className="text-sm font-medium text-gray-800 truncate">{attachment.name}</p>
-                <p className="text-xs text-gray-500">{attachment.size}</p>
-            </div>
-        </div>
-        <a 
-            href={attachment.downloadUrl} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex items-center text-sm font-medium text-white bg-teal-500 rounded-lg px-3 py-1.5 hover:bg-teal-600 transition duration-150"
-        >
-            <Download className="w-4 h-4 mr-1" />
-            Download
-        </a>
-    </div>
-);
+/* ----------------------
+  Attachment Item
+  — only this component's download behavior changed
+------------------------*/
+const AttachmentItem = ({ attachment }: { attachment: any }) => {
+  // helper to trigger download by fetching blob and using object URL
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const url = attachment.downloadUrl || attachment.file || attachment;
+    const filename = attachment.name || (url && url.split("/").pop()) || "download";
 
-// Component for a single collapsible update card
-const UpdateCard = ({ update }) => {
-  const [isOpen, setIsOpen] = useState(update.id === 2); // Q4 is open by default, as per the image
-  
-  const attachmentCount = update.attachments.length;
+    if (!url) {
+      // nothing to download
+      return;
+    }
+
+    try {
+      // Try to fetch the resource as blob so we can force a download
+      const res = await fetch(url, { method: "GET", mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      // Append to DOM to make click work in some browsers
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      // clean up
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (err) {
+      // If fetch fails (CORS, network, HTML response, etc.), fallback to opening the URL in a new tab
+      // which allows the user to manually save the image/file.
+      // We don't change UI — just open in a new tab.
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all duration-300 overflow-hidden">
-      
-      {/* Collapsible Header */}
-      <div 
+    <div className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-teal-500 transition">
+      <div className="flex items-center space-x-3">
+        <FileText className="w-5 h-5 text-blue-500" />
+        <div>
+          <p className="text-sm font-medium text-gray-800 truncate">{attachment.name}</p>
+          <p className="text-xs text-gray-500">{attachment.size}</p>
+        </div>
+      </div>
+
+      {/* Keep visual exactly same — replace anchor with button that triggers download logic */}
+      <button
+        onClick={handleDownload}
+        className="flex items-center text-sm font-medium text-white bg-teal-500 rounded-lg px-3 py-1.5 hover:bg-teal-600 transition"
+        aria-label={`Download ${attachment.name}`}
+        type="button"
+      >
+        <Download className="w-4 h-4 mr-1" /> Download
+      </button>
+    </div>
+  );
+};
+
+/* ----------------------
+  Update Card
+------------------------*/
+const UpdateCard = ({ update }: { update: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const attachmentCount = update.attachments?.length ?? 0;
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all overflow-hidden">
+      <div
         className="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center space-x-4">
-           <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760910352/Container_3_l81okq.png" alt="" />
-            <span className="text-base font-medium text-gray-800">{update.title}</span>
-            <PriorityBadge priority={update.priority} />
-            
-            {/* Attachment Count Badge */}
-            <span className={`text-xs font-medium py-1 px-3 rounded-full ${
-                attachmentCount > 0 ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500'
-            } flex-shrink-0`}>
-                {attachmentCount > 0 ? `${attachmentCount} attachment${attachmentCount > 1 ? 's' : ''}` : 'no attachments'}
-            </span>
+          <img
+            src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760910352/Container_3_l81okq.png"
+            alt=""
+            className="w-8 h-8"
+          />
+          <span className="text-base font-medium text-gray-800">{update.title}</span>
+          <PriorityBadge priority={update.priority} />
+          <span
+            className={`text-xs font-medium py-1 px-3 rounded-full ${
+              attachmentCount > 0 ? "bg-gray-200 text-gray-700" : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {attachmentCount > 0 ? `${attachmentCount} attachment(s)` : "No attachments"}
+          </span>
         </div>
-        
-        {/* Date and Toggle Icon */}
+
         <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
-            {isOpen ? (
-                <ChevronUp className="w-5 h-5 text-gray-500" />
-            ) : (
-                <ChevronDown className="w-5 h-5 text-gray-500" />
-            )}
+          <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
+          {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
         </div>
       </div>
-      
-      {/* Collapsible Body */}
-      <div 
-        className={`transition-max-height duration-500 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-        style={{ transitionProperty: 'max-height, opacity' }} // Ensure transition works smoothly
-      >
+
+      {isOpen && (
         <div className="p-5 pt-0 border-t border-gray-100">
-            {/* Description */}
-            <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-                {update.details}
-            </p>
-            
-            {/* Attachments Section */}
-            {attachmentCount > 0 && (
-                <>
-                    <h4 className="text-sm font-semibold text-gray-800 mb-3 border-t pt-4">Attachments</h4>
-                    <div className="space-y-3">
-                        {update.attachments.map((att, index) => (
-                            <AttachmentItem key={index} attachment={att} />
-                        ))}
-                    </div>
-                </>
-            )}
+          <p className="text-sm text-gray-700 mb-4 leading-relaxed">{update.details}</p>
+          {attachmentCount > 0 && (
+            <>
+              <h4 className="text-sm font-semibold text-gray-800 mb-3 border-t pt-4">Attachments</h4>
+              <div className="space-y-3">
+                {update.attachments.map((att: any, index: number) => (
+                  <AttachmentItem key={index} attachment={att} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
+      )}
+    </div>
+  );
+};
+
+/* ----------------------
+  Announcement Modal (uses dispatch(createAnnouncement))
+------------------------*/
+const AnnouncementModal = ({
+  onClose,
+  onAddLocal, // optional callback (local UI), new item will be available via Redux anyway
+}: {
+  onClose: () => void;
+  onAddLocal?: (item: any) => void;
+}) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState("medium");
+  const [details, setDetails] = useState("");
+  const [date, setDate] = useState("");
+  const [rawFiles, setRawFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    if (selected.length === 0) return;
+    const previewObjs = selected.map((f) => ({
+      name: f.name,
+      size: `${(f.size / 1024 / 1024).toFixed(2)} MB`,
+      downloadUrl: URL.createObjectURL(f),
+    }));
+    setRawFiles((prev) => [...prev, ...selected]);
+    setFilePreviews((prev) => [...prev, ...previewObjs]);
+  };
+
+  useEffect(() => {
+    return () => {
+      for (const p of filePreviews) {
+        if (p.downloadUrl) URL.revokeObjectURL(p.downloadUrl);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const announcementData = {
+        title,
+        date,
+        priority,
+        description: details,
+      };
+
+      // dispatch createAnnouncement thunk — thunk knows how to send FormData if `files` provided
+      const action = dispatch(createAnnouncement({ announcementData, files: rawFiles }));
+      // unwrap to get the created object or throw
+      const created: any = await (action as any).unwrap();
+
+      // Modal will close; Redux already updated state via reducer (createAnnouncement.fulfilled pushes)
+      // Optionally notify parent (local update), though Redux contains the new item
+      if (onAddLocal) {
+        // map created to UI-friendly shape (like before)
+        const mapped = {
+          id: created.id,
+          title: created.title,
+          date: created.date,
+          priority: created.priority,
+          details: created.description ?? details,
+          created_at: created.created_at,
+          updated_at: created.updated_at,
+          attachments: (created.files ?? []).map((f: any) => ({
+            id: f.id,
+            name: f.file?.split("/").pop() ?? `file_${f.id}`,
+            size: "",
+            downloadUrl: getFileUrl(f.file),
+          })),
+        };
+        onAddLocal(mapped);
+      }
+
+      onClose();
+    } catch (err: any) {
+      setError(err?.message ? String(err.message) : "Failed to create announcement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+          <X className="w-5 h-5" />
+        </button>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Add Announcement</h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700">Title</label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full border rounded-md px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-teal-500"
+              placeholder="Enter announcement title"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-700">Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="w-full border rounded-md px-3 py-2 mt-1 text-sm"
+              />
+            </div>
+
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-700">Priority</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="w-full border rounded-md px-3 py-2 mt-1 text-sm"
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">Details</label>
+            <textarea
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              rows={4}
+              className="w-full border rounded-md px-3 py-2 mt-1 text-sm"
+              placeholder="Enter announcement details"
+            ></textarea>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Attachments</label>
+            <label
+              htmlFor="file-upload"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
+            >
+              <UploadCloud className="w-5 h-5 text-gray-500" />
+              Upload Files
+            </label>
+            <input id="file-upload" type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+
+            {filePreviews.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {filePreviews.map((f, i) => (
+                  <li key={i} className="flex justify-between text-sm text-gray-700 border-b pb-1">
+                    <span>{f.name}</span>
+                    <a href={f.downloadUrl} download={f.name} className="text-teal-600 hover:underline text-xs">
+                      Download
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {error && <div className="text-sm text-red-600">{error}</div>}
+
+          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-md text-sm font-semibold disabled:opacity-60">
+            {loading ? "Adding..." : "Add Announcement"}
+          </button>
+        </form>
       </div>
     </div>
   );
 };
 
-// --- 3. MAIN APPLICATION COMPONENT ---
-const Announcements = () => {
-    // Current active category for the filter bar
-    const [activeCategory, setActiveCategory] = useState('All');
-    
-    // Simple filter to demonstrate navigation functionality
-    const filteredUpdates = updateData; 
+/* ----------------------
+  Main component (reads from Redux)
+------------------------*/
+const AdminAnnouncements = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements);
+  const loading = useSelector((s: RootState) => s.propertyBooking.loading);
+  const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const categories = ['All', 'Branding', 'Templates', 'Legal Forms', 'Training', 'Market Research', 'External Tools'];
+  useEffect(() => {
+    // dispatch fetchAnnouncements on mount
+    dispatch(fetchAnnouncements());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return (
-        <div className=" bg-gray-50 font-sans p-4 md:p-8">
-            <div className=" mx-auto">
-                
-                {/* Header Section */}
-                <header className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-1">Updates</h1>
-                    <p className="text-gray-600 text-sm">Stay informed with the latest company updates and announcements</p>
-                </header>
-                
-                {/* Search and Category Filter Bar */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
-                    {/* Search Bar */}
-             <div className="flex items-center border rounded-lg px-3 py-2 w-full max-w-lg">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth="1.5"
-    stroke="currentColor"
-    className="w-5 h-5 mr-2" // 👈 gap on left side (space between icon and placeholder)
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M21 21l-4.35-4.35m1.1-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
-    />
-  </svg>
-  <input
-    type="text"
-    placeholder="Search Resources..."
-    className="outline-none w-full text-sm"
-  />
-</div>
-                    
-                    {/* Category Tabs */}
-                    <div className="overflow-x-auto ml-5 whitespace-nowrap scrollbar-hide">
-                        <div className="inline-flex space-x-2 p-1 bg-white border border-gray-200 rounded-xl shadow-sm">
-                            {categories.map((category) => (
-                                <button
-                                    key={category}
-                                    onClick={() => setActiveCategory(category)}
-                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition duration-200 ${
-                                        activeCategory === category
-                                            ? 'bg-gray-900 text-white shadow-md'
-                                            : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+  // Map backend announcement objects to UI-shape used by UpdateCard (details/attachments)
+  const mappedAnnouncements = (announcementsFromStore && announcementsFromStore.length > 0
+    ? announcementsFromStore
+    : updateData
+  ).map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    date: item.date,
+    priority: item.priority,
+    details: item.description ?? item.details ?? "",
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    attachments: (item.files ?? []).map((f: any) => ({
+      id: f.id,
+      name: f.file?.split("/").pop() ?? `file_${f.id}`,
+      size: "",
+      downloadUrl: getFileUrl(f.file),
+    })),
+  }));
 
-                {/* Updates Listings */}
-                <main>
-                    {filteredUpdates.map((update) => (
-                        <UpdateCard key={update.id} update={update} />
-                    ))}
-                </main>
-                
-            </div>
+  // Optional local add callback (not strictly necessary since Redux will update)
+  const handleAddAnnouncementLocal = (createdMapped: any) => {
+    // no-op: Redux will already have the created item in state via thunk reducer
+    // but keeping function so modal can optionally call it
+  };
+
+  return (
+    <div className="bg-gray-50 font-sans p-4 md:p-8 min-h-screen">
+      <div className="">
+        <div className="flex justify-between mb-8">
+          <header>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Announcements</h1>
+            <p className="text-gray-600 text-sm">Stay informed with the latest company updates and news</p>
+          </header>
+
+          <button onClick={() => setIsModalOpen(true)} className="flex hidden items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow">
+            <Plus className="w-4 h-4" /> Add Announcement
+          </button>
         </div>
-    );
+
+        <main>
+          {loading && <div className="text-sm text-gray-500 mb-3">Loading announcements...</div>}
+          {fetchError && <div className="text-sm text-red-600 mb-3">{String(fetchError)}</div>}
+
+          {mappedAnnouncements.map((update: any) => (
+            <UpdateCard key={update.id} update={update} />
+          ))}
+        </main>
+
+        {isModalOpen && (
+          <AnnouncementModal
+            onClose={() => setIsModalOpen(false)}
+            onAddLocal={handleAddAnnouncementLocal}
+          />
+        )}
+      </div>
+    </div>
+  );
 };
 
-export default Announcements;
+export default AdminAnnouncements;

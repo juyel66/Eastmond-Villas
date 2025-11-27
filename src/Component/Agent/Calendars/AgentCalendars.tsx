@@ -1,53 +1,324 @@
+// // File: AgentCalendar.tsx
+// import React, { useEffect, useMemo, useState } from "react";
+
+// /**
+//  * AgentCalendar.tsx
+//  *
+//  * Fetches:
+//  *  http://10.10.13.60:8000/api/villas/agent/bookings/monthly/?month=<1-12>&year=<yyyy>
+//  *
+//  * Behavior:
+//  * - Builds rows from response.data (property_id -> id, property_title -> name)
+//  * - Booked days (inside any booking range) = YELLOW (disabled)
+//  * - Available days = GREEN (clickable if you later want to add booking)
+//  * - Month & Year selectors refetch data
+//  *
+//  * NOTE:
+//  * - check_out is treated EXCLUSIVE (booking covers check_in .. day before check_out).
+//  *   To treat check_out inclusive, change the while condition in parseBookingDays.
+//  */
+
+// type BookingItem = {
+//   booking_id: number;
+//   full_name: string;
+//   check_in: string; // "YYYY-MM-DD"
+//   check_out: string; // "YYYY-MM-DD"
+//   status?: string;
+//   total_price?: string;
+// };
+
+// type BookingResponseItem = {
+//   property_id: number;
+//   property_title: string;
+//   city?: string;
+//   total_bookings_this_month?: number;
+//   bookings: BookingItem[];
+// };
+
+// type BookingResponse = {
+//   agent: number;
+//   month: number;
+//   year: number;
+//   properties_count: number;
+//   data: BookingResponseItem[];
+// };
+
+// type Property = {
+//   id: number;
+//   name: string;
+//   city?: string;
+//   total_bookings_this_month?: number;
+// };
+
+// const API_BASE = "http://10.10.13.60:8000"; // your base
+// const MONTHLY_PATH = "/api/villas/agent/bookings/monthly/"; // appended with ?month=&year=
+
+// function monthNames() {
+//   return [
+//     "January","February","March","April","May","June",
+//     "July","August","September","October","November","December"
+//   ];
+// }
+
+// export default function AgentCalendar() {
+//   const today = new Date();
+//   // default: current month/year
+//   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth() + 1);
+//   const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear());
+
+//   const [properties, setProperties] = useState<Property[]>([]);
+//   // map key: `${propertyId}-${year}-${month}`
+//   const [bookingsMap, setBookingsMap] = useState<Map<string, Set<number>>>(() => new Map());
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+
+//   // days in selected month
+//   const daysInMonth = useMemo(
+//     () => new Date(selectedYear, selectedMonth, 0).getDate(),
+//     [selectedMonth, selectedYear]
+//   );
+//   const daysArray = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
+
+//   function mapKey(propertyId: number, year = selectedYear, month = selectedMonth) {
+//     return `${propertyId}-${year}-${month}`;
+//   }
+
+//   // parse booking range into list of day numbers inside selected month/year
+//   function parseBookingDays(checkInIso: string, checkOutIso: string, month: number, year: number) {
+//     // check_out exclusive
+//     const days: number[] = [];
+//     const start = new Date(checkInIso + "T00:00:00");
+//     const end = new Date(checkOutIso + "T00:00:00"); // exclusive
+//     const d = new Date(start);
+//     while (d < end) {
+//       if (d.getFullYear() === year && d.getMonth() + 1 === month) {
+//         days.push(d.getDate());
+//       }
+//       d.setDate(d.getDate() + 1);
+//     }
+//     return days;
+//   }
+
+//   async function fetchMonthly(month: number, year: number) {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const url = `${API_BASE}${MONTHLY_PATH}?month=${month}&year=${year}`;
+//       const resp = await fetch(url);
+//       if (!resp.ok) {
+//         throw new Error(`API returned ${resp.status}`);
+//       }
+//       const data = (await resp.json()) as BookingResponse;
+
+//       // build property list from response.data
+//       const props: Property[] = Array.isArray(data.data)
+//         ? data.data.map((it) => ({
+//             id: it.property_id,
+//             name: it.property_title,
+//             city: it.city,
+//             total_bookings_this_month: it.total_bookings_this_month,
+//           }))
+//         : [];
+//       setProperties(props);
+
+//       // build bookings map
+//       const map = new Map<string, Set<number>>();
+//       // ensure keys exist for all returned properties
+//       props.forEach((p) => map.set(mapKey(p.id, data.year ?? year, data.month ?? month), new Set()));
+
+//       (data.data || []).forEach((item) => {
+//         const key = mapKey(item.property_id, data.year ?? year, data.month ?? month);
+//         const setDays = new Set<number>(map.get(key) ? Array.from(map.get(key)!) : []);
+//         (item.bookings || []).forEach((b) => {
+//           try {
+//             const days = parseBookingDays(b.check_in, b.check_out, data.month ?? month, data.year ?? year);
+//             days.forEach((d) => setDays.add(d));
+//           } catch (err) {
+//             // ignore malformed date for single booking
+//             console.warn("parse booking error", err, b);
+//           }
+//         });
+//         map.set(key, setDays);
+//       });
+
+//       setBookingsMap(map);
+//     } catch (err: any) {
+//       console.error(err);
+//       setError(err?.message ?? "Failed to fetch bookings");
+//       setProperties([]);
+//       setBookingsMap(new Map());
+//     } finally {
+//       setLoading(false);
+//     }
+//   }
+
+//   useEffect(() => {
+//     fetchMonthly(selectedMonth, selectedYear);
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [selectedMonth, selectedYear]);
+
+//   function isBooked(propertyId: number, day: number) {
+//     const key = mapKey(propertyId);
+//     const s = bookingsMap.get(key);
+//     return s ? s.has(day) : false;
+//   }
+
+//   // UI: keep simple, tailwind classes for visuals
+//   return (
+//     <div className="p-6 bg-gray-50 min-h-screen">
+//       <div className="flex items-center justify-between mb-4">
+//         <div>
+//           <h1 className="text-xl font-semibold text-gray-800">Agent Calendar</h1>
+//           <p className="text-sm text-gray-500">Booked = yellow, Available = green</p>
+//         </div>
+
+//         <div className="flex items-center gap-3">
+//           <label className="text-sm text-gray-600">Month</label>
+//           <select
+//             value={selectedMonth}
+//             onChange={(e) => setSelectedMonth(Number(e.target.value))}
+//             className="px-2 py-1 border rounded"
+//           >
+//             {monthNames().map((mn, idx) => (
+//               <option key={mn} value={idx + 1}>{mn}</option>
+//             ))}
+//           </select>
+
+//           <label className="text-sm text-gray-600">Year</label>
+//           <select
+//             value={selectedYear}
+//             onChange={(e) => setSelectedYear(Number(e.target.value))}
+//             className="px-2 py-1 border rounded"
+//           >
+//             {/* show a reasonable year range: current-2 .. current+2 */}
+//             {(() => {
+//               const nowY = new Date().getFullYear();
+//               const arr = [];
+//               for (let y = nowY - 2; y <= nowY + 2; y++) arr.push(y);
+//               return arr;
+//             })().map((y) => <option key={y} value={y}>{y}</option>)}
+//           </select>
+
+//           <button
+//             onClick={() => fetchMonthly(selectedMonth, selectedYear)}
+//             className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm"
+//           >
+//             Refresh
+//           </button>
+//         </div>
+//       </div>
+
+//       {loading && <div className="text-sm text-gray-500 mb-3">Loading bookings…</div>}
+//       {error && <div className="text-sm text-red-600 mb-3">Error: {error}</div>}
+
+//       <div className="space-y-4">
+//         {properties.length === 0 && !loading ? (
+//           <div className="text-sm text-gray-500">No properties found for this month/year.</div>
+//         ) : null}
+
+//         {properties.map((p) => (
+//           <div key={p.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+//             <div className="flex items-center justify-between">
+//               <div>
+//                 <div className="text-sm font-medium text-gray-800">{p.name}</div>
+//                 {p.city && <div className="text-xs text-gray-500">{p.city}</div>}
+//                 <div className="text-xs text-gray-400 mt-1">Total bookings: {p.total_bookings_this_month ?? 0}</div>
+//               </div>
+//               <div className="text-xs text-gray-500">{monthNames()[selectedMonth - 1]} {selectedYear}</div>
+//             </div>
+
+//             <div className="mt-3 overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
+//               <div className="flex items-center gap-2 py-1">
+//                 {daysArray.map((d) => {
+//                   const booked = isBooked(p.id, d);
+//                   return (
+//                     <div
+//                       key={`${p.id}-${d}`}
+//                       className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-medium
+//                         ${booked ? "bg-yellow-100 border-yellow-200 text-yellow-800" : "bg-green-50 border-green-100 text-green-700"}
+//                       `}
+//                       title={booked ? `Booked: ${d}/${selectedMonth}/${selectedYear}` : `Available: ${d}/${selectedMonth}/${selectedYear}`}
+//                     >
+//                       {d}
+//                     </div>
+//                   );
+//                 })}
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+
+//       <style>{`
+//         .no-scrollbar::-webkit-scrollbar { height: 8px; display: none; }
+//         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+//       `}</style>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // File: Calendars.tsx
 import React, { useEffect, useMemo, useState } from "react";
 
 /**
  * Calendars.tsx
- * - Shows properties rows with days for selected month/year
- * - Month & Year selector refetch data for that month/year
- * - Bookable days are green (clickable), booked days are red (disabled)
- * - On booking, POST { propertyId, day, agentId, month, year } and update UI
+ * - Fetches agent monthly bookings from:
+ *    http://10.10.13.60:8000/api/villas/agent/bookings/monthly/?month=<m>&year=<y>
+ * - Renders properties from response.data
+ * - Booked days: YELLOW (disabled)
+ * - Available days: GREEN (clickable)
  *
- * Notes:
- * - Backend endpoints:
- *    GET  /api/bookings?propertyId=<id>&month=<1-12>&year=<yyyy>
- *    POST /api/bookings  (body as JSON above)
- * - This component keeps bookings keyed by `${propertyId}-${year}-${month}`
+ * Note: check_out is treated EXCLUSIVE (booking covers check_in .. day before check_out).
  */
 
+type BookingItem = {
+  booking_id: number;
+  full_name: string;
+  check_in: string; // "YYYY-MM-DD"
+  check_out: string; // "YYYY-MM-DD"
+  status?: string;
+  total_price?: string;
+};
+
+type BookingResponseItem = {
+  property_id: number;
+  property_title: string;
+  city?: string;
+  total_bookings_this_month?: number;
+  bookings: BookingItem[];
+};
+
 type BookingResponse = {
-  propertyId: number;
+  agent: number;
   month: number;
   year: number;
-  bookedDays: number[]; // 1..daysInMonth
+  properties_count: number;
+  data: BookingResponseItem[];
 };
 
 type Property = {
   id: number;
   name: string;
+  city?: string;
+  total_bookings_this_month?: number;
 };
 
-type CalendarsProps = {
-  properties?: Property[];
-  agentId?: number | string;
-  apiBaseUrl?: string;
-  startYear?: number; // for year dropdown range
-  endYear?: number;
-};
-
-const DEFAULT_PROPERTIES: Property[] = [
-  { id: 1, name: "Luxury Waterfront Villa" },
-  { id: 2, name: "Modern Urban Loft" },
-  { id: 3, name: "Cozy Mountain Cabin" },
-  { id: 4, name: "Chic City Apartment" },
-  { id: 5, name: "Elegant Countryside" },
-  { id: 6, name: "Charming Coastal" },
-  { id: 7, name: "Modern Urban Loft 2" },
-  { id: 8, name: "Rustic Mountain Cabin" },
-  { id: 9, name: "Sleek Suburban Home" },
-  { id: 10, name: "Artistic City Studio" },
-  { id: 11, name: "Classic Victorian House" },
-];
+const API_BASE = "http://10.10.13.60:8000";
+const MONTHLY_PATH = "/api/villas/agent/bookings/monthly/"; // will append ?month=&year=
+const POST_BOOKING_PATH = "/api/bookings"; // POST target for booking (kept optimistic)
 
 function monthNames() {
   return [
@@ -56,105 +327,122 @@ function monthNames() {
   ];
 }
 
-export default function Calendars({
-  properties = DEFAULT_PROPERTIES,
-  agentId = "agent-unknown",
-  apiBaseUrl = "/api",
-  startYear,
-  endYear,
-}: CalendarsProps) {
-  // date selection state
-  const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1); // 1..12
-  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+export default function Calendars() {
+  // default selection to December 2025 as you provided
+  const [selectedMonth, setSelectedMonth] = useState<number>(12);
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
 
+  const [properties, setProperties] = useState<Property[]>([]);
   // bookings keyed by `${propertyId}-${year}-${month}` => Set<number>
   const [bookingsMap, setBookingsMap] = useState<Map<string, Set<number>>>(() => new Map());
-  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [posting, setPosting] = useState<Record<string, boolean>>({});
 
-  // year range for selector
-  const start = startYear ?? now.getFullYear() - 2;
-  const end = endYear ?? now.getFullYear() + 2;
+  // year range for selector: current-2 .. current+2
+  const now = new Date();
+  const startYear = now.getFullYear() - 2;
+  const endYear = now.getFullYear() + 2;
   const years = useMemo(() => {
     const arr: number[] = [];
-    for (let y = start; y <= end; y++) arr.push(y);
+    for (let y = startYear; y <= endYear; y++) arr.push(y);
     return arr;
-  }, [start, end]);
+  }, [startYear, endYear]);
 
-  // days in the selected month
-  const daysInMonth = useMemo(() => {
-    return new Date(selectedYear, selectedMonth, 0).getDate(); // month is 1..12
-  }, [selectedMonth, selectedYear]);
-
+  // days in selected month
+  const daysInMonth = useMemo(() => new Date(selectedYear, selectedMonth, 0).getDate(), [selectedMonth, selectedYear]);
   const daysArray = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
 
-  // helper key
-  function mapKey(propertyId: number, y: number, m: number) {
-    return `${propertyId}-${y}-${m}`;
+  function mapKey(propertyId: number, year = selectedYear, month = selectedMonth) {
+    return `${propertyId}-${year}-${month}`;
   }
 
-  // fetch bookings for a single property-month
-  async function fetchBookingsForProperty(propertyId: number, month: number, year: number) {
-    const key = mapKey(propertyId, year, month);
-    setLoadingMap((p) => ({ ...p, [key]: true }));
+  // parse booking range into day numbers within selected month/year
+  function parseBookingDays(checkInIso: string, checkOutIso: string, month: number, year: number) {
+    // check_out exclusive
+    const result: number[] = [];
+    const start = new Date(checkInIso + "T00:00:00");
+    const end = new Date(checkOutIso + "T00:00:00"); // exclusive
+    const d = new Date(start);
+    while (d < end) {
+      if (d.getFullYear() === year && d.getMonth() + 1 === month) {
+        result.push(d.getDate());
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return result;
+  }
+
+  // fetch monthly endpoint and populate properties + bookingsMap
+  async function fetchMonthly(month: number, year: number) {
+    setLoading(true);
+    setError(null);
+
+    const url = `${API_BASE}${MONTHLY_PATH}?month=${month}&year=${year}`;
+
     try {
-      const resp = await fetch(`${apiBaseUrl}/bookings?propertyId=${propertyId}&month=${month}&year=${year}`);
+      const resp = await fetch(url);
       if (!resp.ok) {
-        // if not found or backend doesn't support per-property, treat as empty
-        console.warn(`Failed to fetch bookings for ${propertyId} ${month}/${year}: ${resp.status}`);
-        setBookingsMap((prev) => {
-          const next = new Map(prev);
-          next.set(key, new Set());
-          return next;
-        });
-        return;
+        throw new Error(`API responded ${resp.status}`);
       }
       const data = (await resp.json()) as BookingResponse;
-      const setDays = new Set<number>(Array.isArray(data?.bookedDays) ? data.bookedDays : []);
-      setBookingsMap((prev) => {
-        const next = new Map(prev);
-        next.set(key, setDays);
-        return next;
+
+      // build properties list from response.data
+      const props: Property[] = Array.isArray(data.data)
+        ? data.data.map((it) => ({
+            id: it.property_id,
+            name: it.property_title,
+            city: it.city,
+            total_bookings_this_month: it.total_bookings_this_month,
+          }))
+        : [];
+
+      setProperties(props);
+
+      // build bookings map
+      const nextMap = new Map<string, Set<number>>();
+      props.forEach((p) => nextMap.set(mapKey(p.id, data.year ?? year, data.month ?? month), new Set()));
+
+      (data.data || []).forEach((item) => {
+        const key = mapKey(item.property_id, data.year ?? year, data.month ?? month);
+        const existing = new Set<number>(nextMap.get(key) ? Array.from(nextMap.get(key)!) : []);
+        (item.bookings || []).forEach((b) => {
+          try {
+            const days = parseBookingDays(b.check_in, b.check_out, data.month ?? month, data.year ?? year);
+            days.forEach((day) => existing.add(day));
+          } catch (err) {
+            console.warn("parse booking failed", err, b);
+          }
+        });
+        nextMap.set(key, existing);
       });
-    } catch (err) {
+
+      setBookingsMap(nextMap);
+    } catch (err: any) {
       console.error(err);
-      setError("Unable to load bookings");
-      setBookingsMap((prev) => {
-        const next = new Map(prev);
-        next.set(key, new Set());
-        return next;
-      });
+      setError(err?.message ?? "Unable to fetch bookings");
+      setProperties([]);
+      setBookingsMap(new Map());
     } finally {
-      setLoadingMap((p) => ({ ...p, [key]: false }));
+      setLoading(false);
     }
   }
 
-  // fetch bookings for all properties for the selected month/year
-  async function fetchAllForSelectedMonth() {
-    setError(null);
-    const promises = properties.map((p) => fetchBookingsForProperty(p.id, selectedMonth, selectedYear));
-    await Promise.all(promises);
-  }
-
-  // fetch when month/year or properties change
   useEffect(() => {
-    fetchAllForSelectedMonth();
+    fetchMonthly(selectedMonth, selectedYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, selectedYear, apiBaseUrl, properties.length]);
+  }, [selectedMonth, selectedYear]);
 
-  // helper check
-  function isBooked(propertyId: number, day: number, month = selectedMonth, year = selectedYear) {
-    const key = mapKey(propertyId, year, month);
-    const s = bookingsMap.get(key);
+  // helper to check booked
+  function isBooked(propertyId: number, day: number) {
+    const s = bookingsMap.get(mapKey(propertyId));
     return s ? s.has(day) : false;
   }
 
-  // booking function (optimistic)
+  // optimistic booking (kept in case you want click-to-book)
   async function handleBook(propertyId: number, day: number) {
-    const key = mapKey(propertyId, selectedYear, selectedMonth);
-    if (isBooked(propertyId, day, selectedMonth, selectedYear)) {
+    const key = mapKey(propertyId);
+    if (isBooked(propertyId, day)) {
       alert("Already booked.");
       return;
     }
@@ -162,7 +450,7 @@ export default function Calendars({
     if (posting[postKey]) return;
     setPosting((p) => ({ ...p, [postKey]: true }));
 
-    // optimistic update
+    // optimistic
     setBookingsMap((prev) => {
       const next = new Map(prev);
       const setFor = new Set(next.get(key) ? Array.from(next.get(key)!) : []);
@@ -172,17 +460,18 @@ export default function Calendars({
     });
 
     try {
-      const resp = await fetch(`${apiBaseUrl}/bookings`, {
+      const resp = await fetch(`${API_BASE}${POST_BOOKING_PATH}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           propertyId,
           day,
-          agentId,
+          agentId: "agent-unknown",
           month: selectedMonth,
           year: selectedYear,
         }),
       });
+
       if (!resp.ok) {
         let msg = `Booking failed (${resp.status})`;
         try {
@@ -191,9 +480,9 @@ export default function Calendars({
         } catch {}
         throw new Error(msg);
       }
+
       const json = await resp.json();
       if (json?.success && Array.isArray(json.bookedDays)) {
-        // replace with server canonical data
         setBookingsMap((prev) => {
           const next = new Map(prev);
           next.set(key, new Set(json.bookedDays));
@@ -205,7 +494,7 @@ export default function Calendars({
         throw new Error(json?.message || "Booking failed");
       }
     } catch (err: any) {
-      // rollback optimistic
+      // rollback
       setBookingsMap((prev) => {
         const next = new Map(prev);
         const cur = new Set(next.get(key) ? Array.from(next.get(key)!) : []);
@@ -223,10 +512,9 @@ export default function Calendars({
     }
   }
 
-  // render booked days text for detail
+  // small helper to render "Booked: ..." text
   function bookedDaysText(propertyId: number) {
-    const key = mapKey(propertyId, selectedYear, selectedMonth);
-    const s = bookingsMap.get(key);
+    const s = bookingsMap.get(mapKey(propertyId));
     if (!s || s.size === 0) return "No bookings";
     const arr = Array.from(s).sort((a, b) => a - b);
     return `Booked: ${arr.join(", ")}`;
@@ -234,124 +522,118 @@ export default function Calendars({
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">Calendars</h2>
-            <p className="text-sm text-gray-500">Select month & year, then click green days to book</p>
-          </div>
-
-         
-
-          {/* selectors */}
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-600">Month</label>
-            <select
-            
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="px-2 py-1 border rounded"
-            >
-              {monthNames().map((mn, idx) => (
-                <option key={mn} value={idx + 1}>
-                  {mn}
-                </option>
-              ))}
-            </select>
-
-            <label className="text-sm text-gray-600">Year</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-2 py-1 border rounded"
-            >
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={fetchAllForSelectedMonth}
-              className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm"
-            >
-              Refresh
-            </button>
-          </div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800">Agent Calendars</h2>
+          <p className="text-sm text-gray-500">Booked = yellow, Available = green</p>
         </div>
 
-        {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-gray-600">Month</label>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="px-2 py-1 border rounded"
+          >
+            {monthNames().map((mn, idx) => (
+              <option key={mn} value={idx + 1}>
+                {mn}
+              </option>
+            ))}
+          </select>
 
-        <div
-          className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-auto"
-          style={{ maxHeight: "72vh" }}
-        >
-          <div className="p-4 space-y-3">
-            {properties.map((prop) => {
-              const key = mapKey(prop.id, selectedYear, selectedMonth);
-              const loading = !!loadingMap[key];
-              return (
-                <div key={prop.id} className="flex items-start gap-4 py-2 px-2 rounded-md hover:bg-gray-50">
-                  {/* Left name + details */}
-                  <div className="w-56 min-w-[12rem] pr-2">
-                    <div className="text-sm text-gray-700 font-medium">{prop.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">{bookedDaysText(prop.id)}</div>
-                    <div className="text-xs text-gray-400 mt-1">Month: {monthNames()[selectedMonth - 1]} {selectedYear}</div>
-                    {loading && <div className="text-xs text-gray-500 mt-1">Loading...</div>}
-                  </div>
+          <label className="text-sm text-gray-600">Year</label>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-2 py-1 border rounded"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
 
-                  {/* Right: horizontally scrollable days */}
-                  <div className="flex-1">
-                    <div className="overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
-                      <div className="flex items-center gap-2 py-1">
-                        {daysArray.map((d) => {
-                          const booked = isBooked(prop.id, d, selectedMonth, selectedYear);
-                          return (
-                            <button
-                              key={`${prop.id}-${d}`}
-                              onClick={() => {
-                                if (booked) {
-                                  alert(`Property "${prop.name}" is already booked on ${d}/${selectedMonth}/${selectedYear}.`);
-                                  return;
-                                }
-                                handleBook(prop.id, d);
-                              }}
-                              disabled={booked}
-                              className={`flex-shrink-0 flex items-center justify-center select-none transition-all
-                                ${booked ? "cursor-not-allowed" : "cursor-pointer"}`}
-                              style={{
-                                minWidth: 44,
-                                minHeight: 44,
-                                maxWidth: 56,
-                                maxHeight: 56,
-                              }}
-                              title={booked ? "Booked" : `Click to book ${d}/${selectedMonth}/${selectedYear}`}
-                              aria-pressed={!booked}
+          <button
+            onClick={() => fetchMonthly(selectedMonth, selectedYear)}
+            className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {loading && <div className="text-sm text-gray-500 mb-3">Loading bookings…</div>}
+      {error && <div className="text-sm text-red-600 mb-3">Error: {error}</div>}
+
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-auto" style={{ maxHeight: "72vh" }}>
+        <div className="p-4 space-y-3">
+          {properties.length === 0 && !loading ? (
+            <div className="text-sm text-gray-500">No properties found for the selected month/year.</div>
+          ) : null}
+
+          {properties.map((prop) => {
+            return (
+              <div key={prop.id} className="flex items-start gap-4 py-2 px-2 rounded-md hover:bg-gray-50">
+                {/* Left name + details */}
+                <div className="w-56 min-w-[12rem] pr-2">
+                  <div className="text-sm text-gray-700 font-medium">{prop.name}</div>
+                  {prop.city && <div className="text-xs text-gray-500 mt-1">{prop.city}</div>}
+                  <div className="text-xs text-gray-500 mt-1">{bookedDaysText(prop.id)}</div>
+                  <div className="text-xs text-gray-400 mt-1">Month: {monthNames()[selectedMonth - 1]} {selectedYear}</div>
+                </div>
+
+                {/* Right: horizontally scrollable days */}
+                <div className="flex-1">
+                  <div className="overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
+                    <div className="flex items-center gap-2 py-1">
+                      {daysArray.map((d) => {
+                        const booked = isBooked(prop.id, d);
+                        return (
+                          <button
+                            key={`${prop.id}-${d}`}
+                            onClick={() => {
+                              if (booked) {
+                                alert(`Property "${prop.name}" is already booked on ${d}/${selectedMonth}/${selectedYear}.`);
+                                return;
+                              }
+                              handleBook(prop.id, d);
+                            }}
+                            disabled={booked}
+                            className={`flex-shrink-0 flex items-center justify-center select-none transition-all
+                              ${booked ? "cursor-not-allowed" : "cursor-pointer"}`}
+                            style={{
+                              minWidth: 44,
+                              minHeight: 44,
+                              maxWidth: 56,
+                              maxHeight: 56,
+                            }}
+                            title={booked ? "Booked" : `Click to book ${d}/${selectedMonth}/${selectedYear}`}
+                            aria-pressed={!booked}
+                          >
+                            <div
+                              className={`w-full h-full flex items-center justify-center rounded-lg border text-sm font-semibold
+                                ${booked ? "bg-yellow-100 border-yellow-200 text-yellow-800" : "bg-green-50 border-green-100 text-green-700"}`}
+                              style={{ padding: 6 }}
                             >
-                              <div
-                                className={`w-full h-full flex items-center justify-center rounded-lg border text-sm font-semibold
-                                  ${booked ? "bg-red-100 border-red-200 text-red-700" : "bg-green-50 border-green-100 text-green-700"}`}
-                                style={{ padding: 6 }}
-                              >
-                                {d}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                              {d}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
-
-        <p className="text-xs text-gray-400 mt-3">
-          Click a green day to book. The booking is sent to the server (month/year included) and will update across clients after server confirms.
-        </p>
       </div>
+
+      <p className="text-xs text-gray-400 mt-3">
+        Booked days are yellow; available days are green. Click a green day to book (optimistic POST).
+      </p>
 
       <style>{`
         .no-scrollbar::-webkit-scrollbar { height: 8px; display: none; }

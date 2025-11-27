@@ -26,7 +26,7 @@ const fallbackResourceData: UIResource[] = [
     title: 'Brand Guidelines 2025',
     description:
       'Complete brand identity guidelines including logo usage, color palette, typography, and marketing templates.',
-    category: 'Templates',
+    category: 'templates',
     downloadUrl: '#',
   },
   {
@@ -35,7 +35,7 @@ const fallbackResourceData: UIResource[] = [
     title: 'Client Onboarding Form V3',
     description:
       'Official client onboarding and agreement form for new property management contracts.',
-    category: 'Legal Forms',
+    category: 'legal_forms',
     downloadUrl: '#',
   },
 ];
@@ -71,6 +71,15 @@ function getFileUrl(filePath?: string | null) {
 }
 
 /* -----------------------
+   normalize a category string (slug / display) to comparable form
+   - returns slug form (lowercase with underscores)
+------------------------*/
+function normalizeCategoryForCompare(cat?: string | null) {
+  if (!cat) return '';
+  return String(cat).trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+/* -----------------------
    Normalized card
 ------------------------*/
 const ResourceCard = ({ resource, onDownload }: { resource: UIResource; onDownload: (r: UIResource) => void }) => {
@@ -103,7 +112,7 @@ const ResourceCard = ({ resource, onDownload }: { resource: UIResource; onDownlo
         </div>
       </div>
 
-  
+   
 
       <div className="flex gap-2">
         <button
@@ -144,17 +153,6 @@ export default function AdminResources() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // filter resources
-  const filteredResources = resources.filter((resource) => {
-    const categoryMatch = activeCategory === 'All' || resource.category === activeCategory;
-    const search = searchTerm.toLowerCase();
-    const searchMatch =
-      (resource.title ?? '').toLowerCase().includes(search) ||
-      (resource.description ?? '').toLowerCase().includes(search) ||
-      (resource.category ?? '').toLowerCase().includes(search);
-    return categoryMatch && searchMatch;
-  });
-
   // fetch resources on mount via thunk
   useEffect(() => {
     (async () => {
@@ -189,7 +187,8 @@ export default function AdminResources() {
         id: r.id ?? r.pk ?? `api-${idx}`,
         title: r.title ?? r.name ?? 'Untitled',
         description: r.description ?? r.details ?? '',
-        category: r.category ?? r.type ?? 'Uncategorized',
+        // keep backend value as-is (we'll compare using slug/normalized)
+        category: r.category ?? r.type ?? '',
         fileType: r.file_type ?? (filesArr[0]?.type ?? 'document'),
         downloadUrl,
         files: filesArr,
@@ -202,6 +201,34 @@ export default function AdminResources() {
     for (const it of normalized) if (!map.has(it.id)) map.set(it.id, it);
     setResources(Array.from(map.values()));
   }, [apiResources]);
+
+  // Helper: map friendly label -> backend choice key (fallback to slug)
+  function mapCategoryToApi(label: string) {
+    if (!label) return '';
+    if (CATEGORY_TO_API[label] !== undefined && CATEGORY_TO_API[label] !== '') return CATEGORY_TO_API[label];
+    return label.toLowerCase().replace(/\s+/g, '_');
+  }
+
+  // FILTER: use mapped backend key for comparison so UI categories filter actual API categories
+  const filteredResources = resources.filter((resource) => {
+    const search = searchTerm.toLowerCase();
+    const searchMatch =
+      (resource.title ?? '').toLowerCase().includes(search) ||
+      (resource.description ?? '').toLowerCase().includes(search);
+
+    // category handling: if 'All' selected, allow all; otherwise compare normalized slug forms
+    if (activeCategory === 'All') {
+      return searchMatch;
+    }
+
+    const expectedApiKey = mapCategoryToApi(activeCategory); // e.g. "Market Research" -> "market_research"
+    const resourceCatNormalized = normalizeCategoryForCompare(resource.category);
+    const expectedNormalized = normalizeCategoryForCompare(expectedApiKey);
+
+    const categoryMatch = resourceCatNormalized === expectedNormalized;
+
+    return categoryMatch && searchMatch;
+  });
 
   function openModal() {
     setIsModalOpen(true);
@@ -252,12 +279,6 @@ export default function AdminResources() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function mapCategoryToApi(label: string) {
-    if (!label) return '';
-    if (CATEGORY_TO_API[label] !== undefined && CATEGORY_TO_API[label] !== '') return CATEGORY_TO_API[label];
-    return label.toLowerCase().replace(/\s+/g, '_');
-  }
-
   // create resource — use your thunk which already supports FormData when files passed
   async function handleAddResource(e: React.FormEvent) {
     e.preventDefault();
@@ -302,7 +323,7 @@ export default function AdminResources() {
         id: data?.id ?? `r-${Date.now()}`,
         title: data?.title ?? newTitle,
         description: data?.description ?? newDescription ?? '',
-        category: data?.category ?? newCategory,
+        category: data?.category ?? mapCategoryToApi(newCategory),
         fileType: data?.file_type ?? (returnedFiles[0]?.type ?? 'image'),
         downloadUrl: (returnedFiles[0]?.url) ?? null,
         files: returnedFiles,
@@ -332,7 +353,6 @@ export default function AdminResources() {
   // Download handler: ALWAYS try to fetch the resource as a blob and force download.
   // Fallback: open in new tab.
   async function handleDownload(resource: UIResource) {
-    // Prefer normalized file URL from files[]; otherwise fallback to downloadUrl; otherwise try raw.file
     const candidateUrl =
       (resource.files && resource.files.length && resource.files[0].url) ||
       resource.downloadUrl ||
@@ -350,7 +370,6 @@ export default function AdminResources() {
       return;
     }
 
-    // derive filename
     let filename = resource.files && resource.files.length && resource.files[0].name
       ? resource.files[0].name
       : (() => {
@@ -362,28 +381,20 @@ export default function AdminResources() {
           }
         })();
 
-    // Force fetch blob and download — better control and filename
     try {
       const resp = await fetch(finalUrl, { method: 'GET', mode: 'cors' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const blob = await resp.blob();
-
-      // If the response contains a filename in headers (content-disposition), we could parse that here
-      // but for simplicity we use derived filename above.
-
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = filename;
-      // append and click to ensure compatibility
       document.body.appendChild(a);
       a.click();
       a.remove();
-      // cleanup
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.warn('Fetch->blob download failed, falling back to opening the file:', err);
-      // Fallback: try to open in new tab (user can right-click save)
       try {
         window.open(finalUrl, '_blank', 'noopener,noreferrer');
       } catch {

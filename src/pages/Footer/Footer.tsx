@@ -1,8 +1,49 @@
+// Footer.jsx
 import React from 'react';
 
 const Footer = () => {
     const logoSrc = "https://res.cloudinary.com/dqkczdjjs/image/upload/v1762028421/lugo_ajzpp8.png";
     const bgImageSrc = "https://res.cloudinary.com/dqkczdjjs/image/upload/v1762022684/footer_image_jvdr23.jpg";
+
+    // Dashboard click handler: uses localStorage.auth_user to determine role
+    const handleDashboardClick = (e) => {
+        e.preventDefault();
+        try {
+            const raw = localStorage.getItem('auth_user') || localStorage.getItem('user') || null;
+            if (!raw) {
+                alert('Not authenticated. Please login.');
+                return;
+            }
+            let user;
+            try {
+                user = JSON.parse(raw);
+            } catch {
+                // if stored as string (just email) or malformed, guard
+                alert('Unable to determine user role. Please login again.');
+                return;
+            }
+
+            const role = (user?.role || user?.user?.role || '').toString().toLowerCase();
+
+            if (role === 'agent') {
+                // agent dashboard
+                window.open('http://10.10.13.88:5173/dashboard/agent-properties-rentals', '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            if (role === 'admin') {
+                // admin dashboard
+                window.open('http://10.10.13.88:5173/dashboard/admin-dashboard', '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            // not admin or agent
+            alert('You are not Admin or Agent.');
+        } catch (err) {
+            console.error('dashboard click error', err);
+            alert('Could not open dashboard. Please try again.');
+        }
+    };
 
     return (
         <footer className="fixed bottom-0 left-0 w-full -z-[1000] text-white overflow-hidden shadow-2xl h-screen">
@@ -34,7 +75,16 @@ const Footer = () => {
                             <li><a href="/about" className="hover:text-teal-400 transition-colors duration-200">About Us</a></li>
                             <li><a href="/list-with-us" className="hover:text-teal-400 transition-colors duration-200">List With Us</a></li>
                             <li><a href="/contact" className="hover:text-teal-400 transition-colors duration-200">Contact</a></li>
-                            <li><a href="https://ricoholder-dashboard.netlify.app/admin-dashboard" className="hover:text-teal-400 transition-colors duration-200">Dashboard</a></li>
+                            <li>
+                                <a
+                                    href="#dashboard"
+                                    onClick={handleDashboardClick}
+                                    className="hover:text-teal-400 transition-colors duration-200 cursor-pointer"
+                                >
+                                    Dashboard
+                                </a>
+                            </li>
+                            {/* <li><a href="https://ricoholder-dashboard.netlify.app/admin-dashboard" className="hover:text-teal-400 transition-colors duration-200">Legacy Dashboard</a></li> */}
                         </ul>
                     </div>
 
