@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import LocationCreateProperty from './LocationCreateProperty';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 const splitCommaSeparated = (value) => {
   if (!value) return [];
@@ -253,14 +254,20 @@ const CreatePropertySales = () => {
           setMediaError('At least one property image is required by the server.');
           toast.error('Server requires at least one property image.');
         } else {
-          toast.error(`Failed to create property: ${message}`);
+          Swal.fire({ title: 'Error', text: message, icon: 'error' });
         }
         setSubmitting(false);
         return;
       }
 
       console.log('Created property response:', body);
-      toast.success('Property created successfully.');
+        Swal.fire({
+          title: 'Success!',
+          text: 'Property created successfully.',
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500
+        })
       
 
       // reset UI (keep location)

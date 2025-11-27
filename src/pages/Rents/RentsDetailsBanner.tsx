@@ -13,6 +13,7 @@ import {
   FaRegCopy,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const LOCAL_PREVIEW = "/mnt/data/ff015d0f-3872-4d4d-a90f-8ac7502627ac.png";
 
@@ -133,12 +134,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
       if (!res.ok) {
         console.error("Booking POST failed:", data);
+        Swal.fire({ icon: "error", title: "Booking failed", text: data?.detail || res.statusText });
         toast.error(data?.detail || res.statusText || "Booking failed");
         setLoading(false);
         return;
       }
 
       console.log("Booking created successfully:", data);
+      Swal.fire({
+        title: "Booking created successfully!",
+        icon: "success",
+      })
       setFormData({
         name: "",
         email: "",

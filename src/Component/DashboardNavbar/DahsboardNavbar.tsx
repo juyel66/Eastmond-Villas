@@ -1,11 +1,15 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { CgProfile } from "react-icons/cg";
 import { IoSettingsOutline } from "react-icons/io5";
-import { MdOutlineNotifications, MdSearch } from "react-icons/md";
+import { MdSearch } from "react-icons/md";
 import { useLocation } from "react-router-dom";
 
 import { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
+import NotificationBell from "../Notifications/NotificationBell";
+
+// <-- ADDED: Notification bell component
+
 
 const Navbar = () => {
   const { pathname } = useLocation();
@@ -19,10 +23,10 @@ const Navbar = () => {
   const displayRole = currentUser?.role || "No Role";
 
   // ------------------------------
-  // DROPDOWN
+  // DROPDOWN (for avatar / profile)
   // ------------------------------
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
@@ -63,16 +67,14 @@ const Navbar = () => {
               className="relative text-4xl mb-2 cursor-pointer"
               onClick={toggleDropdown}
             >
-              <img
-                className="h-12 w-12"
-                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761005969/Button_2_hee1qa.png"
-                alt="avatar"
-              />
+             
             </div>
 
-            {/* ------------------------------
-                SHOW REAL USER NAME + ROLE
-            ------------------------------ */}
+              <div className="ml-4 mr-2 lg:flex md:flex hidden">
+            <NotificationBell />
+          </div>
+
+           
             <div>
               <p className="text-xl font-semibold">{displayName}</p>
               <p className="text-gray-500">{displayRole}</p>
@@ -82,8 +84,11 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             <CgProfile className="text-xl lg:flex md:flex hidden text-white" />
           </div>
+
           <IoSettingsOutline className="text-xl ml-2 text-white lg:flex md:flex hidden" />
-          <MdOutlineNotifications className="text-xl ml-2 lg:flex md:flex hidden text-white" />
+
+         
+        
         </div>
       </div>
     </div>

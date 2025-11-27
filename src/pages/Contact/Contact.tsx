@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Swal from "sweetalert2";
 
 // Define types for cleaner React code
 interface FormData {
@@ -59,6 +60,12 @@ const Contact = () => {
         phone: "",
         message: "",
       });
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Message sent successfully!",
+      })
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -69,6 +76,9 @@ const Contact = () => {
       }, 4000);
     }
   };
+  
+
+
 
   return (
     <section className="bg-white py-16 md:py-24 lg:py-28 container mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,6 +174,7 @@ const Contact = () => {
                 <p className="text-center text-green-600 font-semibold bg-green-50 p-3 rounded-lg">
                   Message sent successfully!
                 </p>
+                
               )}
 
               {error && (

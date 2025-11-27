@@ -58,6 +58,7 @@ import BookingManagement from "./Component/Admin/AdminDashboard/BookingManagemen
 import UserManagement from "./Component/Admin/AdminDashboard/UserManagement";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import AllContact from "./pages/Contact/AllContact";
+import NotificationsPage from "./Component/Notifications/NotificationsPage";
 
 
 // --- Protected Route Wrapper ---
@@ -83,6 +84,7 @@ export const router = createBrowserRouter([
       { path: "/contact", element: <Contact /> },
       { path: "/property/:id", element: <RentsDetails /> }, // this field use sale and rent 
       { path: "/salesdetails", element: <SalesDetails /> },
+      
     ],
   },
 
@@ -91,6 +93,8 @@ export const router = createBrowserRouter([
   { path: "/register", element: <SignUpPage /> },
   { path: "/signin", element: <SignIn /> },
   { path: "/signup", element: <SignUp /> },
+  
+ 
 
   // --- Dashboard Routes ---
   {
@@ -120,6 +124,7 @@ export const router = createBrowserRouter([
             { path: "admin-faqs", element: <FAQs /> },
             { path: "admin-profile", element: <Profile /> },
              {path: "admin-allContact", element: <AllContact />},
+             { path: "notifications", element: <NotificationsPage /> },
           
         ],
       },
