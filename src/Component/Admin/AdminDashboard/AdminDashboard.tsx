@@ -74,11 +74,45 @@ const AdminDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   // UI toggles
+  // showAll toggles now control "expanded mode" — initial is collapsed (false)
   const [showAllProperties, setShowAllProperties] = useState(false);
-  // show all activities by default so user sees all items
-  const [showAllActivity, setShowAllActivity] = useState(true);
-  const handleViewAllProperties = () => setShowAllProperties((v) => !v);
-  const handleViewAllActivity = () => setShowAllActivity((v) => !v);
+  const [showAllActivity, setShowAllActivity] = useState(false);
+
+  // visible counts for progressive load
+  const [propertiesVisibleCount, setPropertiesVisibleCount] = useState(5); // initial small slice
+  const [activityVisibleCount, setActivityVisibleCount] = useState(4); // initial small slice
+
+  const handleViewAllProperties = () => {
+    // toggle: if currently collapsed -> expand to up to 20; if expanded -> collapse
+    if (!showAllProperties) {
+      setShowAllProperties(true);
+      setPropertiesVisibleCount((prev, total = null) => {
+        // set to 20 or total (we'll compute total in effect when rendering)
+        return 20;
+      });
+    } else {
+      // collapse
+      setShowAllProperties(false);
+      setPropertiesVisibleCount(5);
+    }
+  };
+  const handleViewAllActivity = () => {
+    if (!showAllActivity) {
+      setShowAllActivity(true);
+      setActivityVisibleCount(20);
+    } else {
+      setShowAllActivity(false);
+      setActivityVisibleCount(4);
+    }
+  };
+
+  // progressive "view more" handlers (add +10)
+  const loadMoreProperties = (total) => {
+    setPropertiesVisibleCount((cur) => Math.min(total, cur + 10));
+  };
+  const loadMoreActivity = (total) => {
+    setActivityVisibleCount((cur) => Math.min(total, cur + 10));
+  };
 
   // Redux state
   const properties = useSelector((s: RootState) => s.propertyBooking.properties) ?? [];
@@ -184,10 +218,43 @@ const AdminDashboard = () => {
     return copy;
   }, [normalizedProperties]);
 
-  const recentToShow = showAllProperties ? recentProperties : recentProperties.slice(0, 5);
+  // ensure propertiesVisibleCount does not exceed total and, when "View All" is toggled on, default to 20
+  useEffect(() => {
+    const total = recentProperties.length;
+    if (showAllProperties) {
+      setPropertiesVisibleCount((cur) => Math.min(Math.max(cur, 20), total));
+    } else {
+      // collapsed -> keep initial 5
+      setPropertiesVisibleCount(5);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAllProperties, normalizedProperties.length]);
 
-  // when showAllActivity is true we show ALL items; otherwise show first 4
-  const recentActivityToShow = showAllActivity ? normalizedActivity : normalizedActivity.slice(0, 4);
+  const recentToShow = recentProperties.slice(0, Math.min(propertiesVisibleCount, recentProperties.length));
+
+  // activity
+  const recentActivity = useMemo(() => {
+    const copy = [...normalizedActivity];
+    // sort by time if available (newest first)
+    copy.sort((a, b) => {
+      const at = a.time ? Date.parse(a.time) || 0 : 0;
+      const bt = b.time ? Date.parse(b.time) || 0 : 0;
+      return bt - at;
+    });
+    return copy;
+  }, [normalizedActivity]);
+
+  useEffect(() => {
+    const total = recentActivity.length;
+    if (showAllActivity) {
+      setActivityVisibleCount((cur) => Math.min(Math.max(cur, 20), total));
+    } else {
+      setActivityVisibleCount(4);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAllActivity, normalizedActivity.length]);
+
+  const recentActivityToShow = recentActivity.slice(0, Math.min(activityVisibleCount, recentActivity.length));
 
   // helper classes
   const getPropertyStatusClass = (status) => {
@@ -273,9 +340,21 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Recent Properties</h2>
             {normalizedProperties.length > 5 && (
-              <Button onClick={handleViewAllProperties} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
-                {showAllProperties ? "View Less" : "View All"}
-              </Button>
+              <>
+                {!showAllProperties ? (
+                  <Button onClick={handleViewAllProperties} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
+                    View All
+                  </Button>
+                ) : propertiesVisibleCount < normalizedProperties.length ? (
+                  <Button onClick={() => loadMoreProperties(normalizedProperties.length)} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
+                    View more
+                  </Button>
+                ) : (
+                  <Button onClick={handleViewAllProperties} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
+                    View Less
+                  </Button>
+                )}
+              </>
             )}
           </div>
 
@@ -313,9 +392,21 @@ const AdminDashboard = () => {
               <p className="text-gray-500 text-sm">Latest updates from your team</p>
             </div>
             {normalizedActivity.length > 4 && (
-              <Button onClick={handleViewAllActivity} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
-                {showAllActivity ? "View Less" : "View All"}
-              </Button>
+              <>
+                {!showAllActivity ? (
+                  <Button onClick={handleViewAllActivity} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
+                    View All
+                  </Button>
+                ) : activityVisibleCount < normalizedActivity.length ? (
+                  <Button onClick={() => loadMoreActivity(normalizedActivity.length)} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
+                    View more
+                  </Button>
+                ) : (
+                  <Button onClick={handleViewAllActivity} variant="outline" className="text-gray-600 border-gray-400 hover:bg-blue-50">
+                    View Less
+                  </Button>
+                )}
+              </>
             )}
           </div>
 
@@ -328,21 +419,14 @@ const AdminDashboard = () => {
                   <div className="flex items-start gap-3 flex-grow">
                     <div className={`w-2.5 h-2.5 rounded-full mt-2 ${activity.status.toLowerCase() === "live" ? "bg-teal-500" : activity.status.toLowerCase() === "pending" ? "bg-orange-500" : "bg-blue-500"}`} />
                     <div>
-                      {/* main label */}
-                      {/* <h3 className="text-base font-medium text-gray-800">{activity.type}</h3> */}
-
                       {/* property / subject */}
                       <p className="text-base font-medium text-gray-800">{activity.details}</p>
-
-                      {/* show details (if present) */}
-                      {/* {activity.details ? <p className="text-gray-600 text-xs mt-2 break-words">{activity.details}</p> : null} */}
 
                       {/* By <agent> on first line, then Last activity (human-friendly) on next line */}
                       <p className="text-gray-500 text-xs mt-1">
                         By <span className="font-medium text-gray-700">{activity.propertyName}</span>
                       </p>
 
-                      {/* <-- CHANGED: use timeAgo helper to show human-friendly relative time */}
                       <p className="text-gray-400 text-xs mt-0.5">Last activity: {timeAgo(activity.time)}</p>
                     </div>
                   </div>

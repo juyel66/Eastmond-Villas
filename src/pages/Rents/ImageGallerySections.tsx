@@ -433,6 +433,30 @@ const loadImageWithFallback = (src) =>
     img.src = src || LOCAL_FALLBACK;
   });
 
+// center-crop draw: draw image onto canvas sized cw x ch, cropping to cover
+const drawImageCoverToCanvas = (imgEl, canvas, targetW, targetH) => {
+  const ctx = canvas.getContext("2d");
+  const iw = imgEl.naturalWidth || imgEl.width;
+  const ih = imgEl.naturalHeight || imgEl.height;
+
+  // Compute scale to cover target
+  const scale = Math.max(targetW / iw, targetH / ih);
+  const sw = targetW / scale;
+  const sh = targetH / scale;
+
+  // Source top-left to crop (centered)
+  const sx = Math.max(0, Math.floor((iw - sw) / 2));
+  const sy = Math.max(0, Math.floor((ih - sh) / 2));
+
+  // Make canvas sized to target pixels for higher quality
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  // Clear and draw
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(imgEl, sx, sy, sw, sh, 0, 0, targetW, targetH);
+};
+
 // --------- MAIN COMPONENT ----------
 const ImageGallerySection = ({ villa }) => {
   if (!villa)
@@ -537,7 +561,7 @@ const ImageGallerySection = ({ villa }) => {
   const [showAll, setShowAll] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // -------- PDF Export (UPDATED to 3x3 per page with design)
+  // -------- PDF Export (UPDATED to 3x4 per page with no serial numbers and cover crop)
   const handleDownloadPDF = async () => {
     try {
       const pdf = new jsPDF("p", "mm", "a4"); // portrait A4
@@ -546,53 +570,47 @@ const ImageGallerySection = ({ villa }) => {
       const margin = 12; // mm
       const gap = 6; // mm between images
       const cols = 3;
-      const rows = 3;
-      const perPage = cols * rows;
+      const rows = 4;
+      const perPage = cols * rows; // 12 images per page
 
-      // Compute image size: available width = pageWidth - 2*margin - (cols-1)*gap
+      // Reserve header space
+      const headerHeight = 26; // mm (title + divider)
+      const footerHeight = 12; // page number area
       const availableWidth = pageWidth - margin * 2 - gap * (cols - 1);
-      const imgW = Number((availableWidth / cols).toFixed(2));
-      const imgH = imgW; // square presentation for consistency
+      const availableHeight = pageHeight - margin * 2 - headerHeight - footerHeight - gap * (rows - 1);
 
-      // Header Y start
-      const headerY = 18;
-      const yStart = headerY + 10; // after header
-      const captionHeight = 6;
+      // image box size in mm
+      const imgW = Number((availableWidth / cols).toFixed(2));
+      const imgH = Number((availableHeight / rows).toFixed(2));
+
+      const yStart = margin + headerHeight;
 
       // Build list of image URLs (fall back to placeholder)
       const imgUrls = media_images.map((m) => m.url || LOCAL_FALLBACK);
+      if (imgUrls.length === 0) imgUrls.push(LOCAL_FALLBACK);
 
-      if (imgUrls.length === 0) {
-        // If there are no media images, include a single fallback image
-        imgUrls.push(LOCAL_FALLBACK);
-      }
+      const totalPages = Math.ceil(imgUrls.length / perPage);
 
       // helper to draw header on the current page
-      const drawHeader = (pageIndex, totalPages) => {
+      const drawHeader = (pageIndex) => {
         pdf.setFontSize(18);
         pdf.setTextColor(20, 40, 40);
         const title = villaName || "Property Gallery";
-        pdf.text(title, pageWidth / 2, headerY, { align: "center" });
+        pdf.text(title, pageWidth / 2, margin + 8, { align: "center" });
         if (villa.price) {
           pdf.setFontSize(11);
           const priceText = typeof villa.price === "number" ? `Price: US$ ${villa.price.toLocaleString()}` : `Price: ${villa.price}`;
-          pdf.text(priceText, pageWidth / 2, headerY + 6, { align: "center" });
+          pdf.text(priceText, pageWidth / 2, margin + 14, { align: "center" });
         }
         // small divider
         pdf.setDrawColor(200);
         pdf.setLineWidth(0.4);
-        pdf.line(margin, headerY + 8, pageWidth - margin, headerY + 8);
+        pdf.line(margin, margin + 18, pageWidth - margin, margin + 18);
       };
 
-      // preload all images (but to avoid memory hog, load per page chunk)
-      const totalPages = Math.ceil(imgUrls.length / perPage);
-
-      let imgIndex = 0;
       for (let p = 0; p < totalPages; p++) {
-        // draw header
-        drawHeader(p + 1, totalPages);
+        drawHeader(p + 1);
 
-        // for each cell in the page (3x3)
         for (let i = 0; i < perPage; i++) {
           const currentIndex = p * perPage + i;
           if (currentIndex >= imgUrls.length) break;
@@ -606,51 +624,44 @@ const ImageGallerySection = ({ villa }) => {
           // load image (with fallback)
           const imgEl = await loadImageWithFallback(imgUrls[currentIndex]);
           if (!imgEl) {
-            // if nothing loaded, skip drawing this image
+            // skip if cannot load even fallback
             continue;
           }
 
-          // draw into canvas to get a data URL
+          // create canvas sized for good quality: choose pixels proportional to mm (approx 3.78 px/mm)
+          const pxPerMm = 3.78; // conservative estimate
+          const canvasWpx = Math.max(600, Math.round(imgW * pxPerMm)); // ensure decent resolution
+          const canvasHpx = Math.max(800, Math.round(imgH * pxPerMm));
+
           const canvas = document.createElement("canvas");
-          const cw = imgEl.naturalWidth || imgEl.width || 800;
-          const ch = imgEl.naturalHeight || imgEl.height || 600;
+          // We'll draw cover at target canvas pixel size for crispness
+          drawImageCoverToCanvas(imgEl, canvas, canvasWpx, canvasHpx);
 
-          // To preserve aspect and fill box without distortion, compute scale
-          // We'll fit inside imgW x imgH while preserving aspect ratio
-          // Canvas size should be image's native dims to preserve quality
-          canvas.width = cw;
-          canvas.height = ch;
-          const ctx = canvas.getContext("2d");
-          // draw the image centered and cover the canvas area proportionally
-          // We'll draw full image to canvas, then let jsPDF scale to imgW/imgH
-          ctx.drawImage(imgEl, 0, 0, cw, ch);
-
-          // convert to JPEG
           let imgData;
           try {
-            imgData = canvas.toDataURL("image/jpeg", 0.9);
+            imgData = canvas.toDataURL("image/jpeg", 0.92);
           } catch (err) {
-            // canvas may be tainted; try fallback URL directly
-            imgData = LOCAL_FALLBACK;
+            console.warn("Canvas toDataURL failed, using fallback image src:", err);
+            // last resort: draw fallback tiny canvas
+            const fallbackCanvas = document.createElement("canvas");
+            fallbackCanvas.width = 800;
+            fallbackCanvas.height = 600;
+            const fctx = fallbackCanvas.getContext("2d");
+            const fallbackImg = await loadImageWithFallback(LOCAL_FALLBACK);
+            if (fallbackImg) fctx.drawImage(fallbackImg, 0, 0, fallbackCanvas.width, fallbackCanvas.height);
+            imgData = fallbackCanvas.toDataURL("image/jpeg", 0.9);
           }
 
-          // Add the image (jsPDF positions and scales in mm)
+          // add image to pdf (jsPDF expects mm units)
           pdf.addImage(imgData, "JPEG", x, y, imgW, imgH);
-
-          // caption: small index label centered under the image
-          pdf.setFontSize(9);
-          pdf.setTextColor(90);
-          const captionText = `Image ${currentIndex + 1}`;
-          const captionX = x + imgW / 2;
-          const captionY = y + imgH + 4;
-          pdf.text(captionText, captionX, captionY, { align: "center" });
+          // no caption/serial number as requested
         }
 
-        // page number footer
+        // footer - page number
         pdf.setFontSize(9);
         pdf.setTextColor(120);
         const footerText = `Page ${p + 1} of ${totalPages}`;
-        pdf.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" });
+        pdf.text(footerText, pageWidth / 2, pageHeight - margin + 2, { align: "center" });
 
         if (p < totalPages - 1) pdf.addPage();
       }
@@ -659,7 +670,6 @@ const ImageGallerySection = ({ villa }) => {
       pdf.save(`${(villaName || "EV_Brochure").replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
       console.error("PDF error:", err);
-      // also attempt a simple fallback: create PDF with only the first image if something went wrong
       try {
         const fallbackPdf = new jsPDF("p", "mm", "a4");
         fallbackPdf.setFontSize(18);
