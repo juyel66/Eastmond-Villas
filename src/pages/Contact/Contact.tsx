@@ -157,11 +157,12 @@ const Contact = () => {
                 <p className="text-center text-blue-600 font-semibold">
                   Sending message...
                 </p>
+                
               )}
 
               {success && (
                 <p className="text-center text-green-600 font-semibold bg-green-50 p-3 rounded-lg">
-                  Message Sent! We will get back to you shortly.
+                  Message sent successfully!
                 </p>
               )}
 
