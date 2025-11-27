@@ -27,13 +27,13 @@ const Footer = () => {
 
             if (role === 'agent') {
                 // agent dashboard
-                window.open('http://10.10.13.88:5173/dashboard/agent-properties-rentals', '_blank', 'noopener,noreferrer');
+                window.open('http://localhost:5173/dashboard/agent-properties-rentals', '_blank', 'noopener,noreferrer');
                 return;
             }
 
             if (role === 'admin') {
                 // admin dashboard
-                window.open('http://10.10.13.88:5173/dashboard/admin-dashboard', '_blank', 'noopener,noreferrer');
+                window.open('http://localhost:5173/dashboard/admin-dashboard', '_blank', 'noopener,noreferrer');
                 return;
             }
 
