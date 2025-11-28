@@ -61,6 +61,7 @@ import AllContact from "./pages/Contact/AllContact";
 import NotificationsPage from "./Component/Notifications/NotificationsPage";
 
 
+
 // --- Protected Route Wrapper ---
 const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => <Outlet />;
 
@@ -78,12 +79,15 @@ export const router = createBrowserRouter([
       { path: "/rents", element: <Rents /> },
       { path: "/sales", element: <Sales /> },
       { path: "/list-with-us", element: <ListWithUs /> },
+      { path: "/contact", element: <Contact /> },
       { path: "/management", element: <Management /> },
       { path: "/concierge", element: <Concierge /> },
       { path: "/about", element: <About /> },
-      { path: "/contact", element: <Contact /> },
+      
       { path: "/property/:id", element: <RentsDetails /> }, // this field use sale and rent 
       { path: "/salesdetails", element: <SalesDetails /> },
+
+
       
     ],
   },
