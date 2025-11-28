@@ -1,103 +1,165 @@
 // src/pages/NotificationsPage.tsx
-import React from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  markAsRead,
-  markAllRead,
+  fetchNotifications,
+  markAsReadAsync,
   removeNotification,
-  clearNotifications,
 } from "../../features/notificationsSlice";
 import type { RootState } from "@/store";
 
-export const NotificationsPage: React.FC = () => {
+/**
+ * NotificationsPage
+ * - Loads all notifications from API list endpoint
+ * - Unseen items are highlighted (light green) + green dot
+ * - Clicking an item marks it as read (optimistic UI) and fires markAsReadAsync
+ */
+
+const NotificationsPage: React.FC = () => {
   const dispatch = useDispatch();
   const notifications = useSelector((s: RootState) => s.notifications.items);
+  const unreadCount = useSelector((s: RootState) => s.notifications.unreadCount);
 
-  if (!notifications) return null;
+  // Keep a local set of IDs we've optimistically marked read (so UI updates instantly)
+  const [optimisticRead, setOptimisticRead] = useState<Set<string>>(new Set());
+
+  // Fetch notifications
+  useEffect(() => {
+    dispatch(fetchNotifications() as any);
+  }, [dispatch]);
+
+  // Helper: format ISO -> friendly
+  const fmtDate = (iso?: string) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString();
+    } catch {
+      return iso;
+    }
+  };
+
+  // Click handler: mark as read (optimistic + async)
+  const handleClick = (id: string) => {
+    // optimistic: add to local set so UI immediately shows as read (green removed)
+    setOptimisticRead((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+    // fire server-side mark-as-read (slice thunk)
+    dispatch(markAsReadAsync({ id }) as any);
+  };
+
+  // Remove notification (local)
+  const handleRemove = (id: string) => {
+    dispatch(removeNotification(id) as any);
+    // also remove from optimistic set in case it was there
+    setOptimisticRead((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // Mark all read (iterate)
+  const markAllRead = async () => {
+    const unread = notifications.filter((n) => !n.read);
+    for (const n of unread) {
+      // optimistic: add all to set
+      setOptimisticRead((prev) => {
+        const next = new Set(prev);
+        next.add(n.id);
+        return next;
+      });
+      // await each call to avoid flooding
+      // eslint-disable-next-line no-await-in-loop
+      await dispatch(markAsReadAsync({ id: n.id }) as any);
+    }
+  };
+
+  const clearAll = () => {
+    for (const n of notifications) {
+      dispatch(removeNotification(n.id) as any);
+    }
+    setOptimisticRead(new Set());
+  };
+
+  // List sorted newest first (if not already)
+  const sorted = useMemo(
+    () =>
+      [...notifications].sort((a, b) => {
+        const aa = a.created_at ?? "";
+        const bb = b.created_at ?? "";
+        return bb.localeCompare(aa);
+      }),
+    [notifications]
+  );
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-        <h1 className="text-2xl font-semibold">Notifications</h1>
-        <div className="flex flex-wrap gap-2">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Notifications</h1>
+          <p className="text-sm text-gray-500">{unreadCount} unread</p>
+        </div>
+
+        <div className="flex gap-2">
           <button
-            onClick={() => dispatch(markAllRead())}
-            className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            aria-label="Mark all notifications as read"
+            onClick={markAllRead}
+            className="px-3 py-1 border rounded text-sm hover:bg-gray-50"
           >
             Mark all read
           </button>
           <button
-            onClick={() => dispatch(clearNotifications())}
-            className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-300"
-            aria-label="Clear all notifications"
+            onClick={clearAll}
+            className="px-3 py-1 border rounded text-sm hover:bg-gray-50"
           >
             Clear all
           </button>
         </div>
       </div>
 
-      {notifications.length === 0 ? (
-        <p className="text-gray-500">You have no notifications.</p>
+      {sorted.length === 0 ? (
+        <div className="text-gray-500">No notifications available.</div>
       ) : (
         <div className="space-y-3">
-          {notifications.map((n) => (
-            <article
-              key={n.id}
-              className={`w-full border rounded-lg p-4 shadow-sm transition ${
-                !n.read ? "bg-gray-50" : "bg-white"
-              }`}
-              role="listitem"
-              aria-live={!n.read ? "polite" : "off"}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                {/* Content area */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">
-                        {n.title}
-                      </h3>
-                      <p
-                        className="text-sm text-gray-700 mt-1 break-words"
-                        style={{ wordBreak: "break-word" }}
-                      >
-                        {/* allow longer messages but prevent overflow */}
-                        {n.body}
-                      </p>
+          {sorted.map((n) => {
+            const isRead = Boolean(n.read) || optimisticRead.has(n.id);
+            const itemClass = isRead ? "bg-white" : "bg-green-50";
+            return (
+              <div
+                key={n.id}
+                className={`${itemClass} p-4 border rounded-lg cursor-pointer hover:shadow-sm transition`}
+              >
+                <div className="flex justify-between items-start">
+                  <div
+                    className="flex-1"
+                    // clicking the content marks as read (optimistic)
+                    onClick={() => handleClick(n.id)}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="text-base font-medium">{n.title}</div>
+                      {!isRead && (
+                        <span className="ml-2 inline-block w-3 h-3 bg-green-600 rounded-full" />
+                      )}
                     </div>
+                    <div className="text-sm text-gray-700 mt-1">{n.body}</div>
+                    <div className="text-xs text-gray-400 mt-2">{fmtDate(n.created_at)}</div>
                   </div>
 
-                  <div className="mt-3 sm:mt-2 text-xs text-gray-400">
-                    {n.created_at}
-                  </div>
-                </div>
-
-                {/* Action area */}
-                <div className="flex-shrink-0">
-                  <div className="flex items-center sm:flex-col gap-2">
-                    {!n.read ? (
-                      <button
-                        className="text-sm px-3 py-1 border rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        onClick={() => dispatch(markAsRead(n.id))}
-                        aria-label={`Mark notification ${n.id} as read`}
-                      >
-                        Mark read
-                      </button>
-                    ) : (
-                      <button
-                        className="text-sm px-3 py-1 border rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-300"
-                        onClick={() => dispatch(removeNotification(n.id))}
-                        aria-label={`Remove notification ${n.id}`}
-                      >
-                        Remove
-                      </button>
-                    )}
+                  <div className="ml-4 flex flex-col items-end space-y-2">
+                    <button
+                      onClick={() => handleRemove(n.id)}
+                      className="text-sm px-2 py-1 border rounded hover:bg-gray-50"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               </div>
-            </article>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
