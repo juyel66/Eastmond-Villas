@@ -233,11 +233,11 @@ const Rents: React.FC = () => {
 
   return (
     <div
-      className="relative bg-cover bg-center bg-no-repeat"
+      className="relative bg-cover bg-center bg-no-repeat  "
       style={{
         backgroundImage:
           "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
-        marginBottom: '620px',
+        marginBottom: '1000px',
       }}
     >
       {/* pass master data into FilterSystem and receive filtered results via onResults */}
@@ -307,6 +307,8 @@ const Rents: React.FC = () => {
         totalPages={totalPages}
         onPageChange={(p) => setCurrentPage(p)}
       />
+
+      
     </div>
   );
 };
