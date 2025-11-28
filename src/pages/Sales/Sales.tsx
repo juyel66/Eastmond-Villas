@@ -229,7 +229,7 @@ const Sales: React.FC = () => {
       style={{
         backgroundImage:
           "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
-        marginBottom: '620px',
+        marginBottom: '1000px',
       }}
     >
       <div className="container mx-auto mb-10">
