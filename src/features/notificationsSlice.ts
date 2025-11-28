@@ -2,36 +2,104 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-/**
- * Notification shape
- */
+/* -----------------------------------
+   Notification Shape
+----------------------------------- */
 export interface Notification {
   id: string;
   type: string;
-  title?: string;
-  body?: string;
-  data?: any;
+  title: string;
+  body: string;
+  data: any;
   read: boolean;
   created_at?: string;
 }
 
+/* -----------------------------------
+   State
+----------------------------------- */
 interface NotificationsState {
   items: Notification[];
   unreadCount: number;
 }
 
-/**
- * In-memory only initial state
- */
 const initialState: NotificationsState = {
   items: [],
   unreadCount: 0,
 };
 
+/* -----------------------------------
+   Helpers
+----------------------------------- */
+
 /**
- * Async thunk: mark a notification as read on the server.
- * Expects server endpoint: POST /api/notifications/{id}/mark-read/
- * Adjust endpoint as needed for your backend.
+ * Decide whether an id looks like a "real" server id.
+ * - Accepts: numeric strings ("1725"), UUIDs (hex-4-4-4-12), or typical server ids.
+ * - Rejects: synthetic ids like "summary-12345", "notif-<ts>-<rand>"
+ */
+const isServerId = (id: string) => {
+  if (!id) return false;
+  // numeric id
+  if (/^\d+$/.test(id)) return true;
+  // UUID v4-ish
+  if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) return true;
+  // other server-style patterns you may want to accept — add here if needed
+  return false;
+};
+
+/* -----------------------------------
+   Fetch All Notifications
+----------------------------------- */
+export const fetchNotifications = createAsyncThunk<
+  Notification[],
+  void,
+  { rejectValue: { message: string } }
+>("notifications/fetchNotifications", async (_, { rejectWithValue }) => {
+  try {
+    const token = localStorage.getItem("auth_access") || "";
+
+    const res = await fetch(
+      "https://api.eastmondvillas.com/api/notifications/list/",
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      return rejectWithValue({ message: text || "Failed to fetch notifications" });
+    }
+
+    const data = await res.json();
+
+    // map API → Notification shape
+    const mapped = (data || []).map((item: any) => ({
+      id: String(item.id),
+      type: item.title ?? "notification",
+      title: item.title ?? "Notification",
+      body: item.data?.message ?? item.message ?? "",
+      data: item.data ?? {},
+      read: !!item.is_read,
+      created_at: item.created_at,
+    }));
+
+    return mapped;
+  } catch (err: any) {
+    return rejectWithValue({ message: err.message || "Network error" });
+  }
+});
+
+/* -----------------------------------
+   Mark as Read Async (with guard)
+----------------------------------- */
+/**
+ * markAsReadAsync now checks id pattern.
+ * - If id appears to be a server id -> POST to server endpoint.
+ * - If id is synthetic (summary, temp id) -> resolve immediately and update local state only.
+ *
+ * Adjust endpoint path if your backend uses different URL.
  */
 export const markAsReadAsync = createAsyncThunk<
   { id: string },
@@ -39,18 +107,31 @@ export const markAsReadAsync = createAsyncThunk<
   { rejectValue: { message: string } }
 >("notifications/markAsReadAsync", async ({ id }, { rejectWithValue }) => {
   try {
+    // if id is not a server id, skip HTTP call (it's a summary or synthetic id)
+    if (!isServerId(id)) {
+      // simply return success; reducer will handle marking local item read (if exists)
+      return { id };
+    }
+
     const token = localStorage.getItem("auth_access") || "";
-    const res = await fetch(`/api/notifications/${id}/mark-read/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    });
+
+    // Call actual backend endpoint for marking read
+    // Confirm your backend path; current convention used earlier:
+    // POST https://api.eastmondvillas.com/api/notifications/{id}/mark-read/
+    const res = await fetch(
+      `https://api.eastmondvillas.com/api/notifications/${id}/mark-read/`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (!res.ok) {
-      const text = await res.text();
-      return rejectWithValue({ message: text || "Failed to mark read" });
+      const txt = await res.text();
+      return rejectWithValue({ message: txt || "Failed to mark notification read" });
     }
 
     return { id };
@@ -59,6 +140,9 @@ export const markAsReadAsync = createAsyncThunk<
   }
 });
 
+/* -----------------------------------
+   Slice
+----------------------------------- */
 const slice = createSlice({
   name: "notifications",
   initialState,
@@ -67,12 +151,23 @@ const slice = createSlice({
       const exists = state.items.find((i) => i.id === action.payload.id);
       if (!exists) {
         state.items.unshift(action.payload);
-        if (!action.payload.read) state.unreadCount += 1;
       } else {
         Object.assign(exists, action.payload);
       }
+      state.unreadCount = state.items.filter((i) => !i.read).length;
     },
-    markAsRead(state, action: PayloadAction<string>) {
+
+    setUnreadCount(state, action: PayloadAction<number>) {
+      state.unreadCount = action.payload;
+    },
+
+    removeNotification(state, action: PayloadAction<string>) {
+      state.items = state.items.filter((i) => i.id !== action.payload);
+      state.unreadCount = state.items.filter((i) => !i.read).length;
+    },
+
+    // local synchronous mark-as-read (useful for optimistic updates)
+    markAsReadLocal(state, action: PayloadAction<string>) {
       const id = action.payload;
       const item = state.items.find((i) => i.id === id);
       if (item && !item.read) {
@@ -80,50 +175,41 @@ const slice = createSlice({
         state.unreadCount = Math.max(0, state.unreadCount - 1);
       }
     },
-    markAllRead(state) {
-      state.items.forEach((i) => (i.read = true));
-      state.unreadCount = 0;
-    },
-    setNotifications(state, action: PayloadAction<Notification[]>) {
-      state.items = [...action.payload].sort((a, b) =>
-        (b.created_at || "").localeCompare(a.created_at || "")
-      );
-      state.unreadCount = state.items.filter((i) => !i.read).length;
-    },
-    removeNotification(state, action: PayloadAction<string>) {
-      state.items = state.items.filter((i) => i.id !== action.payload);
-      state.unreadCount = state.items.filter((i) => !i.read).length;
-    },
-    clearNotifications(state) {
+
+    clearAll(state) {
       state.items = [];
       state.unreadCount = 0;
     },
-    // NEW: set unread count directly (for unseen_notifications summary messages)
-    setUnreadCount(state, action: PayloadAction<number>) {
-      state.unreadCount = action.payload;
-    },
   },
   extraReducers: (builder) => {
+    builder.addCase(fetchNotifications.fulfilled, (state, action) => {
+      state.items = action.payload;
+      state.unreadCount = action.payload.filter((i) => !i.read).length;
+    });
+
     builder.addCase(markAsReadAsync.fulfilled, (state, action) => {
       const id = action.payload.id;
+      // When thunk succeeds (or was a synthetic id), mark local item read if present
       const item = state.items.find((i) => i.id === id);
       if (item && !item.read) {
         item.read = true;
-        state.unreadCount = Math.max(0, state.unreadCount - 1);
       }
+      state.unreadCount = state.items.filter((i) => !i.read).length;
     });
-    // Optionally handle pending/rejected for UI feedback
+
+    // optional: handle rejected to rollback optimistic UI if you implement optimistic updates
+    builder.addCase(markAsReadAsync.rejected, (state) => {
+      // no-op here; UI could show an error toast instead
+    });
   },
 });
 
 export const {
   addNotification,
-  markAsRead,
-  markAllRead,
-  setNotifications,
-  removeNotification,
-  clearNotifications,
   setUnreadCount,
+  removeNotification,
+  markAsReadLocal,
+  clearAll,
 } = slice.actions;
 
 export default slice.reducer;
