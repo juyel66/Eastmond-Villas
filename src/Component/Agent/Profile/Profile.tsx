@@ -731,7 +731,8 @@ const Profile = () => {
               handlePasswordChange({ currentPassword, newPassword })
             }
           />
-        )}
+        )} 
+             
 
         <EditProfileModal
           isOpen={isModalOpen}
