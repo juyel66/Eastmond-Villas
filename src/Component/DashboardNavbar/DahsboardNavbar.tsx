@@ -1,94 +1,93 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { CgProfile } from "react-icons/cg";
 import { IoSettingsOutline } from "react-icons/io5";
-import { MdSearch } from "react-icons/md";
 import { useLocation } from "react-router-dom";
-
 import { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import NotificationBell from "../Notifications/NotificationBell";
 
-// <-- ADDED: Notification bell component
+const MOBILE_LOGO =
+  "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760303130/hd_svg_logo_1_rfsh4e.png";
 
-
-const Navbar = () => {
+const Navbar: React.FC = () => {
   const { pathname } = useLocation();
 
-  // ------------------------------
-  // GET CURRENT USER FROM REDUX
-  // ------------------------------
+  // PAGE TITLE
+  const segments = pathname.split("/").filter(Boolean);
+  const last = segments[segments.length - 1] || "dashboard";
+
+  const formatName = (str: string) =>
+    str
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  const pageName = formatName(last);
+
+  // CURRENT USER
   const currentUser = useSelector((state: any) => state?.auth?.user);
+  const username = currentUser?.name || "User";
+  const userRole = currentUser?.role || "No Role";
 
-  const displayName = currentUser?.name || "Unknown User";
-  const displayRole = currentUser?.role || "No Role";
-
-  // ------------------------------
-  // DROPDOWN (for avatar / profile)
-  // ------------------------------
+  // DROPDOWN HANDLER
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const check = (e: any) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
       }
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", check);
+    return () => document.removeEventListener("mousedown", check);
   }, []);
-
-  // ------------------------------
 
   return (
     <div>
       <div className="navbar p-0 border-b-2">
-        <div className="navbar-start">
+
+        {/* LEFT SIDE */}
+        <div className="navbar-start flex items-center gap-3">
+
+          {/* Sidebar trigger (mobile only) */}
           <div className="lg:hidden">
             <SidebarTrigger />
           </div>
 
-          <div className="relative w-full">
-            <MdSearch className="absolute left-3 top-1/2 w-7 h-7 transform -translate-y-1/2 text-gray-400 text-lg" />
-            <input
-              placeholder="Search properties, agents, or listings..."
-              type="text"
-              className="w-full h-10 pl-10 pr-5 rounded-[10px] border-2 border-gray-300"
-            />
+          {/* MOBILE LOGO */}
+          <img
+            src={MOBILE_LOGO}
+            alt="mobile-logo"
+            className="h-10 w-auto block md:hidden"
+          />
+
+          {/* PAGE TITLE (desktop only) */}
+          <div className="ml-3 hidden md:block">
+            <p className="text-black">
+              Pages <span className="text-black"> / {pageName}</span>
+            </p>
+            <p className="text-xl text-black font-semibold">{pageName}</p>
           </div>
         </div>
 
-        <div className="navbar-end">
-          <div className="flex items-center gap-4 pb-2 pt-2" ref={dropdownRef}>
-            <div
-              className="relative text-4xl mb-2 cursor-pointer"
-              onClick={toggleDropdown}
-            >
-             
-            </div>
+        {/* RIGHT SIDE */}
+        <div className="navbar-end flex items-center gap-4 pr-4" ref={dropdownRef}>
+          
+          {/* Notification Bell (all devices) */}
+          <NotificationBell />
 
-              <div className="ml-4 mr-2 lg:flex md:flex hidden">
-            <NotificationBell />
+          {/* USER INFO — Name ABOVE Role */}
+          <div className="flex flex-col text-left">
+            <p className="text-lg font-semibold">{username}</p>
+            <p className="text-gray-500 text-sm">{userRole}</p>
           </div>
 
-           
-            <div>
-              <p className="text-xl font-semibold">{displayName}</p>
-              <p className="text-gray-500">{displayRole}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <CgProfile className="text-xl lg:flex md:flex hidden text-white" />
-          </div>
-
-          <IoSettingsOutline className="text-xl ml-2 text-white lg:flex md:flex hidden" />
-
-         
-        
+          {/* Profile Icon + Settings (desktop only) */}
+          <CgProfile className="text-xl text-white hidden md:flex" />
+          <IoSettingsOutline className="text-xl ml-2 text-white hidden md:flex" />
         </div>
       </div>
     </div>
