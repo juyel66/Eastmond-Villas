@@ -21,6 +21,8 @@ const Analytics = () => {
   const [selectedRange, setSelectedRange] = useState('Last 7 Days');
   const ANALYTICS_URL = `${import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com'}/villas/analytics/`;
 
+  
+
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [apiData, setApiData] = useState(null);
