@@ -129,6 +129,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               <div key={index} className="flex items-center space-x-1">
                 {item.icon}
                 <span className="text-gray-700">{item.value}</span>
+
               </div>
             ))}
           </div>
