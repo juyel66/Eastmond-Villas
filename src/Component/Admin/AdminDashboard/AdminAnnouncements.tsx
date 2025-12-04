@@ -46,33 +46,6 @@ const getFileUrl = (filePath: string) => {
 };
 
 /* ----------------------
-  Local fallback data (kept for first render)
-------------------------*/
-const updateData = [
-  {
-    id: 1,
-    title: "New Marketing Guidelines Released",
-    date: "2025-10-11",
-    priority: "high",
-    details:
-      "We have updated our marketing guidelines to reflect the latest brand standards. Please review the attached document for detailed information on approved messaging, logo usage, and social media best practices.",
-    attachments: [{ name: "Marketing_Guidelines_2025.pdf", size: "2.3 MB", downloadUrl: "#" }],
-  },
-  {
-    id: 2,
-    title: "Q4 Financial Report Available",
-    date: "2025-10-15",
-    priority: "medium",
-    details:
-      "The official Q4 Financial Report is now available. This document contains key performance indicators, revenue analysis, and projections for the next quarter.",
-    attachments: [
-      { name: "Q4_Financial_Report.pdf", size: "5.1 MB", downloadUrl: "#" },
-      { name: "Q4_Summary_Deck.pptx", size: "1.2 MB", downloadUrl: "#" },
-    ],
-  },
-];
-
-/* ----------------------
   Priority badge
 ------------------------*/
 const PriorityBadge = ({ priority }: { priority: string }) => {
@@ -134,8 +107,6 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (err) {
       // If fetch fails (CORS, network, HTML response, etc.), fallback to opening the URL in a new tab
-      // which allows the user to manually save the image/file.
-      // We don't change UI — just open in a new tab.
       window.open(url, "_blank", "noopener,noreferrer");
     }
   };
@@ -150,7 +121,6 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
         </div>
       </div>
 
-      {/* Keep visual exactly same — replace anchor with button that triggers download logic */}
       <button
         onClick={handleDownload}
         className="flex items-center text-sm font-medium text-white bg-teal-500 rounded-lg px-3 py-1.5 hover:bg-teal-600 transition"
@@ -278,10 +248,8 @@ const AnnouncementModal = ({
       // unwrap to get the created object or throw
       const created: any = await (action as any).unwrap();
 
-      // Modal will close; Redux already updated state via reducer (createAnnouncement.fulfilled pushes)
       // Optionally notify parent (local update), though Redux contains the new item
       if (onAddLocal) {
-        // map created to UI-friendly shape (like before)
         const mapped = {
           id: created.id,
           title: created.title,
@@ -406,7 +374,7 @@ const AnnouncementModal = ({
 ------------------------*/
 const AdminAnnouncements = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements);
+  const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements) ?? [];
   const loading = useSelector((s: RootState) => s.propertyBooking.loading);
   const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -418,14 +386,11 @@ const AdminAnnouncements = () => {
   }, []);
 
   // Map backend announcement objects to UI-shape used by UpdateCard (details/attachments)
-  const mappedAnnouncements = (announcementsFromStore && announcementsFromStore.length > 0
-    ? announcementsFromStore
-    : updateData
-  ).map((item: any) => ({
+  const mappedAnnouncements = (announcementsFromStore || []).map((item: any) => ({
     id: item.id,
     title: item.title,
-    date: item.date,
-    priority: item.priority,
+    date: item.date ?? item.created_at ?? "",
+    priority: item.priority ?? "low",
     details: item.description ?? item.details ?? "",
     created_at: item.created_at,
     updated_at: item.updated_at,
@@ -440,7 +405,6 @@ const AdminAnnouncements = () => {
   // Optional local add callback (not strictly necessary since Redux will update)
   const handleAddAnnouncementLocal = (createdMapped: any) => {
     // no-op: Redux will already have the created item in state via thunk reducer
-    // but keeping function so modal can optionally call it
   };
 
   return (
@@ -457,13 +421,39 @@ const AdminAnnouncements = () => {
           </button>
         </div>
 
-        <main>
-          {loading && <div className="text-sm text-gray-500 mb-3">Loading announcements...</div>}
+        <main className="relative">
+          {/* Centered loading overlay while (re)loading */}
+          {loading && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center">
+              <div className="bg-white/90 p-6 rounded-lg shadow-lg flex flex-col items-center">
+                <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <div className="text-sm text-gray-700">Loading announcements…</div>
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
           {fetchError && <div className="text-sm text-red-600 mb-3">{String(fetchError)}</div>}
 
-          {mappedAnnouncements.map((update: any) => (
-            <UpdateCard key={update.id} update={update} />
-          ))}
+          {/* When not loading, show announcements or empty state */}
+          {!loading && mappedAnnouncements.length === 0 && (
+            <div className="flex items-center justify-center p-12">
+              <div className="text-center text-gray-500">
+                <p className="text-lg font-medium">No announcements found.</p>
+                <p className="text-sm mt-2">Create one using the "Add Announcement" button.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Announcements list */}
+          <div className="space-y-4">
+            {mappedAnnouncements.map((update: any) => (
+              <UpdateCard key={update.id} update={update} />
+            ))}
+          </div>
         </main>
 
         {isModalOpen && (

@@ -78,7 +78,17 @@ const AllContact = () => {
 <div className="px-6 py-8">
 <h1 className="text-3xl font-bold mb-6 text-gray-800">All Contact Messages</h1>
  
-      {loading && <p className="text-gray-600 text-lg font-medium">Loading...</p>}
+      {loading && 
+         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+            <div className="bg-white/95 p-6 rounded-lg shadow-lg flex flex-col items-center pointer-events-auto">
+              <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              <div className="text-sm text-gray-700">Loading Booking...</div>
+            </div>
+          </div>
+      }
  
       {error && (
 <p className="text-red-600 text-lg bg-red-50 p-3 rounded-md">{error}</p>
@@ -89,6 +99,7 @@ const AllContact = () => {
 <table className="min-w-full bg-white rounded-lg">
 <thead className="bg-gray-100 text-gray-700">
 <tr>
+<th className="py-3 px-4 text-left">No</th>
 <th className="py-3 px-4 text-left">Name</th>
 <th className="py-3 px-4 text-left">Email</th>
 <th className="py-3 px-4 text-left">Phone</th>
@@ -106,11 +117,12 @@ const AllContact = () => {
 </td>
 </tr>
               ) : (
-                contacts.map((contact: any) => (
+                contacts.map((contact: any, inx) => (
 <tr
                     key={contact.id}
                     className="border-t hover:bg-gray-50 transition"
 >
+<td className="py-3 px-4 font-medium">{inx +1}</td>
 <td className="py-3 px-4 font-medium">{contact.name}</td>
 <td className="py-3 px-4">{contact.email}</td>
 <td className="py-3 px-4">{contact.phone}</td>

@@ -1,382 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import jsPDF from "jspdf";
-// import VideoExperience from "./VideoExperience";
-// import Description from "./Descriptions";
-// import Locations from "./Locations";
-// import Calendar from "./Calendar";
-// import AddReviewForm from "./AddReviewForm";
-// import BedRoomsSliders from "./BedRoomsSliders";
-// import RatesBookingInformation from "./RatesBookingInformation";
-// import { PropertyData } from "@/FakeJson";
-
-// interface SimpleListItemProps {
-//   name: string;
-// }
-
-// import type { PropertyDataType } from "../../../types/property.types";
-
-// const AmenityItem: React.FC<SimpleListItemProps> = ({ name }) => (
-//   <li className="flex items-start text-gray-700 text-sm mb-2">
-//     <img
-//       src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
-//       alt="icon"
-//       className="w-4 h-4 mr-2 mt-0.5"
-//     />
-//     {name}
-//   </li>
-// );
-
-// const StaffItem: React.FC<{ name: string; details: string }> = ({
-//   name,
-//   details,
-// }) => (
-//   <li className="flex items-start mb-4">
-//     <img
-//       src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
-//       alt="icon"
-//       className="w-4 h-4 mr-2 mt-0.5"
-//     />
-//     <div className="flex flex-col text-gray-700 text-sm">
-//       <span className="font-semibold text-gray-800">{name}</span>
-//       <span className="text-xs text-gray-600">{details}</span>
-//     </div>
-//   </li>
-// );
-
-// console.log("Property Data:", PropertyData);
-
-// const mockData: PropertyDataType = PropertyData;
-
-// const ImageGallerySection: React.FC = () => {
-//   const [data, setData] = useState<PropertyDataType | null>(null);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [showAll, setShowAll] = useState(false);
-//   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-//   useEffect(() => {
-//     setTimeout(() => {
-//       setData(mockData);
-//       setIsLoading(false);
-//     }, 1000);
-//   }, []);
-
-//   if (isLoading) {
-//     return (
-//       <section className="container mx-auto px-4 py-16 text-center">
-//         <div className="text-xl font-semibold text-teal-600">
-//           Loading property details...
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   if (!data) {
-//     return (
-//       <section className="container mx-auto px-4 py-16 text-center">
-//         <div className="text-xl font-semibold text-red-500">
-//           Error loading data. Please try again.
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   const {
-//     media_images,
-//     amenities,
-//     location,
-//     rules_and_etiquette,
-//     check_in_out_time,
-//     staff,
-//     concierge_service,
-//     security_deposit,
-//     description,
-//     description_image_url,
-//     booking_rate_start,
-//     bedrooms_images,
-//   } = data;
-
-//   const { signature_distinctions, interior_amenities, outdoor_amenities } =
-//     amenities;
-
-//   const handleDownloadPDF = async () => {
-//     try {
-//       const pdf = new jsPDF("p", "mm", "a4");
-//       const imgWidth = 90;
-//       const imgHeight = 65;
-//       const marginX = 10;
-//       const marginY = 25;
-//       let x = marginX;
-//       let y = marginY;
-
-//       pdf.setFontSize(22);
-//       pdf.setTextColor(30, 30, 60);
-//       pdf.text("Gallery Images", 105, 15, { align: "center" });
-//       pdf.setLineWidth(0.5);
-//       pdf.setDrawColor(100, 100, 255);
-//       pdf.line(10, 18, 200, 18);
-
-//       const imagesToUse = media_images.slice(0, 6);
-
-//       for (let i = 0; i < imagesToUse.length; i++) {
-//         const img = imagesToUse[i];
-//         const image = new Image();
-//         image.crossOrigin = "anonymous";
-//         image.src = img.url;
-//         await new Promise<void>((resolve, reject) => {
-//           image.onload = () => resolve();
-//           image.onerror = () => reject();
-//         });
-
-//         const canvas = document.createElement("canvas");
-//         const ctx = canvas.getContext("2d");
-//         canvas.width = image.width;
-//         canvas.height = image.height;
-//         ctx?.drawImage(image, 0, 0);
-//         const imgData = canvas.toDataURL("image/jpeg", 1.0);
-
-//         pdf.setDrawColor(50, 50, 150);
-//         pdf.setLineWidth(1.2);
-//         pdf.roundedRect(x - 2, y - 2, imgWidth + 4, imgHeight + 4, 5, 5, "S");
-//         pdf.setFillColor(245, 245, 255);
-//         pdf.rect(x - 1.5, y - 1.5, imgWidth + 3, imgHeight + 3, "F");
-
-//         pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
-
-//         if (i % 2 === 0) {
-//           x += imgWidth + 10;
-//         } else {
-//           x = marginX;
-//           y += imgHeight + 15;
-//         }
-
-//         if (y + imgHeight > 270) break;
-//       }
-
-//       pdf.save("EV_Brochure.pdf");
-//     } catch (error) {
-//       console.error("PDF Generation Error:", error);
-//     }
-//   };
-
-//   return (
-//     <section className="container mx-auto mb-[920px] px-4 py-16 relative">
-//       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-//         {/* Left section */}
-//         <div className="lg:col-span-7">
-//           <h2 className="text-3xl font-bold text-gray-900 mb-8">
-//             Image Gallery - {media_images.length} photos
-//           </h2>
-
-//           <div className="grid grid-cols-3 gap-4">
-//             {(showAll ? media_images : media_images.slice(0, 6)).map((img) => (
-//               <div
-//                 key={img.id}
-//                 className="aspect-4/3 bg-gray-200 rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
-//                 onClick={() => setSelectedImage(img.url)}
-//               >
-//                 <img
-//                   src={img.url}
-//                   alt={`Gallery photo ${img.id}`}
-//                   className="w-full h-full object-cover"
-//                 />
-//               </div>
-//             ))}
-//           </div>
-
-//           <div className="mt-8 text-center">
-//             {!showAll ? (
-//               <button
-//                 onClick={() => setShowAll(true)}
-//                 className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-200 shadow-lg"
-//               >
-//                 View All Photos
-//               </button>
-//             ) : (
-//               <button
-//                 onClick={() => setShowAll(false)}
-//                 className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-200 shadow-lg"
-//               >
-//                 Show Less
-//               </button>
-//             )}
-
-//             <VideoExperience />
-//             <Description
-//               descriptionData={description}
-//               descriptionImage={description_image_url}
-//             />
-//           </div>
-//         </div>
-
-//         {/* Right section */}
-//         <div className="lg:col-span-5 border-l lg:pl-12 pl-0">
-//           {/* Signature Distinctions */}
-//           <div className="mb-10">
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-//               Signature Distinctions
-//             </h3>
-//             <ul className="list-none p-0">
-//               {signature_distinctions.map((item, index) => (
-//                 <AmenityItem key={index} name={item} />
-//               ))}
-//             </ul>
-//           </div>
-
-//           {/* Interior & Outdoor Amenities */}
-//           <div>
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-//               Finer Details
-//             </h3>
-//             <h4 className="font-semibold text-lg text-gray-800 mb-2">
-//               Interior Amenities
-//             </h4>
-//             <ul className="grid grid-cols-2 gap-x-6">
-//               {interior_amenities.map((item, index) => (
-//                 <AmenityItem key={index} name={item} />
-//               ))}
-//             </ul>
-
-//             <h4 className="font-semibold text-lg text-gray-800 mt-6 mb-2">
-//               Outdoor Amenities
-//             </h4>
-//             <ul className="list-none p-0 mb-10">
-//               {outdoor_amenities.map((item, index) => (
-//                 <AmenityItem key={index} name={item} />
-//               ))}
-//             </ul>
-//           </div>
-
-//           {/* Rules & Etiquette */}
-//           <div className="mb-10 pt-4 border-t border-gray-200">
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-//               Rules & Etiquette
-//             </h3>
-//             <ul className="list-none p-0">
-//               {rules_and_etiquette.map((item: string, index: number) => (
-//                 <AmenityItem key={index} name={item} />
-//               ))}
-//             </ul>
-//           </div>
-
-//           {/* Check In/Out */}
-//           <div className="mb-10 pt-4 border-t border-gray-200">
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-//               Check in/out time
-//             </h3>
-//             <div className="flex flex-col space-y-2 text-gray-700 text-sm">
-//               <div>Check-In: {check_in_out_time.check_in}</div>
-//               <div>Check-Out: {check_in_out_time.check_out}</div>
-//               <div>{check_in_out_time.description}</div>
-//             </div>
-//           </div>
-
-//           {/* Staff */}
-//           <div className="mb-10 pt-4 border-t border-gray-200">
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4 flex justify-between items-end">
-//               Staff
-//               <button className="text-teal-600 text-sm font-semibold hover:text-teal-700 transition duration-150">
-//                 View All Staff
-//               </button>
-//             </h3>
-//             <ul className="list-none p-0">
-//               {staff.map(
-//                 (item: { name: string; details: string }, index: number) => (
-//                   <StaffItem
-//                     key={index}
-//                     name={item.name}
-//                     details={item.details}
-//                   />
-//                 )
-//               )}
-//             </ul>
-//           </div>
-
-//           {/* Bedrooms */}
-//           <BedRoomsSliders bedrooms_images={bedrooms_images} />
-
-//           {/* Concierge */}
-//           <div className="mb-10 pt-4 border-t border-gray-200">
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-//               Concierge Service
-//             </h3>
-//             <ul className="list-none p-0">
-//               {concierge_service.map((item: string, index: number) => (
-//                 <AmenityItem key={index} name={item} />
-//               ))}
-//             </ul>
-//           </div>
-
-//           {/* Security Deposit */}
-//           <div className="mb-10 pt-4 border-t border-gray-200">
-//             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-//               Security Deposit
-//             </h3>
-//             <p className="text-3xl font-bold text-gray-900">
-//               {security_deposit}
-//             </p>
-//           </div>
-
-//           {/* Download Button */}
-//           <div className="mt-8">
-//             <button
-//               onClick={handleDownloadPDF}
-//               className="w-full bg-teal-600 cursor-pointer hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-lg transition duration-200 shadow-lg text-lg"
-//             >
-//               Download EV Brochure
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Rates Section */}
-//       <RatesBookingInformation booking_rate_start={booking_rate_start} />
-
-//       {/* Calendar */}
-//       <Calendar />
-
-//       {/* Location Map */}
-//       <Locations
-//         lat={location.lat}
-//         lng={location.lng}
-//         text={location.address}
-//       />
-
-//       {/* Reviews */}
-//       <AddReviewForm />
-
-//       {/* Image Modal */}
-//       {selectedImage && (
-//         <div
-//           className="fixed inset-0 bg-opacity-80 flex justify-center items-center z-9999"
-//           style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
-//           onClick={() => setSelectedImage(null)}
-//         >
-//           <div className="relative" onClick={(e) => e.stopPropagation()}>
-//             <button
-//               onClick={() => setSelectedImage(null)}
-//               className="absolute top-4 right-4 text-white text-3xl font-bold z-10"
-//             >
-//               &times;
-//             </button>
-//             <img
-//               src={selectedImage}
-//               alt="Expanded"
-//               className="w-full h-[80vh] object-contain rounded-xl shadow-2xl"
-//             />
-//           </div>
-//         </div>
-//       )}
-//     </section>
-//   );
-// };
-
-// export default ImageGallerySection;
-
-
-
-
-
-
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 
@@ -387,7 +8,9 @@ import Calendar from "./Calendar";
 import AddReviewForm from "./AddReviewForm";
 import BedRoomsSliders from "./BedRoomsSliders";
 import RatesBookingInformation from "./RatesBookingInformation";
+import Swal from "sweetalert2";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.eastmondvillas.com/api";
 const LOCAL_FALLBACK = "/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png";
 
 // --------- Sub-item Components ----------
@@ -482,22 +105,13 @@ const ImageGallerySection = ({ villa }) => {
     })) || [];
 
   const signature_distinctions =
-    Array.isArray(villa.signature_distinctions)
-      ? villa.signature_distinctions
-      : [];
+    Array.isArray(villa.signature_distinctions) ? villa.signature_distinctions : [];
 
-  const interior_amenities =
-    Array.isArray(villa.interior_amenities)
-      ? villa.interior_amenities
-      : [];
+  const interior_amenities = Array.isArray(villa.interior_amenities) ? villa.interior_amenities : [];
 
-  const outdoor_amenities =
-    Array.isArray(villa.outdoor_amenities)
-      ? villa.outdoor_amenities
-      : [];
+  const outdoor_amenities = Array.isArray(villa.outdoor_amenities) ? villa.outdoor_amenities : [];
 
-  const rules_and_etiquette =
-    Array.isArray(villa.rules_and_etiquette) ? villa.rules_and_etiquette : [];
+  const rules_and_etiquette = Array.isArray(villa.rules_and_etiquette) ? villa.rules_and_etiquette : [];
 
   // Accept both nested check_in_out_time or root-level check_in / check_out
   const check_in_out_time = villa.check_in_out_time || {
@@ -512,8 +126,7 @@ const ImageGallerySection = ({ villa }) => {
     ? [{ name: villa.staff.name, details: villa.staff.details || "" }]
     : [];
 
-  const concierge_service =
-    Array.isArray(villa.concierge_service) ? villa.concierge_service : [];
+  const concierge_service = Array.isArray(villa.concierge_service) ? villa.concierge_service : [];
 
   const security_deposit = villa.security_deposit || "";
 
@@ -522,8 +135,7 @@ const ImageGallerySection = ({ villa }) => {
 
   const booking_rate_start = villa.booking_rate_start || [];
 
-  // ===== UPDATED: Build location object robustly (use top-level latitude/longitude,
-  // or location_coords object if present; if both missing, leave null so Locations can fallback)
+  // ===== UPDATED: Build location object robustly
   const location = {
     lat:
       typeof villa.latitude === "number"
@@ -536,62 +148,110 @@ const ImageGallerySection = ({ villa }) => {
     address: villa.address || villa.city || "",
   };
 
-  // Villa name (title or name)
   const villaName = villa.title || villa.name || "";
-
-  // Determine listing type (forgiving)
   const listingType = String(villa.listing_type ?? "").toLowerCase();
   const isRentType =
     listingType === "rent" ||
     listingType === "rental" ||
     listingType === "rentals" ||
     listingType === "let";
-  const isSaleType = listingType === "sale" || listingType === "sales";
-
-  // Debug logs so you can confirm in console
-  console.log("→ Location values extracted for Locations component:", {
-    lat: location.lat,
-    lng: location.lng,
-    address: location.address,
-    villaName,
-    fullApiResponse: villa,
-    listingType,
-  });
+  // debug
+  console.log("→ Location values:", { lat: location.lat, lng: location.lng, address: location.address, villaName });
 
   const [showAll, setShowAll] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // -------- PDF Export (UPDATED to 3x4 per page with no serial numbers and cover crop)
+  // -------- DOWNLOAD RECORD + PDF EXPORT
   const handleDownloadPDF = async () => {
+    const villaId = villa.id;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_access") : null;
+    const downloadEndpoint = `${API_BASE}/villas/properties/${villaId}/downloaded/`;
+
+    // helper to attempt a request (method 'POST' or 'GET')
+    const tryRequest = async (method) => {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const options = {
+        method,
+        headers,
+      };
+
+      // for GET we don't include body
+      if (method === "POST") {
+        // body is optional; leave empty - backend in your screenshot accepted GET
+        // options.body = JSON.stringify({ source: "brochure" });
+      }
+
+      const res = await fetch(downloadEndpoint, options);
+      return res;
+    };
+
     try {
-      const pdf = new jsPDF("p", "mm", "a4"); // portrait A4
-      const pageWidth = pdf.internal.pageSize.getWidth(); // 210
-      const pageHeight = pdf.internal.pageSize.getHeight(); // 297
-      const margin = 12; // mm
-      const gap = 6; // mm between images
+      // 1) Try POST first (keeps original behavior). If backend forbids POST (405), fallback to GET.
+      let res;
+      try {
+        res = await tryRequest("POST");
+        if (res.status === 405) {
+          console.warn("Download POST returned 405; falling back to GET as backend expects GET.");
+          res = await tryRequest("GET");
+        }
+      } catch (e) {
+        // network error for POST -> try GET (helps in some CORS/backends)
+        console.warn("POST failed, attempting GET as fallback:", e);
+        try {
+          res = await tryRequest("GET");
+        } catch (e2) {
+          throw e2;
+        }
+      }
+
+      if (!res || !res.ok) {
+        const text = await (res ? res.text().catch(() => null) : Promise.resolve(null));
+        console.error("Download recording failed:", res ? res.status : "no-response", text);
+        Swal.fire({
+          icon: "error",
+          title: "Download record failed",
+          text:
+            (text && String(text).slice(0, 500)) ||
+            `Server responded with status ${res ? res.status : "unknown"}. Aborting download.`,
+        });
+        return; // abort PDF generation
+      }
+
+      let resJson = null;
+      try {
+        resJson = await res.json().catch(() => null);
+      } catch {
+        resJson = null;
+      }
+
+      // SUCCESS: only console.log (per your instruction), do NOT show Swal success
+      console.log("Download recorded successfully for property:", villaId, resJson);
+
+      // 2) Proceed to generate PDF (same implementation as before)
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const gap = 6;
       const cols = 3;
       const rows = 4;
-      const perPage = cols * rows; // 12 images per page
+      const perPage = cols * rows;
 
-      // Reserve header space
-      const headerHeight = 26; // mm (title + divider)
-      const footerHeight = 12; // page number area
+      const headerHeight = 26;
+      const footerHeight = 12;
       const availableWidth = pageWidth - margin * 2 - gap * (cols - 1);
       const availableHeight = pageHeight - margin * 2 - headerHeight - footerHeight - gap * (rows - 1);
 
-      // image box size in mm
       const imgW = Number((availableWidth / cols).toFixed(2));
       const imgH = Number((availableHeight / rows).toFixed(2));
-
       const yStart = margin + headerHeight;
 
-      // Build list of image URLs (fall back to placeholder)
       const imgUrls = media_images.map((m) => m.url || LOCAL_FALLBACK);
       if (imgUrls.length === 0) imgUrls.push(LOCAL_FALLBACK);
-
       const totalPages = Math.ceil(imgUrls.length / perPage);
 
-      // helper to draw header on the current page
       const drawHeader = (pageIndex) => {
         pdf.setFontSize(18);
         pdf.setTextColor(20, 40, 40);
@@ -602,7 +262,6 @@ const ImageGallerySection = ({ villa }) => {
           const priceText = typeof villa.price === "number" ? `Price: US$ ${villa.price.toLocaleString()}` : `Price: ${villa.price}`;
           pdf.text(priceText, pageWidth / 2, margin + 14, { align: "center" });
         }
-        // small divider
         pdf.setDrawColor(200);
         pdf.setLineWidth(0.4);
         pdf.line(margin, margin + 18, pageWidth - margin, margin + 18);
@@ -621,20 +280,14 @@ const ImageGallerySection = ({ villa }) => {
           const x = margin + col * (imgW + gap);
           const y = yStart + row * (imgH + gap);
 
-          // load image (with fallback)
           const imgEl = await loadImageWithFallback(imgUrls[currentIndex]);
-          if (!imgEl) {
-            // skip if cannot load even fallback
-            continue;
-          }
+          if (!imgEl) continue;
 
-          // create canvas sized for good quality: choose pixels proportional to mm (approx 3.78 px/mm)
-          const pxPerMm = 3.78; // conservative estimate
-          const canvasWpx = Math.max(600, Math.round(imgW * pxPerMm)); // ensure decent resolution
+          const pxPerMm = 3.78;
+          const canvasWpx = Math.max(600, Math.round(imgW * pxPerMm));
           const canvasHpx = Math.max(800, Math.round(imgH * pxPerMm));
 
           const canvas = document.createElement("canvas");
-          // We'll draw cover at target canvas pixel size for crispness
           drawImageCoverToCanvas(imgEl, canvas, canvasWpx, canvasHpx);
 
           let imgData;
@@ -642,7 +295,6 @@ const ImageGallerySection = ({ villa }) => {
             imgData = canvas.toDataURL("image/jpeg", 0.92);
           } catch (err) {
             console.warn("Canvas toDataURL failed, using fallback image src:", err);
-            // last resort: draw fallback tiny canvas
             const fallbackCanvas = document.createElement("canvas");
             fallbackCanvas.width = 800;
             fallbackCanvas.height = 600;
@@ -652,9 +304,7 @@ const ImageGallerySection = ({ villa }) => {
             imgData = fallbackCanvas.toDataURL("image/jpeg", 0.9);
           }
 
-          // add image to pdf (jsPDF expects mm units)
           pdf.addImage(imgData, "JPEG", x, y, imgW, imgH);
-          // no caption/serial number as requested
         }
 
         // footer - page number
@@ -669,15 +319,12 @@ const ImageGallerySection = ({ villa }) => {
       // finalize
       pdf.save(`${(villaName || "EV_Brochure").replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
-      console.error("PDF error:", err);
-      try {
-        const fallbackPdf = new jsPDF("p", "mm", "a4");
-        fallbackPdf.setFontSize(18);
-        fallbackPdf.text("Gallery Export Failed - See console", 20, 30);
-        fallbackPdf.save("EV_Brochure_Fallback.pdf");
-      } catch (e) {
-        console.error("Fallback PDF also failed:", e);
-      }
+      console.error("PDF/download flow error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Export failed",
+        text: "Could not record download or generate brochure. See console for details.",
+      });
     }
   };
 

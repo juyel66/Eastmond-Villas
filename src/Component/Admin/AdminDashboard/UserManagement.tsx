@@ -1,3 +1,4 @@
+// File: UserManagement.jsx
 import React, { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -13,29 +14,6 @@ import toast from 'react-hot-toast';
  * - Delete/Update use Swal confirmation and dual toast feedback (react-hot-toast + Swal fallback).
  * - Roles available: customer, agent, admin.
  */
-
-const initialUsers = [
-  {
-    id: 1,
-    name: 'Ayesha Khan',
-    email: 'ayesha.khan@example.com',
-    role: 'manager',
-  },
-  { id: 2, name: 'Rafi Ahmed', email: 'rafi.ahmed@example.com', role: 'agent' },
-  { id: 3, name: 'Minu Roy', email: 'minu.roy@example.com', role: 'customer' },
-  {
-    id: 4,
-    name: 'Sabbir Hossain',
-    email: 'sabbir.hossain@example.com',
-    role: 'agent',
-  },
-  {
-    id: 5,
-    name: 'Kamal Uddin',
-    email: 'kamal.uddin@example.com',
-    role: 'manager',
-  },
-];
 
 const ROLE_FILTERS = ['all', 'customer', 'agent', 'admin'];
 const ALL_ROLES = ['customer', 'agent', 'admin'];
@@ -56,7 +34,8 @@ const showToast = (title, icon = 'success', timer = 2500) => {
 };
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(initialUsers);
+  // Start with empty list — no static fallback data
+  const [users, setUsers] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [actionInProgress, setActionInProgress] = useState({});
@@ -378,7 +357,20 @@ export default function UserManagement() {
   const pretty = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="p-4 sm:p-6 md:p-8 relative">
+      {/* Centered loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/60">
+          <div className="flex flex-col items-center">
+            <svg className="animate-spin h-12 w-12 text-teal-600 mb-3" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <div className="text-sm text-gray-700">Loading users...</div>
+          </div>
+        </div>
+      )}
+
       <div>
         {/* TOP ROW: role filter, centered search, title + total count */}
         <div className="mb-6 flex flex-col items-center justify-center gap-4">
@@ -420,9 +412,6 @@ export default function UserManagement() {
           </div>
         </div>
 
-        {loading && (
-          <div className="mb-3 text-xs text-gray-500">Loading users...</div>
-        )}
         {error && (
           <div className="mb-3 text-xs text-red-600">Error: {error}</div>
         )}
@@ -589,7 +578,7 @@ export default function UserManagement() {
                     colSpan={5}
                     className="px-6 py-6 text-center text-gray-500"
                   >
-                    No users found.
+                    {loading ? 'Loading...' : 'No users found.'}
                   </td>
                 </tr>
               )}
@@ -737,7 +726,7 @@ export default function UserManagement() {
 
           {filtered.length === 0 && (
             <div className="text-center text-sm text-gray-500">
-              No users found.
+              {loading ? 'Loading...' : 'No users found.'}
             </div>
           )}
         </div>

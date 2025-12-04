@@ -14,6 +14,7 @@ import { Link } from "react-router";
  * - Formats activity time to human-friendly relative strings (e.g. "5 hours ago").
  *
  * Change: implements progressive "View All" -> show 30 -> "View more" (+10 below list) -> "View Less".
+ * Change: fetch agents list from API and compute Active Agents count from agents where is_active === true.
  */
 
 const PLACEHOLDER_IMG =
@@ -128,11 +129,107 @@ const AdminDashboard = () => {
   const activityLoading = useSelector((s: RootState) => s.propertyBooking.loading);
   const activityError = useSelector((s: RootState) => s.propertyBooking.error);
 
+  // Local agents state (NEW)
+  const [agents, setAgents] = useState([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+  const [agentsError, setAgentsError] = useState(null);
+
   // Fetch API data on mount
   useEffect(() => {
     dispatch(fetchProperties());
     dispatch(fetchActivityLogs());
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Helper: make candidate agent URLs robust (try both /api/agents/ and /agents/)
+  const buildAgentUrlCandidates = () => {
+    const rawBase = import.meta.env.VITE_API_BASE || "https://api.eastmondvillas.com";
+    const b = String(rawBase).replace(/\/+$/, ""); // trim trailing slash
+    const candidates = [];
+    // If base already contains "/api", add both b + "/agents/" and b + "/api/agents/"
+    if (b.toLowerCase().includes("/api")) {
+      candidates.push(`${b}/agents/`);
+      candidates.push(`${b.replace(/\/api.*$/i, "")}/api/agents/`); // fallback to base root + /api/agents/
+    } else {
+      // base has no /api: try both b + '/api/agents/' and b + '/agents/'
+      candidates.push(`${b}/api/agents/`);
+      candidates.push(`${b}/agents/`);
+    }
+    // make unique and return
+    return Array.from(new Set(candidates));
+  };
+
+  // Fetch agents list from API (NEW — robust, tries candidates)
+  useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+    const token = (() => {
+      try {
+        return localStorage.getItem("auth_access");
+      } catch {
+        return null;
+      }
+    })();
+
+    const candidates = buildAgentUrlCandidates();
+
+    (async () => {
+      setAgentsLoading(true);
+      setAgentsError(null);
+      try {
+        let success = false;
+        let lastErr = null;
+
+        for (const url of candidates) {
+          if (!mounted) break;
+          try {
+            const headers: Record<string, string> = { Accept: "application/json" };
+            if (token) headers.Authorization = `Bearer ${token}`;
+            const res = await fetch(url, { signal: controller.signal, headers });
+            if (!res.ok) {
+              // record and try next
+              const txt = await res.text().catch(() => "");
+              lastErr = `Attempt ${url} → HTTP ${res.status} ${txt ? `: ${txt}` : ""}`;
+              console.warn("[agents fetch] candidate failed:", url, res.status, txt);
+              continue;
+            }
+            // ok
+            const json = await res.json();
+            const list = Array.isArray(json) ? json : (Array.isArray(json.results) ? json.results : []);
+            if (mounted) setAgents(list);
+            success = true;
+            break;
+          } catch (err) {
+            lastErr = err;
+            if (err && err.name === "AbortError") {
+              // aborted — stop
+              break;
+            }
+            console.warn("[agents fetch] candidate threw:", url, err);
+            continue; // try next
+          }
+        }
+
+        if (!success) {
+          // both attempts failed
+          const message = typeof lastErr === "string" ? lastErr : (lastErr && lastErr.message) ? lastErr.message : "Failed to fetch agents";
+          if (mounted) setAgentsError(message);
+          console.error("[agents fetch] all candidates failed:", candidates, lastErr);
+        }
+      } catch (err) {
+        if (err && err.name !== "AbortError") {
+          console.error("[agents fetch] unexpected error:", err);
+          if (mounted) setAgentsError(String(err.message || err));
+        }
+      } finally {
+        if (mounted) setAgentsLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, []);
 
   // Normalize properties (API-driven) and extract first image
@@ -201,16 +298,43 @@ const AdminDashboard = () => {
     });
   }, [activityLogs]);
 
-  // Dashboard counters
-  const totals = useMemo(() => {
+  // Dashboard counters - compute totalsFromPropertiesFallback first
+  const totalsFromPropertiesFallback = useMemo(() => {
     const all = normalizedProperties;
     const totalProperties = all.length;
     const activeListings = all.filter((p) => String(p.status).toLowerCase().includes("publish")).length;
     const pendingReviews = all.filter((p) => String(p.status).toLowerCase().includes("pending")).length;
     const agentsSet = new Set(all.map((p) => (p.agent ? String(p.agent).trim() : null)).filter(Boolean));
-    const activeAgents = agentsSet.size || 0;
-    return { totalProperties, activeListings, pendingReviews, activeAgents };
+    const activeAgentsFallback = agentsSet.size || 0;
+    return { totalProperties, activeListings, pendingReviews, activeAgentsFallback };
   }, [normalizedProperties]);
+
+  // Compute active agents using fetched agents list if available (NEW)
+  const activeAgentsCount = useMemo(() => {
+    if (Array.isArray(agents) && agents.length > 0) {
+      // Accept both boolean and string "true" forms, also accept `active` field
+      return agents.filter((a) => {
+        if (!a) return false;
+        if (a.is_active === true) return true;
+        if (a.active === true) return true;
+        if (typeof a.is_active === "string" && a.is_active.toLowerCase() === "true") return true;
+        if (typeof a.active === "string" && a.active.toLowerCase() === "true") return true;
+        return false;
+      }).length;
+    }
+    // fallback to property-derived estimate
+    return totalsFromPropertiesFallback.activeAgentsFallback;
+  }, [agents, totalsFromPropertiesFallback]);
+
+  // Use totals object but replace activeAgents with activeAgentsCount
+  const totals = useMemo(() => {
+    return {
+      totalProperties: totalsFromPropertiesFallback.totalProperties,
+      activeListings: totalsFromPropertiesFallback.activeListings,
+      pendingReviews: totalsFromPropertiesFallback.pendingReviews,
+      activeAgents: activeAgentsCount,
+    };
+  }, [totalsFromPropertiesFallback, activeAgentsCount]);
 
   // recent items (sorted)
   const recentProperties = useMemo(() => {
@@ -331,8 +455,16 @@ const AdminDashboard = () => {
             <div className="mb-3">
               <img className="bg-[#00968915] rounded-lg" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997599/DashboardView_3_pfflqc.png" alt="" />
             </div>
-            <div className="text-3xl font-semibold text-gray-800 mb-1">{totals.activeAgents}</div>
+
+            {/* Show loading state briefly if agents are being fetched */}
+            <div className="text-3xl font-semibold text-gray-800 mb-1">
+              {agentsLoading ? "…" : totals.activeAgents}
+            </div>
+
             <div className="text-gray-500 text-sm">Active Agents</div>
+
+            {/* show fetch error if exists (small) */}
+            {agentsError && <div className="text-xs text-red-500 mt-2">Agents fetch error: {String(agentsError).slice(0, 80)}</div>}
           </div>
         </div>
       </div>

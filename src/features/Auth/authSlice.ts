@@ -87,7 +87,7 @@ const clearUser = () => {
  * - sets Accept: application/json
  * - sets Content-Type: application/json unless body is FormData or Content-Type already provided
  */
-const authFetch = (url, options = {}) => {
+export const authFetch = (url, options = {}) => {
   const headers = { ...(options.headers || {}) };
 
   // Always accept JSON responses

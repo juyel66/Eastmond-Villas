@@ -220,7 +220,7 @@ import NotificationsPage from './Component/Notifications/NotificationsPage';
 
 // --- Protected Route Wrapper ---
 import ProtectedRoute from './Component/Auth/ProtectedRoute';
-import AllReview from './pages/AllReview/AllReview';
+import AllReview from './pages/AllReview/AllReviews';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
