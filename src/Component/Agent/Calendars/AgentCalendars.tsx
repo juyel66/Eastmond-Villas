@@ -410,7 +410,6 @@ export default function Calendars() {
         Swal.fire({
           icon: "warning",
           title: "Could not load bookings",
-          text: `Server returned ${resp.status}${text ? ` — ${text}` : ""}`,
           toast: true,
           position: "top-center",
           timer: 4000,
@@ -642,7 +641,7 @@ export default function Calendars() {
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-auto" style={{ maxHeight: "72vh" }}>
         <div className="p-4 space-y-3">
           {properties.length === 0 && !loading ? (
-            <div className="text-sm text-gray-500">No properties found for the selected month/year.</div>
+            <div className="text-sm text-gray-500 text-center ">No properties found for the selected month/year.</div>
           ) : null}
 
           {properties.map((prop) => (
