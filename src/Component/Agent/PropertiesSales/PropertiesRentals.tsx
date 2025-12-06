@@ -1,9 +1,17 @@
-// src/features/Properties/PropertiesRentals.tsx
-import React, { useState, useMemo, useEffect } from "react";
-import { Search, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/Auth/authSlice";
+// src/features/Properties/PropertiesSales.tsx
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/features/Auth/authSlice';
+
+/**
+ * PropertiesSales.tsx
+ * - UI same as before
+ * - NOW: Fetches **rent** properties from: ${API_BASE}/villas/properties/?listing_type=rent
+ * - Shows ONLY properties assigned to the current user (by ID)
+ * - Logs raw & mapped data to console for debugging
+ */
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -14,34 +22,110 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   pool: number;
-  status: "published" | "draft" | "pending";
+  status: 'published' | 'draft' | 'pending';
   imageUrl: string;
   description?: string | null;
   calendar_link?: string | null;
   _raw?: any;
-  listing_type?: "rent" | "sale" | "other";
+  listing_type?: 'sale' | 'rent' | 'other';
   assigned_agent?: number | null;
 }
 
-// --- API base (use env var if available) ---
+// --- API base (defaults to your server) ---
 const API_BASE =
-  (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/, "") ||
-  "http://localhost:8888/api";
+  (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/, '') ||
+  'https://api.eastmondvillas.com';
 
 // --- PRICE FORMATTER ---
 const formatPrice = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
-// Placeholder image when backend doesn't provide one
+// Placeholder image
 const PLACEHOLDER_IMAGE =
-  "https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE";
+  'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
 
-// --- PROPERTY CARD ---
+// --- LOADING SPINNER (brand-style) ---
+const LoadingState: React.FC = () => (
+  <div className="flex justify-center items-center py-10">
+    <div className="flex flex-col items-center gap-3">
+      <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-gray-900 animate-spin" />
+      <p className="text-sm text-gray-600">Loading your sales properties…</p>
+    </div>
+  </div>
+);
+
+// --- EMPTY / NO DATA CARD ---
+interface EmptyStateCardProps {
+  loadError: string | null;
+  searchTerm: string;
+  onRetry: () => void;
+}
+
+const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
+  loadError,
+  searchTerm,
+  onRetry,
+}) => {
+  const hasSearch = searchTerm.trim().length > 0;
+  const isError = Boolean(loadError);
+
+  const title = isError
+    ? 'Unable to load sales'
+    : hasSearch
+      ? 'No Rentals match your search'
+      : 'No Rentals properties assigned';
+
+  const description = isError
+    ? 'Something went wrong while contacting the server. Please try again in a moment.'
+    : hasSearch
+      ? 'Try adjusting your search term or clearing the search box to see all available sales properties.'
+      : 'Once rentals properties are assigned to your account, they will appear here.';
+
+  return (
+    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col items-center">
+      <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+        <span className="text-gray-500 text-xl">🏡</span>
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <p className="text-sm text-gray-500 max-w-md mx-auto mb-5">
+        {description}
+      </p>
+
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {isError && (
+          <button
+            onClick={onRetry}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition"
+          >
+            Retry loading sales
+          </button>
+        )}
+
+        {hasSearch && (
+          <button
+            onClick={() => (window.location.href = window.location.pathname)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+          >
+            Clear search
+          </button>
+        )}
+      </div>
+
+      {isError && (
+        <div className="mt-4 text-xs text-gray-400 max-w-md mx-auto">
+          <strong>Technical details:</strong> {loadError}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- PROPERTY CARD (same look as Rentals card) ---
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const {
     id,
@@ -55,13 +139,15 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     imageUrl,
   } = property;
 
-  const StatusBadge = ({ status }: { status: Property["status"] }) => {
-    let bgColor = "bg-gray-100 text-gray-700";
-    if (status === "published") bgColor = "bg-green-100 text-green-700";
-    else if (status === "draft") bgColor = "bg-yellow-100 text-yellow-700";
-    else if (status === "pending") bgColor = "bg-blue-100 text-blue-700";
+  const StatusBadge = ({ status }: { status: Property['status'] }) => {
+    let bgColor = 'bg-gray-100 text-gray-700';
+    if (status === 'published') bgColor = 'bg-green-100 text-green-700';
+    else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
+    else if (status === 'pending') bgColor = 'bg-blue-100 text-blue-700';
     return (
-      <span className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}>
+      <span
+        className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
+      >
         {status}
       </span>
     );
@@ -69,23 +155,22 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
   const copyToClipboard = async (text: string, action: string) => {
     try {
-      if (!text || String(text).trim() === "") {
+      if (!text || String(text).trim() === '') {
         alert(`${action} is not available for ${title}`);
         return;
       }
       await navigator.clipboard.writeText(String(text));
       alert(`${action} copied for ${title}`);
     } catch (err) {
-      // fallback using textarea
       try {
-        const el = document.createElement("textarea");
+        const el = document.createElement('textarea');
         el.value = String(text);
         document.body.appendChild(el);
         el.select();
-        document.execCommand("copy");
+        document.execCommand('copy');
         document.body.removeChild(el);
         alert(`${action} copied for ${title}`);
-      } catch (e) {
+      } catch {
         alert(`Failed to copy ${action}`);
       }
     }
@@ -93,36 +178,34 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
   const downloadImage = async (imgUrl?: string | null) => {
     if (!imgUrl) {
-      alert("No image available to download.");
+      alert('No image available to download.');
       return;
     }
     try {
-      // if relative path (starts with /), prefix API_BASE (no double slash)
       const url =
-        String(imgUrl).startsWith("http") || String(imgUrl).startsWith("//")
+        String(imgUrl).startsWith('http') || String(imgUrl).startsWith('//')
           ? String(imgUrl)
-          : `${API_BASE.replace(/\/api\/?$/, "")}${
-              imgUrl.startsWith("/") ? imgUrl : "/" + imgUrl
+          : `${API_BASE.replace(/\/api\/?$/, '')}${
+              imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl
             }`;
 
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = blobUrl;
-      // build friendly filename
-      const ext = blob.type.split("/")[1] || "jpg";
+      const ext = blob.type.split('/')[1] || 'jpg';
       a.download = `${
-        title.replace(/\s+/g, "-").toLowerCase() || "image"
+        title.replace(/\s+/g, '-').toLowerCase() || 'image'
       }.${ext}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error("Download error:", err);
-      alert("Failed to download image.");
+      console.error('Download error:', err);
+      alert('Failed to download image.');
     }
   };
 
@@ -135,7 +218,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           alt={title}
           className="w-full h-full object-cover rounded-xl"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+            (e.target as HTMLImageElement).src =
+              'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
           }}
         />
       </div>
@@ -144,8 +228,12 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       <div className="flex-grow flex flex-col justify-between">
         <div>
           <div className="flex justify-between items-start mb-2">
-            <h2 className="text-lg font-bold text-gray-900 truncate">{title}</h2>
-            <StatusBadge status={status} />
+            <h2 className="text-lg font-bold text-gray-900 truncate">
+              {title}
+            </h2>
+            <div className="flex items-center gap-2">
+              <StatusBadge status={status} />
+            </div>
           </div>
 
           <p className="text-sm text-gray-500 flex items-center mb-3">
@@ -156,7 +244,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 text-sm">
             <div>
               <p className="text-gray-500 text-xs uppercase">Price</p>
-              <p className="font-semibold text-gray-800">{formatPrice(price)}</p>
+              <p className="font-semibold text-gray-800">
+                {formatPrice(price)}
+              </p>
             </div>
             <div>
               <p className="text-gray-500 text-xs uppercase">Bedrooms</p>
@@ -177,11 +267,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         <div
           className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100"
           style={{
-            rowGap: "8px",
+            rowGap: '8px',
           }}
         >
           <Link
-            to={`/dashboard/agent-property-rentals-details/${id}`}
+            to={`/dashboard/agent-property-sales-details/${id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
             <img
@@ -196,7 +286,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             onClick={() =>
               copyToClipboard(
                 property.description ?? `${title} - ${address}`,
-                "Description"
+                'Description'
               )
             }
             className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
@@ -211,7 +301,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
           <button
             onClick={() =>
-              copyToClipboard(property.calendar_link ?? "", "Calendar Link")
+              copyToClipboard(property.calendar_link ?? '', 'Calendar Link')
             }
             className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
@@ -240,19 +330,19 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
-// --- MAIN COMPONENT (Rentals only) ---
+// --- MAIN COMPONENT (Sales, now showing RENT data) ---
 type Props = {
   agentId?: number | null;
 };
 
 const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [properties, setProperties] = useState<Property[]>([]); // NO demo data - start empty
+  const [searchTerm, setSearchTerm] = useState('');
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastFetchAt, setLastFetchAt] = useState<number | null>(null);
 
-  // 🔐 Logged-in user from Redux
+  // Logged-in user from Redux
   const currentUser = useSelector(selectCurrentUser) as
     | { id?: number | string | null; email?: string | null }
     | null;
@@ -270,10 +360,10 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
   const lsAgentId = useMemo(() => {
     try {
       const fromLS =
-        localStorage.getItem("agent_id") ??
-        localStorage.getItem("assigned_agent") ??
-        localStorage.getItem("agentId") ??
-        localStorage.getItem("user_id");
+        localStorage.getItem('agent_id') ??
+        localStorage.getItem('assigned_agent') ??
+        localStorage.getItem('agentId') ??
+        localStorage.getItem('user_id');
       if (fromLS) {
         const n = Number(fromLS);
         if (!isNaN(n)) return n;
@@ -284,9 +374,9 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
     return null;
   }, []);
 
-  // ✅ Final agent ID used for filtering
+  // Final agent ID used for filtering
   const effectiveAgentId = useMemo(() => {
-    if (typeof propAgentId === "number" && !isNaN(propAgentId)) {
+    if (typeof propAgentId === 'number' && !isNaN(propAgentId)) {
       return propAgentId;
     }
     if (currentUserId !== null) return currentUserId;
@@ -294,124 +384,145 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
     return null;
   }, [propAgentId, currentUserId, lsAgentId]);
 
-  const loadProperties = async (signal?: AbortSignal) => {
+  const loadProperties = async (opts?: {
+    ignoreResults?: { current: boolean };
+  }) => {
     setLoading(true);
     setLoadError(null);
 
     try {
+      // ✅ NOW FETCHING RENT PROPERTIES
       const url = `${API_BASE.replace(
         /\/+$/,
-        ""
+        ''
       )}/villas/properties/?listing_type=rent`;
       const res = await fetch(url, {
-        headers: { Accept: "application/json" },
-        signal,
+        headers: { Accept: 'application/json' },
       });
 
       if (!res.ok) {
-        // set to empty and surface a friendly message
-        const text = await res.text().catch(() => "");
+        const text = await res.text().catch(() => '');
         throw new Error(`Server returned ${res.status} ${text}`.trim());
       }
 
       const data = await res.json();
-      const list = Array.isArray(data) ? data : data?.results ?? data?.items ?? [];
+
+      // 🔍 LOG RAW RESPONSE
+      console.log('[Sales→Rent] Raw response from /villas/properties:', data);
+
+      const list = Array.isArray(data)
+        ? data
+        : data?.results ?? data?.items ?? [];
+
+      // 🔍 LOG PARSED LIST
+      console.log('[Sales→Rent] Parsed rent properties list:', list);
 
       const mapped: Property[] = list.map((p: any) => {
         let img = p.main_image_url ?? p.imageUrl ?? null;
-        if (!img && Array.isArray(p.media_images) && p.media_images.length > 0) {
+        if (
+          img == null &&
+          Array.isArray(p.media_images) &&
+          p.media_images.length > 0
+        ) {
           img = p.media_images[0]?.image ?? null;
         }
-        if (img && img.startsWith("/")) {
-          img = `${API_BASE.replace(/\/api\/?$/, "")}${img}`;
+        if (img && img.startsWith('/')) {
+          img = `${API_BASE.replace(/\/api\/?$/, '')}${img}`;
         }
         const priceVal =
           Number(p.price ?? p.price_display ?? p.total_price ?? 0) || 0;
         const address =
           p.address ??
           (p.location
-            ? typeof p.location === "string"
+            ? typeof p.location === 'string'
               ? p.location
-              : ""
-            : "") ??
+              : ''
+            : '') ??
           p.city ??
-          "";
+          '';
 
         return {
           id: Number(p.id ?? p.pk ?? Math.floor(Math.random() * 1e9)),
-          title: p.title ?? p.name ?? p.slug ?? "Untitled",
-          address: address || "—",
+          title: p.title ?? p.name ?? p.slug ?? 'Untitled',
+          address: address || '—',
           price: priceVal,
           bedrooms: Number(p.bedrooms ?? p.num_bedrooms ?? 0),
           bathrooms: Number(p.bathrooms ?? p.num_bathrooms ?? 0),
           pool: Number(p.pool ?? 0),
           status:
-            (String(p.status ?? p.state ?? "draft").toLowerCase() as
-              | "published"
-              | "draft"
-              | "pending") ?? "draft",
+            (String(p.status ?? p.state ?? 'draft').toLowerCase() as
+              | 'published'
+              | 'draft'
+              | 'pending') ?? 'draft',
           imageUrl: img || PLACEHOLDER_IMAGE,
           description: p.description ?? p.short_description ?? null,
           calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
           _raw: p,
-          listing_type: p.listing_type ?? "rent",
+          // ✅ Default listing_type is now 'rent'
+          listing_type: p.listing_type ?? 'rent',
           assigned_agent:
-            typeof p.assigned_agent === "number"
+            typeof p.assigned_agent === 'number'
               ? p.assigned_agent
               : p.assigned_agent?.id ?? null,
         };
       });
 
+      // 🔍 LOG MAPPED DATA
+      console.log('[Sales→Rent] Mapped rent properties:', mapped);
+
+      if (opts?.ignoreResults?.current) return;
+
       setProperties(mapped);
       setLastFetchAt(Date.now());
     } catch (err: any) {
-      // Ignore AbortError (user navigated away / fetch cancelled)
-      const name = err?.name ?? (err && err.constructor && err.constructor.name);
-      if (name === "AbortError") {
-        // don't change UI state on abort besides stopping loading
-        return;
-      }
-      console.error("Failed to load properties", err);
-      setProperties([]); // ensure empty when backend not available
-      setLoadError(err?.message ?? "Failed to load properties.");
+      console.error('Failed to load properties', err);
+      if (opts?.ignoreResults?.current) return;
+      setProperties([]);
+      setLoadError(err?.message ?? 'Failed to load properties.');
     } finally {
-      setLoading(false);
+      if (!opts?.ignoreResults?.current) {
+        setLoading(false);
+      } else {
+        try {
+          setLoading(false);
+        } catch {
+          // ignore
+        }
+      }
     }
   };
 
   useEffect(() => {
-    let controller = new AbortController();
-    loadProperties(controller.signal);
+    const ignore = { current: false };
+    loadProperties({ ignoreResults: ignore });
 
     return () => {
-      controller.abort();
-      controller = null as any;
+      ignore.current = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // load once on mount
+  }, []);
 
-  // Retry helper
   const handleRetry = () => {
-    const controller = new AbortController();
-    loadProperties(controller.signal);
+    const ignore = { current: false };
+    loadProperties({ ignoreResults: ignore });
   };
 
-  // Now filter: only rentals where assigned_agent === effectiveAgentId
+  // Filter logic: now only 'rent' listing_type, plus agent ID == current user
   const filteredProperties = useMemo(() => {
     const lower = searchTerm.toLowerCase();
 
     return properties.filter((p) => {
-      if ((p.listing_type ?? "rent") !== "rent") return false;
+      // ✅ Only rent
+      if ((p.listing_type ?? 'rent') !== 'rent') return false;
 
-      // ❗ Without effectiveAgentId we show nothing
       if (effectiveAgentId === null) return false;
 
-      // ✅ Only show rentals assigned to this agent
       if (Number(p.assigned_agent ?? -1) !== Number(effectiveAgentId)) {
         return false;
       }
 
       if (!lower) return true;
+
       return (
         p.title.toLowerCase().includes(lower) ||
         p.address.toLowerCase().includes(lower)
@@ -419,7 +530,6 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
     });
   }, [searchTerm, properties, effectiveAgentId]);
 
-  // Whether we should show the "no data" card:
   const shouldShowNoData =
     !loading &&
     ((Array.isArray(properties) && properties.length === 0) ||
@@ -430,20 +540,20 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
       <div className="mx-auto">
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Properties - Rentals
+            Properties - Sales
           </h1>
           <p className="text-gray-600 text-sm">
-            Access assigned rental properties and marketing materials.
+            Access assigned sales properties and marketing materials.
           </p>
 
           <div className="mt-3 text-sm text-gray-500">
             {effectiveAgentId !== null ? (
               <>
-                Showing rentals assigned to agent{" "}
+                Showing sales assigned to agent ID{' '}
                 <strong>{effectiveAgentId}</strong>.
               </>
             ) : (
-              <>You are not associated with an agent account. No rentals are visible.</>
+              <>You are not associated with an agent account. No sales are visible.</>
             )}
           </div>
         </header>
@@ -452,55 +562,23 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
           <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search rental properties..."
+            placeholder="Search sales properties..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-blue-500 focus:border-blue-500 transition"
           />
         </div>
 
-        {loading && (
-          <div className="text-center text-gray-500 mb-6">
-            Loading properties…
-          </div>
-        )}
+        {loading && <LoadingState />}
 
-        {/* If backend returned nothing or filter emptied list, show a friendly card */}
         {!loading && shouldShowNoData && (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              No rental properties available
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {loadError
-                ? "We couldn't load properties from the server. Please check your connection or try again."
-                : "There are no rentals assigned to your account or matching your search."}
-            </p>
-
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={handleRetry}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
-              >
-                <span className="loading loading-spinner loading-xl"></span>
-              </button>
-            </div>
-
-            {loadError && (
-              <div className="mt-4 text-xs text-gray-400">
-                <strong>Details:</strong> {loadError}
-              </div>
-            )}
-
-            {lastFetchAt && (
-              <div className="mt-2 text-xs text-gray-300">
-                Last attempt: {new Date(lastFetchAt).toLocaleString()}
-              </div>
-            )}
-          </div>
+          <EmptyStateCard
+            loadError={loadError}
+            searchTerm={searchTerm}
+            onRetry={handleRetry}
+          />
         )}
 
-        {/* Property list */}
         {!loading && filteredProperties.length > 0 && (
           <>
             {filteredProperties.map((property) => (
@@ -510,7 +588,7 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
         )}
       </div>
 
-      {/* Extra responsive tuning for mid-size devices (Unchanged) */}
+      {/* Responsive tweaks; keep design unchanged */}
       <style>
         {`
           @media (min-width: 1200px) and (max-width: 1450px) {
