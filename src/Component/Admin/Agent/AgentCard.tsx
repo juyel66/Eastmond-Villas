@@ -1,6 +1,15 @@
 // AgentCard.jsx
 import React, { useEffect, useRef, useState } from "react";
-import { Mail, Phone, MoreVertical, Download, Edit, X, Trash2, Building2 } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MoreVertical,
+  Download,
+  Edit,
+  X,
+  Trash2,
+  Building2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 /**
@@ -8,21 +17,12 @@ import { Link } from "react-router-dom";
  *
  * - Defensive: won't crash when fields missing.
  * - Shows last login formatted in Barbados time (America/Barbados) using Intl.DateTimeFormat.
- *   Falls back to a locale-friendly ISO/time string if parsing fails.
- * - The 3-dot menu contains Edit / Manage Properties / Deactivate|Activate / Delete.
- *   Deactivate/Activate button label switches based on agent.is_active / agent.status.
- * - All actions call handlers passed via props (onEdit, onManageProperties, onToggleActive, onDelete).
- *   If handlers not provided, it falls back to console.log.
- *
- * Props:
- *  - agent: object
- *  - onEdit(agent)
- *  - onManageProperties(agent)
- *  - onToggleActive(agent)
- *  - onDelete(agent)
+ * - 3-dot menu: Edit / Manage Properties / Deactivate|Activate / Delete.
+ * - Uses assigned_total_property to show Properties count.
  */
 
-const safe = (v, fallback = "") => (v === null || v === undefined ? fallback : v);
+const safe = (v, fallback = "") =>
+  v === null || v === undefined ? fallback : v;
 
 const getInitials = (name = "") =>
   String(name)
@@ -54,14 +54,15 @@ const validatePermission = (permission) => {
 };
 
 const formatLoginTime = (input) => {
-  // input can be ISO string, timestamp, or already-formatted string
   if (!input) return "—";
   try {
-    // try parse as Date
-    const d = typeof input === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(input) ? new Date(input) : new Date(input);
+    const d =
+      typeof input === "string" &&
+      /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(input)
+        ? new Date(input)
+        : new Date(input);
     if (isNaN(d.getTime())) return String(input);
 
-    // Format using Barbados timezone (America/Barbados) and international English style
     const formatter = new Intl.DateTimeFormat("en-GB", {
       timeZone: "America/Barbados",
       year: "numeric",
@@ -74,7 +75,6 @@ const formatLoginTime = (input) => {
     });
     return formatter.format(d);
   } catch (e) {
-    // fallback
     return String(input);
   }
 };
@@ -104,11 +104,42 @@ export default function AgentCard({
   const phone = safe(agent.phone, "—");
   const role = String(safe(agent.role || "agent"));
   const permissions = safe(agent.permission ?? agent.permissions ?? "", "");
-  const propertiesCount = Number(safe(agent.propertiesCount ?? agent.properties ?? 0, 0));
-  // determine active status: prefer explicit is_active boolean, fallback to agent.status text
-  const isActive = typeof agent.is_active === "boolean" ? agent.is_active : (String(safe(agent.status, "inactive")).toLowerCase() === "active");
+
+  // 🔥 Use assigned_total_property with fallbacks
+  let assignedTotalRaw =
+    agent.assigned_total_property ??
+    agent.propertiesCount ??
+    agent.properties ??
+    0;
+
+  let assigned_total_property = Number(assignedTotalRaw);
+  if (isNaN(assigned_total_property)) assigned_total_property = 0;
+
+  // 🔍 Debug log for you
+  console.log(
+    "AgentCard -> id:",
+    agent.id,
+    "name:",
+    agent.name,
+    "assigned_total_property (raw):",
+    assignedTotalRaw,
+    "=> (final):",
+    assigned_total_property
+  );
+
+  console.log("Agent data:", agent);
+
+  // determine active status
+  const isActive =
+    typeof agent.is_active === "boolean"
+      ? agent.is_active
+      : String(safe(agent.status, "inactive")).toLowerCase() === "active";
+
   const status = isActive ? "active" : "inactive";
-  const lastLoginRaw = safe(agent.lastLogin ?? agent.last_login ?? agent.__raw?.last_login ?? "");
+  const lastLoginRaw = safe(
+    agent.lastLogin ?? agent.last_login ?? agent.__raw?.last_login ?? "",
+    ""
+  );
   const lastLogin = formatLoginTime(lastLoginRaw);
 
   const initials = getInitials(name);
@@ -117,10 +148,20 @@ export default function AgentCard({
 
   // handlers with safe fallbacks
   const handlers = {
-    edit: typeof onEdit === "function" ? onEdit : (a) => console.log("Edit", a),
-    manage: typeof onManageProperties === "function" ? onManageProperties : (a) => console.log("Manage props", a),
-    toggle: typeof onToggleActive === "function" ? onToggleActive : (a) => console.log("Toggle active", a),
-    delete: typeof onDelete === "function" ? onDelete : (a) => console.log("Delete", a),
+    edit:
+      typeof onEdit === "function" ? onEdit : (a) => console.log("Edit", a),
+    manage:
+      typeof onManageProperties === "function"
+        ? onManageProperties
+        : (a) => console.log("Manage props", a),
+    toggle:
+      typeof onToggleActive === "function"
+        ? onToggleActive
+        : (a) => console.log("Toggle active", a),
+    delete:
+      typeof onDelete === "function"
+        ? onDelete
+        : (a) => console.log("Delete", a),
   };
 
   return (
@@ -175,7 +216,8 @@ export default function AgentCard({
                     handlers.toggle(agent);
                   }}
                 >
-                  <X className="w-4 h-4 mr-2" /> {isActive ? "Deactivate" : "Activate"}
+                  <X className="w-4 h-4 mr-2" />{" "}
+                  {isActive ? "Deactivate" : "Activate"}
                 </button>
 
                 <hr className="my-1" />
@@ -196,7 +238,9 @@ export default function AgentCard({
 
         {/* Agent Info */}
         <div className="flex items-center gap-2 mb-2">
-          <h2 className="text-2xl font-semibold text-gray-800 truncate">{name}</h2>
+          <h2 className="text-2xl font-semibold text-gray-800 truncate">
+            {name}
+          </h2>
         </div>
 
         <span className="inline-block px-3 py-1 text-sm font-medium rounded-md bg-[#ECEEF2] text-black mb-4 inline-flex items-center gap-2">
@@ -219,20 +263,30 @@ export default function AgentCard({
         <div className="space-y-3 text-base">
           <div className="flex justify-between items-center text-gray-600">
             <span>Properties</span>
-            <span className="font-medium text-gray-800">{propertiesCount}</span>
+            <span className="font-medium text-gray-800">
+              {assigned_total_property}
+            </span>
           </div>
 
           <div className="flex justify-between items-center text-gray-600">
             <span>Permissions</span>
             <span className="flex items-center font-medium text-gray-800">
-              <span className="mr-2">{permissionLabel === "Download" ? <Download className="w-4 h-4" /> : null}</span>
+              <span className="mr-2">
+                {permissionLabel === "Download" ? (
+                  <Download className="w-4 h-4" />
+                ) : null}
+              </span>
               {permissionLabel}
             </span>
           </div>
 
           <div className="flex justify-between items-center pt-2">
             <span className="text-gray-600">Access Level</span>
-            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass}`}>{status}</span>
+            <span
+              className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass}`}
+            >
+              {status}
+            </span>
           </div>
 
           {/* <div className="text-xs text-gray-400 pt-2">Last login: {lastLogin}</div> */}
