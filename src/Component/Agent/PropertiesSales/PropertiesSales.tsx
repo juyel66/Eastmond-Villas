@@ -10,7 +10,7 @@ import { selectCurrentUser } from '@/features/Auth/authSlice';
  * - Same UI/design as your Rentals page
  * - Fetches sale properties from: ${API_BASE}/villas/properties/?listing_type=sale
  * - Shows ONLY properties assigned to the current user (by ID)
- * - Now logs raw & mapped data to console for debugging
+ * - Logs raw & mapped data to console for debugging
  */
 
 // --- TYPE DEFINITIONS ---
@@ -49,6 +49,82 @@ const formatPrice = (amount: number) => {
 const PLACEHOLDER_IMAGE =
   'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
 
+// --- LOADING SPINNER (brand-style) ---
+const LoadingState: React.FC = () => (
+  <div className="flex justify-center items-center py-10">
+    <div className="flex flex-col items-center gap-3">
+      <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-gray-900 animate-spin" />
+      <p className="text-sm text-gray-600">Loading your sales properties…</p>
+    </div>
+  </div>
+);
+
+// --- EMPTY / NO DATA CARD ---
+interface EmptyStateCardProps {
+  loadError: string | null;
+  searchTerm: string;
+  onRetry: () => void;
+}
+
+const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
+  loadError,
+  searchTerm,
+  onRetry,
+}) => {
+  const hasSearch = searchTerm.trim().length > 0;
+  const isError = Boolean(loadError);
+
+  const title = isError
+    ? 'Unable to load sales'
+    : hasSearch
+      ? 'No sales match your search'
+      : 'No sales properties assigned';
+
+  const description = isError
+    ? 'Something went wrong while contacting the server. Please try again in a moment.'
+    : hasSearch
+      ? 'Try adjusting your search term or clearing the search box to see all available sales properties.'
+      : 'Once sales properties are assigned to your account, they will appear here.';
+
+  return (
+    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col items-center">
+      <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+        <span className="text-gray-500 text-xl">🏡</span>
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <p className="text-sm text-gray-500 max-w-md mx-auto mb-5">
+        {description}
+      </p>
+
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {isError && (
+          <button
+            onClick={onRetry}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition"
+          >
+            Retry loading sales
+          </button>
+        )}
+
+        {hasSearch && (
+          <button
+            onClick={() => (window.location.href = window.location.pathname)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+          >
+            Clear search
+          </button>
+        )}
+      </div>
+
+      {isError && (
+        <div className="mt-4 text-xs text-gray-400 max-w-md mx-auto">
+          <strong>Technical details:</strong> {loadError}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- PROPERTY CARD (same look as Rentals card) ---
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const {
@@ -61,7 +137,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     pool,
     status,
     imageUrl,
-    assigned_agent,
   } = property;
 
   const StatusBadge = ({ status }: { status: Property['status'] }) => {
@@ -158,8 +233,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             </h2>
             <div className="flex items-center gap-2">
               <StatusBadge status={status} />
-              
-            
             </div>
           </div>
 
@@ -345,7 +418,11 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
 
       const mapped: Property[] = list.map((p: any) => {
         let img = p.main_image_url ?? p.imageUrl ?? null;
-        if (img == null && Array.isArray(p.media_images) && p.media_images.length > 0) {
+        if (
+          img == null &&
+          Array.isArray(p.media_images) &&
+          p.media_images.length > 0
+        ) {
           img = p.media_images[0]?.image ?? null;
         }
         if (img && img.startsWith('/')) {
@@ -435,10 +512,8 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
     return properties.filter((p) => {
       if ((p.listing_type ?? 'sale') !== 'sale') return false;
 
-      // Without effectiveAgentId we show nothing
       if (effectiveAgentId === null) return false;
 
-      // Only show if assigned_agent matches current/active agent ID
       if (Number(p.assigned_agent ?? -1) !== Number(effectiveAgentId)) {
         return false;
       }
@@ -491,56 +566,22 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
           />
         </div>
 
-        {/* loading spinner (matching Rentals) */}
-        {loading && (
-          <div className="text-center text-gray-500 mb-6">
-            {/* Optional spinner here */}
-          </div>
-        )}
+        {loading && <LoadingState />}
 
-        {/* No-data card (backend empty or filtering empty) */}
         {!loading && shouldShowNoData && (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              No sales properties available
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {loadError
-                ? "We couldn't load properties from the server. Please check your connection or try again."
-                : 'There are no sales assigned to your account or matching your search.'}
-            </p>
-
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={handleRetry}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
-              >
-                <span className="loading loading-spinner loading-xl"></span>
-              </button>
-            </div>
-
-            {loadError && (
-              <div className="mt-4 text-xs text-gray-400">
-                <strong>Details:</strong> {loadError}
-              </div>
-            )}
-
-            {lastFetchAt && (
-              <div className="mt-2 text-xs text-gray-300">
-                Last attempt: {new Date(lastFetchAt).toLocaleString()}
-              </div>
-            )}
-          </div>
+          <EmptyStateCard
+            loadError={loadError}
+            searchTerm={searchTerm}
+            onRetry={handleRetry}
+          />
         )}
 
-        {filteredProperties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-
-        {!loading && filteredProperties.length === 0 && !shouldShowNoData && (
-          <div className="text-center text-gray-500">
-            No sales properties found assigned to your account.
-          </div>
+        {!loading && filteredProperties.length > 0 && (
+          <>
+            {filteredProperties.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </>
         )}
       </div>
 
