@@ -221,6 +221,7 @@ import NotificationsPage from './Component/Notifications/NotificationsPage';
 // --- Protected Route Wrapper ---
 import ProtectedRoute from './Component/Auth/ProtectedRoute';
 import AllReview from './pages/AllReview/AllReviews';
+import AgentFaqs from './Component/Agent/FaQs/AgentFaqs';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
@@ -302,7 +303,7 @@ export const router = createBrowserRouter([
           { path: 'agent-calendars', element: <Calendars /> },
           { path: 'agent-announcements', element: <Announcements /> },
           { path: 'agent-resources', element: <Resources /> },
-          { path: 'agent-faqs', element: <FAQs /> },
+          { path: 'agent-faqs', element: <AgentFaqs /> },
           { path: 'agent-profile', element: <Profile /> },
           {
             path: 'agent-property-rentals-details/:id',
