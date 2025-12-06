@@ -1,6 +1,6 @@
 // Profile.jsx
 import React, { useEffect, useState, useRef } from 'react';
-import { Edit2, X, CheckCircle, Lock, Mail, Phone, User } from 'lucide-react';
+import { Edit2, X, Lock, Mail, Phone, User } from 'lucide-react';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import toast from 'react-hot-toast';
@@ -11,6 +11,7 @@ import { changePassword } from '@/features/Auth/authSlice';
  * Profile.jsx
  *
  * - Fetches current user from /auth/user/ and fills header (name, email, role, joined date)
+ * - Fetches agent stats from /villas/agents/summary/ (assigned_properties, active_listings, downloads_this_month, scheduled_viewings)
  * - Edit Personal Info modal updates via PATCH /auth/user/
  * - Security tab calls changePassword thunk (reads values from refs — no onChange)
  *
@@ -20,60 +21,71 @@ import { changePassword } from '@/features/Auth/authSlice';
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
+// 🔹 Initial profile with NO static fake user data
 const initialProfileData = {
-  initials: 'JS',
-  name: 'John Smith',
-  email: 'john.smith@realestate.com',
-  role: 'agent',
-  date_joined: '2025-02-01T00:00:00Z',
-  status: 'Active Agent',
-  memberSince: 'Feb 2025',
+  initials: '',
+  name: '',
+  email: '',
+  role: '',
+  date_joined: '',
+  status: '',
+  memberSince: '',
   stats: {
-    totalProperties: 3,
-    totalDownloads: 24,
+    totalProperties: 0,
+    totalDownloads: 0,
   },
   metrics: [
     {
       title: 'Assigned Properties',
-      count: 3,
+      key: 'assigned_properties',
+      count: 0,
       img: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760912317/Container_4_mdn7xb.png',
       color: 'text-blue-500',
       bg: 'bg-blue-50',
     },
     {
       title: 'Active Listings',
-      count: 3,
+      key: 'active_listings',
+      count: 0,
       img: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760913301/Container_5_vn6hql.png',
       color: 'text-green-500',
       bg: 'bg-green-50',
     },
     {
       title: 'Downloads This Month',
-      count: 24,
+      key: 'downloads_this_month',
+      count: 0,
       img: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760913571/Container_7_dur80i.png',
       color: 'text-purple-500',
       bg: 'bg-purple-50',
     },
     {
       title: 'Scheduled Viewings',
-      count: 8,
+      key: 'scheduled_viewings',
+      count: 0,
       img: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760913561/Container_8_tgnlcm.png',
       color: 'text-orange-500',
       bg: 'bg-orange-50',
     },
   ],
   personalInfo: {
-    fullName: 'John Smith',
-    emailAddress: 'john.smith@realestate.com',
-    phoneNumber: '+1 (555) 123-4567',
-    accountStatus: 'Active',
-    professionalBio:
-      'As a seasoned real estate professional with over 10 years of experience, John specializes in luxury waterfront villas in the Miami area.',
+    fullName: '',
+    emailAddress: '',
+    phoneNumber: '',
+    accountStatus: '',
+    professionalBio: '',
   },
 };
 
-const safe = (v, fallback = '') =>
-  v === null || v === undefined ? fallback : v;
+// Simple spinner component (same style as other pages)
+const LoadingState = () => (
+  <div className="flex justify-center items-center py-10">
+    <div className="flex flex-col items-center gap-3">
+      <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-gray-900 animate-spin" />
+      <p className="text-sm text-gray-600">Loading your profile…</p>
+    </div>
+  </div>
+);
 
 const MetricCard = ({ metric }) => (
   <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between border border-gray-100 transition hover:shadow-lg">
@@ -167,7 +179,6 @@ const EditProfileModal = ({ isOpen, onClose, currentInfo = {}, onSave }) => {
   };
 
   const handleSave = () => {
-    // basic validation
     if (!formData.fullName || !formData.emailAddress) {
       Swal.fire({
         icon: 'error',
@@ -254,16 +265,14 @@ const EditProfileModal = ({ isOpen, onClose, currentInfo = {}, onSave }) => {
                 Account Status
               </label>
               <div className="relative w-full">
-                {/* This div acts as the bordered container, similar to an input field */}
                 <div
-                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-opacity-50
-                 flex items-center"
+                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-opacity-50 flex items-center"
                   style={{
                     borderColor:
                       formData.accountStatus === 'Active'
                         ? '#34D399'
                         : '#EF4444',
-                  }} // Green for Active, Red for Inactive
+                  }}
                 >
                   {formData.accountStatus === 'Active' ? (
                     <span className="text-green-500">Active</span>
@@ -302,7 +311,7 @@ const EditProfileModal = ({ isOpen, onClose, currentInfo = {}, onSave }) => {
  * - Calls changePassword thunk and handles success/errors (shows errors with Swal)
  * - Shows "Updating..." on button while request is in progress
  */
-const SecurityTab = ({ onPasswordChange }) => {
+const SecurityTab = () => {
   const dispatch = useDispatch();
   const currentRef = useRef(null);
   const newRef = useRef(null);
@@ -316,28 +325,27 @@ const SecurityTab = ({ onPasswordChange }) => {
       new_password2: confirmRef.current?.value || '',
     };
 
-    console.log('SecurityTab - sending payload:', payload);
+    console.log('SecurityTab - sending changePassword payload:', payload);
     setIsUpdating(true);
 
     try {
       const res = await dispatch(changePassword(payload)).unwrap();
-      console.log('changePassword success', res);
+      console.log('changePassword success:', res);
 
-      // show success via Swal
       Swal.fire({
         icon: 'success',
         title: 'Password changed',
-        text: (res && (res.detail || res.message)) || 'Password changed successfully.'
+        text:
+          (res && (res.detail || res.message)) ||
+          'Password changed successfully.',
       });
 
-      // Clear inputs
       if (currentRef.current) currentRef.current.value = '';
       if (newRef.current) newRef.current.value = '';
       if (confirmRef.current) confirmRef.current.value = '';
     } catch (err) {
-      console.error('changePassword error', err);
+      console.error('changePassword error:', err);
 
-      // build message string from possible DRF-style error shapes
       let html = '';
       if (err?.data) {
         const d = err.data;
@@ -361,7 +369,6 @@ const SecurityTab = ({ onPasswordChange }) => {
         html = 'Password change failed.';
       }
 
-      // show SweetAlert with html (line breaks preserved)
       Swal.fire({
         icon: 'error',
         title: 'Password change failed',
@@ -377,7 +384,6 @@ const SecurityTab = ({ onPasswordChange }) => {
       <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
       <div className="relative">
         <input
-          // uncontrolled input: no onChange
           ref={inputRef}
           name={name}
           type="password"
@@ -415,7 +421,9 @@ const SecurityTab = ({ onPasswordChange }) => {
       <button
         onClick={handleUpdatePassword}
         disabled={isUpdating}
-        className={`mt-6 w-full md:w-auto px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition duration-150 shadow-md shadow-gray-400/50 ${isUpdating ? 'opacity-60 cursor-not-allowed' : ''}`}
+        className={`mt-6 w-full md:w-auto px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition duration-150 shadow-md shadow-gray-400/50 ${
+          isUpdating ? 'opacity-60 cursor-not-allowed' : ''
+        }`}
       >
         {isUpdating ? 'Updating...' : 'Update Password'}
       </button>
@@ -430,7 +438,66 @@ const Profile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // fetch current user
+  // Only agents will see metric cards
+  const isAgent =
+    (profileData.role || '').toString().toLowerCase() === 'agent';
+
+  // Fetch agent summary stats
+  const fetchAgentSummary = async (token) => {
+    try {
+      const res = await fetch(`${API_BASE}/villas/agents/summary/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.warn('Agent summary request failed with status:', res.status);
+        return;
+      }
+
+      const summary = await res.json();
+      console.log('Agent summary response:', summary);
+
+      setProfileData((prev) => {
+        const updatedMetrics = prev.metrics.map((metric) => {
+          const key = metric.key;
+          if (key && Object.prototype.hasOwnProperty.call(summary, key)) {
+            return {
+              ...metric,
+              count: summary[key] ?? 0,
+            };
+          }
+          return metric;
+        });
+
+        return {
+          ...prev,
+          name: summary.name || prev.name,
+          email: summary.email || prev.email,
+          date_joined: summary.date_joined || prev.date_joined,
+          memberSince: summary.date_joined
+            ? new Date(summary.date_joined).toLocaleString('en-GB', {
+                month: 'short',
+                year: 'numeric',
+              })
+            : prev.memberSince,
+          stats: {
+            totalProperties:
+              summary.assigned_properties ?? prev.stats.totalProperties,
+            totalDownloads:
+              summary.downloads_this_month ?? prev.stats.totalDownloads,
+          },
+          metrics: updatedMetrics,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to fetch agent summary:', error);
+    }
+  };
+
+  // fetch current user (name, role, basic info)
   useEffect(() => {
     let mounted = true;
     const token = localStorage.getItem('auth_access');
@@ -452,7 +519,9 @@ const Profile = () => {
         }
         const u = await res.json();
         if (!mounted) return;
-        // map to profileData shape
+
+        console.log('Auth user response:', u);
+
         setProfileData((prev) => ({
           ...prev,
           initials:
@@ -480,8 +549,11 @@ const Profile = () => {
             professionalBio: prev.personalInfo.professionalBio,
           },
         }));
+
+        if ((u.role || '').toLowerCase() === 'agent') {
+          await fetchAgentSummary(token);
+        }
       } catch (err) {
-        // fallback to static
         console.warn('Could not fetch current user:', err);
       } finally {
         if (mounted) setLoadingUser(false);
@@ -498,7 +570,6 @@ const Profile = () => {
   // Save profile to server (PATCH /auth/user/)
   const handleSaveProfile = async (updatedInfo) => {
     const token = localStorage.getItem('auth_access');
-    // update UI optimistically
     setProfileData((p) => ({
       ...p,
       personalInfo: { ...p.personalInfo, ...updatedInfo },
@@ -512,7 +583,6 @@ const Profile = () => {
         .toUpperCase(),
     }));
 
-    // try persist to backend
     if (!token) {
       toast.success('Profile updated locally (not authenticated).');
       return;
@@ -534,7 +604,6 @@ const Profile = () => {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        // show warning but keep UI updated
         toast.success('Profile updated locally.');
         Swal.fire({
           icon: 'warning',
@@ -551,43 +620,6 @@ const Profile = () => {
     }
   };
 
-  // Change password (kept for completeness, not used by SecurityTab)
-  const handlePasswordChange = async ({ currentPassword, newPassword }) => {
-    try {
-      await dispatch(
-        changePassword({
-          old_password: currentPassword,
-          new_password1: newPassword,
-          new_password2: newPassword,
-        })
-      ).unwrap();
-
-      toast.success('Password changed successfully.');
-      return Promise.resolve();
-    } catch (err) {
-      if (err && typeof err === 'object') {
-        if (err.new_password1 || err.new_password2) {
-          const msgs = []
-            .concat(err.new_password1 || [])
-            .concat(err.new_password2 || [])
-            .join(' ');
-          toast.error(msgs || 'Password change failed.');
-          return Promise.reject(msgs || err);
-        }
-        if (err.detail) {
-          toast.error(String(err.detail));
-          return Promise.reject(err.detail);
-        }
-        toast.error(JSON.stringify(err));
-        return Promise.reject(err);
-      } else {
-        toast.error(String(err || 'Password change failed.'));
-        return Promise.reject(err);
-      }
-    }
-  };
-
-  // formatted joined date
   const formattedJoined = (() => {
     try {
       if (!profileData.date_joined) return profileData.memberSince;
@@ -601,6 +633,23 @@ const Profile = () => {
       return profileData.memberSince;
     }
   })();
+
+  // 🔹 While dynamic data is loading, show spinner instead of fake static content
+  if (loadingUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-sans p-4 md:p-8">
+        <div className="mx-auto">
+          <header className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Profile</h1>
+            <p className="text-gray-600 text-sm">
+              Manage your account settings and preferences
+            </p>
+          </header>
+          <LoadingState />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans p-4 md:p-8">
@@ -618,49 +667,39 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-6 mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gray-200 text-gray-700 font-bold text-xl rounded-full flex items-center justify-center border-4 border-white shadow-inner">
-                {profileData.initials}
+                {profileData.initials || '?'}
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {profileData.name}
+                  {profileData.name || '—'}
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">
-                  {profileData.email}
+                  {profileData.email || '—'}
                 </p>
                 <div className="flex items-center space-x-2 text-xs">
                   <span className="text-teal-600 font-medium">
-                    {profileData.role}
+                    {profileData.role || '—'}
                   </span>
                   <span className="text-gray-500">|</span>
                   <span className="text-gray-500">
-                    Joined {formattedJoined}
+                    Joined {formattedJoined || '—'}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 md:mt-0 flex space-x-6 text-right">
-              <div className="border-r pr-6">
-                <p className="text-2xl font-bold text-gray-900">
-                  {profileData.stats.totalProperties}
-                </p>
-                <p className="text-sm text-gray-500">Properties</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {profileData.stats.totalDownloads}
-                </p>
-                <p className="text-sm text-gray-500">Downloads</p>
-              </div>
-            </div>
+            {/* Properties / Downloads block removed as requested */}
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {profileData.metrics.map((metric, index) => (
-              <MetricCard key={index} metric={metric} />
-            ))}
-          </div>
+          {/* Metric cards only for agent */}
+          {isAgent && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {profileData.metrics.map((metric, index) => (
+                <MetricCard key={index} metric={metric} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
@@ -670,7 +709,11 @@ const Profile = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium transition duration-150 ${activeTab === tab ? 'border-b-2 border-gray-900 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-4 py-2 text-sm font-medium transition duration-150 ${
+                  activeTab === tab
+                    ? 'border-b-2 border-gray-900 text-gray-900'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
               >
                 {tab}
               </button>
@@ -725,13 +768,7 @@ const Profile = () => {
           </div>
         )}
 
-        {activeTab === 'Security' && (
-          <SecurityTab
-            onPasswordChange={async ({ currentPassword, newPassword }) =>
-              handlePasswordChange({ currentPassword, newPassword })
-            }
-          />
-        )}
+        {activeTab === 'Security' && <SecurityTab />}
 
         <EditProfileModal
           isOpen={isModalOpen}
