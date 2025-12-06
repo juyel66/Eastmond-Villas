@@ -9,7 +9,6 @@ import Swal from "sweetalert2";
  * - Reads agent id from prop OR URL query (?agent=4 or ?agentId=4)
  * - Uses effectiveAgentId + viewAgentId for preselecting, optimistic updates and saves
  * - PATCH logic: try JSON first; if server returns 415, retry with FormData
- * - Console logs actions and responses
  * - For a given agent (e.g. ?agent=30), admin screen shows:
  *     • All properties (sales/rentals per tab)
  *     • Assigned ones are selectable only for this agent, others blocked
@@ -196,12 +195,9 @@ export default function ManageProperties({
 
   // effective agent: prop > query param
   const effectiveAgentId = agentId ?? queryAgent;
+
   useEffect(() => {
-    console.log("Resolved effectiveAgentId:", {
-      propAgentId: agentId,
-      queryAgent,
-      effectiveAgentId,
-    });
+    // previously: console.log("Resolved effectiveAgentId", ...)
   }, [agentId, queryAgent, effectiveAgentId]);
 
   // try to get agentName from location.state if not passed via props
@@ -214,21 +210,10 @@ export default function ManageProperties({
     // If current user is an agent, they should only ever see *their own* set
     if (currentUserRole === "agent") {
       const forcedId = currentUserAgentId ?? effectiveAgentId ?? null;
-      console.log("viewAgentId (AGENT mode):", {
-        currentUserRole,
-        currentUserAgentId,
-        effectiveAgentId,
-        chosenViewAgentId: forcedId,
-      });
       return forcedId;
     }
 
     // Admin: can view whatever is passed via prop/query
-    console.log("viewAgentId (ADMIN mode):", {
-      currentUserRole,
-      currentUserAgentId,
-      effectiveAgentId,
-    });
     return effectiveAgentId ?? null;
   }, [currentUserRole, currentUserAgentId, effectiveAgentId]);
 
@@ -241,7 +226,7 @@ export default function ManageProperties({
         localStorage.getItem("token");
       if (token) return { Authorization: `Bearer ${token}` };
     } catch (e) {
-      console.warn("authHeaders: failed to read token from localStorage", e);
+      // previously logged warning
     }
     return {};
   }
@@ -289,12 +274,10 @@ export default function ManageProperties({
       let url: string | null = `${API_BASE}${PROPERTIES_PATH}?page=1`;
       const acc: any[] = [];
       while (url) {
-        console.log("Fetching properties page:", url);
         const res = await fetch(url, { headers: { ...authHeaders() } });
         if (!res.ok)
           throw new Error(`Failed to fetch properties (${res.status})`);
         const json = await res.json();
-        console.log("Raw page response from API:", json);
 
         const list = Array.isArray(json.results)
           ? json.results
@@ -307,10 +290,7 @@ export default function ManageProperties({
         else url = null;
       }
 
-      console.log("All raw properties from API (acc):", acc);
-
       const normalized = acc.map(normalizeProperty);
-      console.log("Normalized properties:", normalized);
       setProperties(normalized);
 
       if (viewAgentId != null) {
@@ -322,24 +302,13 @@ export default function ManageProperties({
           )
           .map((p) => p.id);
 
-        console.log(
-          "Preselected IDs for viewAgentId",
-          viewAgentId,
-          "=>",
-          preselected
-        );
-
         setSelectedPropertyIds(preselected);
         setInitialAssignedIds(preselected);
       } else {
         setSelectedPropertyIds([]);
         setInitialAssignedIds([]);
-        console.log(
-          "No viewAgentId resolved — selections start empty. (Probably no agent context)."
-        );
       }
     } catch (err: any) {
-      console.error("fetchAllPropertiesPages error:", err);
       setError(err?.message || "Failed to load properties");
       setProperties([]);
       setSelectedPropertyIds([]);
@@ -350,26 +319,14 @@ export default function ManageProperties({
   }
 
   useEffect(() => {
-    console.log("Fetching properties for viewAgentId change:", { viewAgentId });
     fetchAllPropertiesPages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewAgentId]);
 
   // toggle selection — optimistic assigned_agent update when we know viewAgentId
   const handleToggleProperty = (propertyId: number) => {
-    console.log("Property click", {
-      propertyId,
-      effectiveAgentId,
-      viewAgentId,
-      currentUserRole,
-      currentUserAgentId,
-    });
-
     const target = properties.find((p) => p.id === propertyId);
     if (!target) {
-      console.warn("handleToggleProperty: property not found in state", {
-        propertyId,
-      });
       return;
     }
 
@@ -401,15 +358,6 @@ export default function ManageProperties({
           target.raw?.assigned_agent?.username ??
           `Agent #${assigned}`;
 
-        console.warn(
-          "Attempt to toggle a property assigned to another agent. Blocking.",
-          {
-            propertyId,
-            assignedTo: assigned,
-            assignedAgentNameFromRaw,
-            currentAgent,
-          }
-        );
         Swal.fire({
           icon: "warning",
           title: "Already assigned to another agent",
@@ -427,12 +375,6 @@ export default function ManageProperties({
         ? prev.filter((id) => id !== propertyId)
         : [...prev, propertyId];
 
-      console.log("Selection change:", {
-        propertyId,
-        wasSelected: isSelected,
-        newSelectedIds: next,
-      });
-
       if (viewAgentId != null) {
         setProperties((old) =>
           old.map((o) =>
@@ -444,14 +386,6 @@ export default function ManageProperties({
                 }
               : o
           )
-        );
-        console.log("Optimistic assigned_agent update:", {
-          propertyId,
-          assigned: !isSelected ? viewAgentId : null,
-        });
-      } else {
-        console.warn(
-          "No viewAgentId — selection toggled locally. Pass agentId prop or ?agent=ID in URL to enable save."
         );
       }
 
@@ -469,7 +403,6 @@ export default function ManageProperties({
         assigned_agent: assignedValue === null ? null : Number(assignedValue),
       };
       const headers = { ...authHeaders(), "Content-Type": "application/json" };
-      console.log("PATCH (JSON) ->", PROPERTY_PATCH(propertyId), payload);
       const res = await fetch(PROPERTY_PATCH(propertyId), {
         method: "PATCH",
         headers,
@@ -485,9 +418,6 @@ export default function ManageProperties({
         assignedValue === null ? "" : String(Number(assignedValue))
       );
       const headers = { ...authHeaders() };
-      console.log("PATCH (FormData) ->", PROPERTY_PATCH(propertyId), {
-        assigned_agent: fd.get("assigned_agent"),
-      });
       const res = await fetch(PROPERTY_PATCH(propertyId), {
         method: "PATCH",
         headers,
@@ -506,9 +436,6 @@ export default function ManageProperties({
 
     // 2) If JSON rejected due to unsupported media type, retry with form-data
     if (res.status === 415) {
-      console.warn(
-        "Server returned 415 for JSON payload — retrying with multipart/form-data"
-      );
       attempt = await tryForm();
       res = attempt.res;
     }
@@ -527,11 +454,9 @@ export default function ManageProperties({
       } catch {
         result.bodyText = text;
       }
-    } catch (e) {
+    } catch {
       result.bodyText = "";
     }
-
-    console.log("PATCH final response for", propertyId, result);
 
     if (!res.ok) {
       const err = new Error(`Patch ${propertyId} failed (${res.status})`);
@@ -548,26 +473,12 @@ export default function ManageProperties({
       alert(
         "Cannot save: no agent specified. Pass agentId prop or use ?agent=ID in the URL."
       );
-      console.warn(
-        "Save blocked: viewAgentId is null. currentUserRole, currentUserAgentId:",
-        { currentUserRole, currentUserAgentId }
-      );
       return;
     }
     if (properties.length === 0) {
       alert("Cannot save: no properties loaded from API.");
-      console.warn("Save blocked: properties array is empty.");
       return;
     }
-
-    console.log("handleSaveAssignments START", {
-      viewAgentId,
-      currentUserRole,
-      currentUserAgentId,
-      initialAssignedIds,
-      selectedPropertyIds,
-      allProperties: properties,
-    });
 
     setSaving(true);
     try {
@@ -575,15 +486,6 @@ export default function ManageProperties({
       const after = new Set(selectedPropertyIds);
       const toAssign = Array.from(after).filter((id) => !before.has(id));
       const toUnassign = Array.from(before).filter((id) => !after.has(id));
-      console.log(
-        "SaveAssignments -> toAssign / toUnassign",
-        {
-          toAssign,
-          toUnassign,
-        },
-        "viewAgentId:",
-        viewAgentId
-      );
 
       const requests: Promise<any>[] = [];
       for (const id of toAssign)
@@ -593,7 +495,6 @@ export default function ManageProperties({
 
       if (requests.length === 0) {
         alert("No changes to save.");
-        console.log("SaveAssignments -> No changes detected, aborting.");
         setSaving(false);
         return;
       }
@@ -609,11 +510,6 @@ export default function ManageProperties({
           else failures.push({ message: String(reason) });
         }
       });
-
-      console.group("ManageProperties · SaveAssignments Results");
-      console.log("Assigned (successful):", successes);
-      console.log("Failed:", failures);
-      console.groupEnd();
 
       if (failures.length === 0) {
         Swal.fire({
@@ -635,7 +531,6 @@ export default function ManageProperties({
 
       await fetchAllPropertiesPages();
     } catch (err: any) {
-      console.error("handleSaveAssignments error:", err);
       Swal.fire({
         icon: "error",
         title: "Failed to save assignments",
@@ -649,12 +544,8 @@ export default function ManageProperties({
   }
 
   const handleCancel = () => {
-    console.log("handleCancel -> resetting selections", {
-      initialAssignedIds,
-    });
     setSelectedPropertyIds([...initialAssignedIds]);
     fetchAllPropertiesPages();
-    console.log("Selection cancelled and refetched.");
   };
 
   // 🔢 SUMMARY STATS: totals & available counts + total assigned
@@ -683,13 +574,6 @@ export default function ManageProperties({
     });
 
     const totalProperties = properties.length;
-
-    console.log("Summary stats computed:", {
-      totalProperties,
-      availableSales,
-      availableRentals,
-      totalAssigned,
-    });
 
     return {
       totalProperties,
@@ -736,33 +620,10 @@ export default function ManageProperties({
       return true;
     });
 
-    console.log("Filtered properties computed:", {
-      activeTab,
-      viewAgentId,
-      currentUserRole,
-      currentUserAgentId,
-      totalProperties: properties.length,
-      filteredCount: result.length,
-      filteredIds: result.map((r) => r.id),
-    });
-
     return result;
   }, [properties, activeTab, viewAgentId, currentUserRole, currentUserAgentId]);
 
   const selectedCount = selectedPropertyIds.length;
-  console.log("Render ManageProperties:", {
-    selectedPropertyIds,
-    selectedCount,
-    activeTab,
-    loading,
-    error,
-    totalProperties: properties.length,
-    filteredPropertiesIds: filteredProperties.map((p) => p.id),
-    viewAgentId,
-    effectiveAgentId,
-    currentUserRole,
-    currentUserAgentId,
-  });
 
   return (
     <div className="p-6 md:p-10 flex flex-col items-center">
