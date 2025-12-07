@@ -359,6 +359,8 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
   const rating =
     v.rating ??
+
+
     (v.property_stats && v.property_stats.total_bookings ? 4.6 : 0);
   const reviewCount =
     v.reviewCount ?? (v.property_stats ? v.property_stats.total_bookings : 0);
@@ -629,7 +631,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           {/* Amenities */}
           <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
             {amenities.length > 0 ? (
-              amenities.map((amenity: string, idx: number) => (
+              amenities.slice(0, 4).map((amenity: string, idx: number) => (
                 <span
                   key={idx}
                   className="px-3 py-1 text-xs md:text-sm font-medium text-teal-700 bg-teal-50 border border-teal-300 rounded-full"
