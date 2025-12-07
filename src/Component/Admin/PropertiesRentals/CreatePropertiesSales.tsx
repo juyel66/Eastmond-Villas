@@ -43,8 +43,12 @@ const CreatePropertySales = () => {
   const signatureRefs = useRef([]);
 
   const setPrimaryImage = (id) => {
-    setMediaImages((prev) => prev.map((img) => ({ ...img, isPrimary: img.id === id })));
-    setBedroomImages((prev) => prev.map((img) => ({ ...img, isPrimary: img.id === id })));
+    setMediaImages((prev) =>
+      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+    );
+    setBedroomImages((prev) =>
+      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+    );
   };
 
   const handleMediaImageUpload = (e) => {
@@ -141,7 +145,9 @@ const CreatePropertySales = () => {
       return false;
     }
 
-    const missingMeta = bedroomImages.find((b) => !b.name || !b.name.trim());
+    const missingMeta = bedroomImages.find(
+      (b) => !b.name || !b.name.trim()
+    );
     if (missingMeta) {
       toast.error("Bedroom name is required for each bedroom image.");
       return false;
@@ -163,7 +169,10 @@ const CreatePropertySales = () => {
         price: String(values.price),
         price_display: String(values.price),
         listing_type: "sale", // FIXED SALE
-        status: (values.status || "draft").toLowerCase(),
+        // 🔧 FIX: normalize status to snake_case for backend
+        status: (values.status || "draft")
+          .toLowerCase()
+          .replace(/\s+/g, "_"),
         address: values.address || location.address,
         city: values.city || "",
         add_guest: Number(values.add_guest) || 1,
@@ -214,7 +223,11 @@ const CreatePropertySales = () => {
       const body = await res.json().catch(() => null);
 
       if (!res.ok) {
-        Swal.fire({ title: "Error", text: body?.error || "Failed", icon: "error" });
+        Swal.fire({
+          title: "Error",
+          text: body?.error || "Failed",
+          icon: "error",
+        });
         setSubmitting(false);
         return;
       }
@@ -257,10 +270,13 @@ const CreatePropertySales = () => {
           <h1 className="text-3xl font-semibold text-gray-800">
             Create New Property (Sales)
           </h1>
-          <p className="text-gray-500 mt-2">Enter details to create the listing.</p>
+          <p className="text-gray-500 mt-2">
+            Enter details to create the listing.
+          </p>
         </div>
         <button className="border border-gray-300 text-black px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 shadow-sm">
-          <User className="w-5 h-5 sm:inline-block hidden" /> Preview Agent Portal
+          <User className="w-5 h-5 sm:inline-block hidden" /> Preview Agent
+          Portal
         </button>
       </div>
 
@@ -271,7 +287,11 @@ const CreatePropertySales = () => {
           lng={location.lng}
           text={location.address}
           onLocationAdd={(villa) =>
-            setLocation({ lat: villa.lat, lng: villa.lng, address: villa.name })
+            setLocation({
+              lat: villa.lat,
+              lng: villa.lng,
+              address: villa.name,
+            })
           }
         />
       </div>
@@ -283,28 +303,42 @@ const CreatePropertySales = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Property Title
             </label>
-            <input {...register("title")} className="w-full border rounded-lg p-3" />
+            <input
+              {...register("title")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
 
           <div className="col-span-12">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
-            <textarea {...register("description")} rows="3" className="w-full border rounded-lg p-3 bg-gray-50" />
+            <textarea
+              {...register("description")}
+              rows="3"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
           </div>
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Price
             </label>
-            <input type="number" {...register("price")} className="w-full border rounded-lg p-3" />
+            <input
+              type="number"
+              {...register("price")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Property Type
             </label>
-            <select disabled className="w-full border rounded-lg p-3 bg-gray-100 text-gray-600">
+            <select
+              disabled
+              className="w-full border rounded-lg p-3 bg-gray-100 text-gray-600"
+            >
               <option>Sales </option>
             </select>
           </div>
@@ -313,7 +347,10 @@ const CreatePropertySales = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Status
             </label>
-            <select {...register("status")} className="w-full border rounded-lg p-3 bg-gray-50">
+            <select
+              {...register("status")}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            >
               <option>Draft</option>
               <option>Pending Review</option>
               <option>Published</option>
@@ -325,32 +362,62 @@ const CreatePropertySales = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Add Guest
             </label>
-            <input type="number" {...register("add_guest")} className="w-full border rounded-lg p-3" />
+            <input
+              type="number"
+              {...register("add_guest")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
 
           <div className="col-span-12 sm:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
-            <input type="number" {...register("bedrooms")} className="w-full border rounded-lg p-3" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bedrooms
+            </label>
+            <input
+              type="number"
+              {...register("bedrooms")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
           <div className="col-span-12 sm:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bathrooms</label>
-            <input type="number" {...register("bathrooms")} className="w-full border rounded-lg p-3" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bathrooms
+            </label>
+            <input
+              type="number"
+              {...register("bathrooms")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
           <div className="col-span-12 sm:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pools</label>
-            <input type="number" {...register("pool")} className="w-full border rounded-lg p-3" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Pools
+            </label>
+            <input
+              type="number"
+              {...register("pool")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
 
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Address
             </label>
-            <input {...register("address")} className="w-full border rounded-lg p-3" />
+            <input
+              {...register("address")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
 
           <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-            <input {...register("city")} className="w-full border rounded-lg p-3" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              City
+            </label>
+            <input
+              {...register("city")}
+              className="w-full border rounded-lg p-3"
+            />
           </div>
         </div>
 
@@ -361,7 +428,10 @@ const CreatePropertySales = () => {
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {mediaImages.map((img) => (
-              <div key={img.id} className="relative border rounded-xl overflow-hidden h-32">
+              <div
+                key={img.id}
+                className="relative border rounded-xl overflow-hidden h-32"
+              >
                 <img src={img.url} className="w-full h-full object-cover" />
                 <div className="absolute left-2 bottom-2">
                   <button
@@ -389,10 +459,18 @@ const CreatePropertySales = () => {
             <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 transition h-32">
               <UploadCloud className="w-6 h-6 mb-1" />
               <p className="text-sm">Upload Media</p>
-              <input type="file" accept="image/*" multiple className="hidden" onChange={handleMediaImageUpload} />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleMediaImageUpload}
+              />
             </label>
           </div>
-          {mediaError && <p className="text-sm text-red-600 mt-2">{mediaError}</p>}
+          {mediaError && (
+            <p className="text-sm text-red-600 mt-2">{mediaError}</p>
+          )}
         </div>
 
         {/* BEDROOM IMAGES */}
@@ -416,7 +494,11 @@ const CreatePropertySales = () => {
                 <input
                   value={img.name}
                   onChange={(e) =>
-                    setBedroomImages((prev) => prev.map((b) => (b.id === img.id ? { ...b, name: e.target.value } : b)))
+                    setBedroomImages((prev) =>
+                      prev.map((b) =>
+                        b.id === img.id ? { ...b, name: e.target.value } : b
+                      )
+                    )
                   }
                   placeholder="Bedroom name (required)"
                   className="w-full border rounded-lg p-2 text-xs bg-gray-50"
@@ -425,7 +507,13 @@ const CreatePropertySales = () => {
                 <input
                   value={img.description}
                   onChange={(e) =>
-                    setBedroomImages((prev) => prev.map((b) => (b.id === img.id ? { ...b, description: e.target.value } : b)))
+                    setBedroomImages((prev) =>
+                      prev.map((b) =>
+                        b.id === img.id
+                          ? { ...b, description: e.target.value }
+                          : b
+                      )
+                    )
                   }
                   placeholder="Description (optional)"
                   className="w-full border rounded-lg p-2 text-xs bg-gray-50"
@@ -436,7 +524,13 @@ const CreatePropertySales = () => {
             <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 transition h-32">
               <UploadCloud className="w-6 h-6 mb-1" />
               <p className="text-sm">Upload Bedroom Images</p>
-              <input type="file" accept="image/*" multiple className="hidden" onChange={handleBedroomImageUpload} />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleBedroomImageUpload}
+              />
             </label>
           </div>
         </div>
@@ -450,7 +544,13 @@ const CreatePropertySales = () => {
             <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 transition h-32">
               <UploadCloud className="w-6 h-6 mb-1" />
               <p className="text-sm">Upload Videos</p>
-              <input type="file" accept="video/*" multiple className="hidden" onChange={handleVideoUpload} />
+              <input
+                type="file"
+                accept="video/*"
+                multiple
+                className="hidden"
+                onChange={handleVideoUpload}
+              />
             </label>
 
             {videos.length > 0 && (
@@ -472,20 +572,26 @@ const CreatePropertySales = () => {
                 <input
                   value={s}
                   ref={(el) => (signatureRefs.current[i] = el)}
-                  onChange={(e) => updateArray(setSignatureList, signatureList, i, e.target.value)}
+                  onChange={(e) =>
+                    updateArray(setSignatureList, signatureList, i, e.target.value)
+                  }
                   placeholder="e.g. Ocean view"
                   className="flex-1 border rounded-lg p-2 bg-gray-50"
                 />
                 <button
                   type="button"
-                  onClick={() => addArrayItem(setSignatureList, signatureList, signatureRefs)}
+                  onClick={() =>
+                    addArrayItem(setSignatureList, signatureList, signatureRefs)
+                  }
                   className="px-3 py-2 bg-teal-600 text-white rounded-lg"
                 >
                   Add
                 </button>
                 <button
                   type="button"
-                  onClick={() => removeArrayItem(setSignatureList, signatureList, i)}
+                  onClick={() =>
+                    removeArrayItem(setSignatureList, signatureList, i)
+                  }
                   className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
                 >
                   x
@@ -507,20 +613,35 @@ const CreatePropertySales = () => {
                   <input
                     value={v}
                     ref={(el) => (interiorRefs.current[i] = el)}
-                    onChange={(e) => updateArray(setInteriorAmenities, interiorAmenities, i, e.target.value)}
+                    onChange={(e) =>
+                      updateArray(
+                        setInteriorAmenities,
+                        interiorAmenities,
+                        i,
+                        e.target.value
+                      )
+                    }
                     placeholder="e.g. WiFi"
                     className="flex-1 border rounded-lg p-2 bg-gray-50"
                   />
                   <button
                     type="button"
-                    onClick={() => addArrayItem(setInteriorAmenities, interiorAmenities, interiorRefs)}
+                    onClick={() =>
+                      addArrayItem(
+                        setInteriorAmenities,
+                        interiorAmenities,
+                        interiorRefs
+                      )
+                    }
                     className="px-3 py-2 bg-teal-600 text-white rounded-lg"
                   >
                     Add
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeArrayItem(setInteriorAmenities, interiorAmenities, i)}
+                    onClick={() =>
+                      removeArrayItem(setInteriorAmenities, interiorAmenities, i)
+                    }
                     className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
                   >
                     x
@@ -540,20 +661,35 @@ const CreatePropertySales = () => {
                   <input
                     value={v}
                     ref={(el) => (outdoorRefs.current[i] = el)}
-                    onChange={(e) => updateArray(setOutdoorAmenities, outdoorAmenities, i, e.target.value)}
+                    onChange={(e) =>
+                      updateArray(
+                        setOutdoorAmenities,
+                        outdoorAmenities,
+                        i,
+                        e.target.value
+                      )
+                    }
                     placeholder="e.g. Parking"
                     className="flex-1 border rounded-lg p-2 bg-gray-50"
                   />
                   <button
                     type="button"
-                    onClick={() => addArrayItem(setOutdoorAmenities, outdoorAmenities, outdoorRefs)}
+                    onClick={() =>
+                      addArrayItem(
+                        setOutdoorAmenities,
+                        outdoorAmenities,
+                        outdoorRefs
+                      )
+                    }
                     className="px-3 py-2 bg-teal-600 text-white rounded-lg"
                   >
                     Add
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeArrayItem(setOutdoorAmenities, outdoorAmenities, i)}
+                    onClick={() =>
+                      removeArrayItem(setOutdoorAmenities, outdoorAmenities, i)
+                    }
                     className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
                   >
                     x
@@ -592,9 +728,7 @@ const CreatePropertySales = () => {
             type="submit"
             className="flex items-center justify-center w-full px-4 py-3 text-white rounded-lg transition shadow-md bg-teal-600 border border-teal-700 hover:bg-teal-700"
           >
-            {submitting ?
-               (
-
+            {submitting ? (
               <>
                 <svg
                   className="animate-spin h-5 w-5 mr-2 text-white"
@@ -606,7 +740,7 @@ const CreatePropertySales = () => {
                     className="opacity-25"
                     cx="12"
                     cy="12"
-                    r="10"                  
+                    r="10"
                     stroke="currentColor"
                     strokeWidth="4"
                   ></circle>
@@ -618,18 +752,16 @@ const CreatePropertySales = () => {
                 </svg>
                 Creating...
               </>
-              
             ) : (
               <>
                 <img
                   className="mr-2 w-5 h-5"
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760999922/Icon_41_fxo3ap.png"
                   alt="icon"
-                />{' '}
+                />{" "}
                 Create Property
               </>
             )}
-            
           </button>
 
           <Link
