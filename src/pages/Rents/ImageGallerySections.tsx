@@ -1,3 +1,4 @@
+// ImageGallerySections.tsx (or .jsx)
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 
@@ -63,20 +64,16 @@ const drawImageCoverToCanvas = (imgEl, canvas, targetW, targetH) => {
   const iw = imgEl.naturalWidth || imgEl.width;
   const ih = imgEl.naturalHeight || imgEl.height;
 
-  // Compute scale to cover target
   const scale = Math.max(targetW / iw, targetH / ih);
   const sw = targetW / scale;
   const sh = targetH / scale;
 
-  // Source top-left to crop (centered)
   const sx = Math.max(0, Math.floor((iw - sw) / 2));
   const sy = Math.max(0, Math.floor((ih - sh) / 2));
 
-  // Make canvas sized to target pixels for higher quality
   canvas.width = targetW;
   canvas.height = targetH;
 
-  // Clear and draw
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(imgEl, sx, sy, sw, sh, 0, 0, targetW, targetH);
 };
@@ -99,7 +96,6 @@ const ImageGallerySection = ({ villa }) => {
       url: img.image || img.file_url || LOCAL_FALLBACK,
     })) || [];
 
-  // bedrooms_images now include name + description for each image
   const bedrooms_images =
     villa.bedrooms_images?.map((img) => ({
       id: img.id,
@@ -137,7 +133,7 @@ const ImageGallerySection = ({ villa }) => {
     ? [{ name: villa.staff.name, details: villa.staff.details || "" }]
     : [];
 
-  // Concierge Services: read from concierge_services (API) with fallback
+  // Concierge Services (dynamic only)
   const concierge_service = Array.isArray(villa.concierge_services)
     ? villa.concierge_services
     : Array.isArray(villa.concierge_service)
@@ -147,11 +143,12 @@ const ImageGallerySection = ({ villa }) => {
   const security_deposit = villa.security_deposit || "";
 
   const description = villa.description || "";
-  const description_image_url = villa.description_image_url || LOCAL_FALLBACK;
+  const description_image_url =
+    villa.description_image_url || LOCAL_FALLBACK;
 
   const booking_rate_start = villa.booking_rate_start || [];
 
-  // ✅ NEW: flat booking_rate array from API (for RatesBookingInformation)
+  // flat booking_rate array for RatesBookingInformation
   const booking_rate = Array.isArray(villa.booking_rate)
     ? villa.booking_rate
     : [];
@@ -164,7 +161,6 @@ const ImageGallerySection = ({ villa }) => {
       }))
     : [];
 
-  // ===== Build location object robustly
   const location = {
     lat:
       typeof villa.latitude === "number"
@@ -279,7 +275,8 @@ const ImageGallerySection = ({ villa }) => {
 
       const headerHeight = 26;
       const footerHeight = 12;
-      const availableWidth = pageWidth - margin * 2 - gap * (cols - 1);
+      const availableWidth =
+        pageWidth - margin * 2 - gap * (cols - 1);
       const availableHeight =
         pageHeight -
         margin * 2 -
@@ -314,7 +311,12 @@ const ImageGallerySection = ({ villa }) => {
         }
         pdf.setDrawColor(200);
         pdf.setLineWidth(0.4);
-        pdf.line(margin, margin + 18, pageWidth - margin, margin + 18);
+        pdf.line(
+          margin,
+          margin + 18,
+          pageWidth - margin,
+          margin + 18
+        );
       };
 
       for (let p = 0; p < totalPages; p++) {
@@ -330,15 +332,28 @@ const ImageGallerySection = ({ villa }) => {
           const x = margin + col * (imgW + gap);
           const y = yStart + row * (imgH + gap);
 
-          const imgEl = await loadImageWithFallback(imgUrls[currentIndex]);
+          const imgEl = await loadImageWithFallback(
+            imgUrls[currentIndex]
+          );
           if (!imgEl) continue;
 
           const pxPerMm = 3.78;
-          const canvasWpx = Math.max(600, Math.round(imgW * pxPerMm));
-          const canvasHpx = Math.max(800, Math.round(imgH * pxPerMm));
+          const canvasWpx = Math.max(
+            600,
+            Math.round(imgW * pxPerMm)
+          );
+          const canvasHpx = Math.max(
+            800,
+            Math.round(imgH * pxPerMm)
+          );
 
           const canvas = document.createElement("canvas");
-          drawImageCoverToCanvas(imgEl, canvas, canvasWpx, canvasHpx);
+          drawImageCoverToCanvas(
+            imgEl,
+            canvas,
+            canvasWpx,
+            canvasHpx
+          );
 
           let imgData;
           try {
@@ -348,11 +363,14 @@ const ImageGallerySection = ({ villa }) => {
               "Canvas toDataURL failed, using fallback image src:",
               err
             );
-            const fallbackCanvas = document.createElement("canvas");
+            const fallbackCanvas =
+              document.createElement("canvas");
             fallbackCanvas.width = 800;
             fallbackCanvas.height = 600;
             const fctx = fallbackCanvas.getContext("2d");
-            const fallbackImg = await loadImageWithFallback(LOCAL_FALLBACK);
+            const fallbackImg = await loadImageWithFallback(
+              LOCAL_FALLBACK
+            );
             if (fallbackImg)
               fctx.drawImage(
                 fallbackImg,
@@ -361,7 +379,10 @@ const ImageGallerySection = ({ villa }) => {
                 fallbackCanvas.width,
                 fallbackCanvas.height
               );
-            imgData = fallbackCanvas.toDataURL("image/jpeg", 0.9);
+            imgData = fallbackCanvas.toDataURL(
+              "image/jpeg",
+              0.9
+            );
           }
 
           pdf.addImage(imgData, "JPEG", x, y, imgW, imgH);
@@ -370,15 +391,20 @@ const ImageGallerySection = ({ villa }) => {
         pdf.setFontSize(9);
         pdf.setTextColor(120);
         const footerText = `Page ${p + 1} of ${totalPages}`;
-        pdf.text(footerText, pageWidth / 2, pageHeight - margin + 2, {
-          align: "center",
-        });
+        pdf.text(
+          footerText,
+          pageWidth / 2,
+          pageHeight - margin + 2,
+          { align: "center" }
+        );
 
         if (p < totalPages - 1) pdf.addPage();
       }
 
       pdf.save(
-        `${(villaName || "EV_Brochure").replace(/\s+/g, "_").trim()}.pdf`
+        `${(villaName || "EV_Brochure")
+          .replace(/\s+/g, "_")
+          .trim()}.pdf`
       );
     } catch (err) {
       console.error("PDF/download flow error:", err);
@@ -403,15 +429,20 @@ const ImageGallerySection = ({ villa }) => {
           </h2>
 
           <div className="grid grid-cols-3 gap-4">
-            {(showAll ? media_images : media_images.slice(0, 6)).map((img) => (
-              <div
-                key={img.id}
-                className="aspect-4/3 bg-gray-200 rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
-                onClick={() => setSelectedImage(img.url)}
-              >
-                <img src={img.url} className="w-full h-full object-cover" />
-              </div>
-            ))}
+            {(showAll ? media_images : media_images.slice(0, 6)).map(
+              (img) => (
+                <div
+                  key={img.id}
+                  className="aspect-4/3 bg-gray-200 rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
+                  onClick={() => setSelectedImage(img.url)}
+                >
+                  <img
+                    src={img.url}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )
+            )}
           </div>
 
           <div className="mt-8 text-center">
@@ -431,13 +462,14 @@ const ImageGallerySection = ({ villa }) => {
               </button>
             )}
 
-            {/* ✅ VideoExperience now receives videos + full villa */}
             <VideoExperience videos={videos} villa={villa} />
 
             <Description
               descriptionData={description}
               descriptionImage={
-                media_images?.[1]?.url || description_image_url || LOCAL_FALLBACK
+                media_images?.[1]?.url ||
+                description_image_url ||
+                LOCAL_FALLBACK
               }
             />
           </div>
@@ -445,23 +477,31 @@ const ImageGallerySection = ({ villa }) => {
 
         {/* RIGHT */}
         <div className="lg:col-span-5 border-l lg:pl-12 pl-0">
-          <h3 className="text-2xl font-bold mb-4">Signature Distinctions</h3>
+          <h3 className="text-2xl font-bold mb-4">
+            Signature Distinctions
+          </h3>
           <ul>
             {signature_distinctions.map((item, i) => (
               <AmenityItem key={i} name={item} />
             ))}
           </ul>
 
-          <h3 className="text-2xl font-bold mt-10 mb-4">Finer Details</h3>
+          <h3 className="text-2xl font-bold mt-10 mb-4">
+            Finer Details
+          </h3>
 
-          <h4 className="font-semibold text-lg mb-2">Interior Amenities</h4>
+          <h4 className="font-semibold text-lg mb-2">
+            Interior Amenities
+          </h4>
           <ul className="grid grid-cols-2 gap-x-6">
             {interior_amenities.map((item, i) => (
               <AmenityItem key={i} name={item} />
             ))}
           </ul>
 
-          <h4 className="font-semibold text-lg mt-6 mb-2">Outdoor Amenities</h4>
+          <h4 className="font-semibold text-lg mt-6 mb-2">
+            Outdoor Amenities
+          </h4>
           <ul>
             {outdoor_amenities.map((item, i) => (
               <AmenityItem key={i} name={item} />
@@ -480,7 +520,9 @@ const ImageGallerySection = ({ villa }) => {
                 ))}
               </ul>
 
-              <h3 className="text-2xl font-bold mt-10 mb-4">Check-in/out</h3>
+              <h3 className="text-2xl font-bold mt-10 mb-4">
+                Check-in/out
+              </h3>
               {check_in_out_time.check_in ? (
                 <p>Check-In: {check_in_out_time.check_in}</p>
               ) : (
@@ -495,7 +537,9 @@ const ImageGallerySection = ({ villa }) => {
                 <p>{check_in_out_time.description}</p>
               ) : null}
 
-              <h3 className="text-2xl font-bold mt-10 mb-4">Staff</h3>
+              <h3 className="text-2xl font-bold mt-10 mb-4">
+                Staff
+              </h3>
               <ul>
                 {staffArray.map((s, i) => (
                   <StaffItem key={i} name={s.name} details={s.details} />
@@ -515,59 +559,27 @@ const ImageGallerySection = ({ villa }) => {
                 Concierge Service
               </h3>
 
-              {/* Existing concierge items (if any) */}
+              {/* dynamic concierge items only */}
               <ul>
                 {concierge_service.map((item, i) => (
                   <AmenityItem key={i} name={item} />
                 ))}
-
-                {/* --- STATIC LINES REQUESTED --- */}
-                <li className="flex items-start text-gray-700 text-sm mb-2 mt-4">
-                  <img
-                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
-                    alt="icon"
-                    className="w-4 h-4 mr-2 mt-0.5"
-                  />
-                  <span>
-                    Our concierge team offers a bunch of luxury services, making
-                    sure you enjoy every moment.
-                  </span>
-                </li>
-
-                <li className="flex items-start text-gray-700 text-sm mb-2">
-                  <img
-                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
-                    alt="icon"
-                    className="w-4 h-4 mr-2 mt-0.5"
-                  />
-                  <span>
-                    We handle your Arrival, Transfers, Car Rentals, and
-                    Chauffeur Services.
-                  </span>
-                </li>
-
-                <li className="flex items-start text-gray-700 text-sm mb-2">
-                  <img
-                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
-                    alt="icon"
-                    className="w-4 h-4 mr-2 mt-0.5"
-                  />
-                  <span>
-                    We can stock your villa, help with menus, provide household
-                    support, and spa services.
-                  </span>
-                </li>
               </ul>
             </>
           )}
 
-          <h3 className="text-3xl font-bold mt-10 mb-4">
-            Security Deposit
-          </h3>
+          {/* 🔐 Security Deposit: ONLY for RENT properties now */}
+          {isRentType && (
+            <>
+              <h3 className="text-3xl font-bold mt-10 mb-4">
+                Security Deposit
+              </h3>
 
-          <p className="text-2xl font-semibold">
-            US$ {security_deposit || "US$ 10,000.00"}
-          </p>
+              <p className="text-2xl font-semibold">
+                US$ {security_deposit || "US$ 10,000.00"}
+              </p>
+            </>
+          )}
 
           <button
             onClick={handleDownloadPDF}
