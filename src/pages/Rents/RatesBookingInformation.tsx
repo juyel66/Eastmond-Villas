@@ -1,4 +1,3 @@
-// RatesBookingInformation.tsx
 import React, { useMemo } from "react";
 import { Info } from "lucide-react"; // tooltip icon
 
@@ -178,9 +177,7 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
             </div>
 
             {rows.map((r) => {
-              const nights =
-                parseInt(String(r.min_stay).replace(/\D/g, ""), 10) || 1;
-              const calculated = nights * (Number(r.rate) || 0);
+              const displayRate = Number(r.rate) || 0;
 
               return (
                 <div
@@ -192,7 +189,7 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
                     {r.min_stay}
                   </div>
                   <div className="p-2 text-right font-bold">
-                    {formatCurrency(calculated)}
+                    {formatCurrency(displayRate)}
                   </div>
                 </div>
               );
