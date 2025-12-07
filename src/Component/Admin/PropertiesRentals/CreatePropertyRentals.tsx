@@ -31,7 +31,7 @@ const CreatePropertyRentals = () => {
   const [mediaImages, setMediaImages] = useState([]); // {id,url,file,isPrimary}
   const [bedroomImages, setBedroomImages] = useState([]); // {id,url,file,isPrimary,name,description}
 
-  // 🎥 Videos
+  // Videos
   const [videos, setVideos] = useState([]); // File[]
 
   // Multiple-use arrays
@@ -43,12 +43,17 @@ const CreatePropertyRentals = () => {
   // Concierge services rows (like staff)
   const [conciergeRows, setConciergeRows] = useState(['']);
 
-  // **Check-in and Check-out (separate fields)**
+  // Check-in and Check-out
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
 
   // Staff rows (name + details)
   const [staffRows, setStaffRows] = useState([{ name: '', details: '' }]);
+
+  // 🔥 Booking Rate rows (Rental Period, Minimum Stay, Rate Per Night)
+  const [bookingRateRows, setBookingRateRows] = useState([
+    { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+  ]);
 
   // UI state
   const [submitting, setSubmitting] = useState(false);
@@ -104,7 +109,7 @@ const CreatePropertyRentals = () => {
     setMediaError('');
   };
 
-  // 🎥 handle videos upload
+  // handle videos upload
   const handleVideoUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -163,7 +168,6 @@ const CreatePropertyRentals = () => {
     if (staffRows.length === 1) setStaffRows([{ name: '', details: '' }]);
   };
 
-  // staff builder for payload (filter empty)
   const buildStaffArray = (rows) =>
     rows
       .filter(
@@ -173,6 +177,53 @@ const CreatePropertyRentals = () => {
         name: r.name?.trim() || '',
         details: r.details?.trim() || '',
       }));
+
+  // 🔥 Booking Rate helpers
+  const handleBookingRateChange = (idx, key, value) => {
+    setBookingRateRows((prev) => {
+      const copy = prev.map((r) => ({ ...r }));
+      copy[idx][key] = value;
+      return copy;
+    });
+  };
+
+  const addBookingRateRow = () => {
+    setBookingRateRows((prev) => [
+      ...prev,
+      { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+    ]);
+  };
+
+  const removeBookingRateRow = (idx) => {
+    setBookingRateRows((prev) => prev.filter((_, i) => i !== idx));
+    if (bookingRateRows.length === 1) {
+      setBookingRateRows([
+        { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+      ]);
+    }
+  };
+
+  // convert to backend format:
+  // "booking_rate": [
+  //   "jan 20 - jan 30",
+  //   "10 days",
+  //   "5600",
+  //   ...more if multiple rows
+  // ]
+  const buildBookingRateArray = (rows) => {
+    return rows
+      .filter(
+        (r) =>
+          (r.rentalPeriod && r.rentalPeriod.trim()) ||
+          (r.minimumStay && r.minimumStay.trim()) ||
+          (r.ratePerNight && String(r.ratePerNight).trim())
+      )
+      .flatMap((r) => [
+        r.rentalPeriod?.trim() || '',
+        r.minimumStay?.trim() || '',
+        String(r.ratePerNight).trim() || '',
+      ]);
+  };
 
   // metadata builder for main media images
   const buildMediaMetadata = (imgs, category, startOrder = 0) =>
@@ -236,7 +287,6 @@ const CreatePropertyRentals = () => {
       return false;
     }
 
-    // ✅ Bedroom metadata required for each bedroom image
     if (bedroomImages.length > 0) {
       const missingMeta = bedroomImages.find(
         (b) => !b.name || !b.name.trim()
@@ -278,9 +328,9 @@ const CreatePropertyRentals = () => {
         description: values.description || '',
         price: values.price ? String(values.price) : '0.00',
         price_display: values.price ? String(values.price) : '0.00',
-        booking_rate: {},
 
-        listing_type: values.property_type === 'sales' ? 'sale' : 'rent',
+        // rentals only
+        listing_type: 'rent',
         status: (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
         address: values.address || location.address,
         city: values.city || '',
@@ -297,6 +347,9 @@ const CreatePropertyRentals = () => {
         check_in: checkIn || '',
         check_out: checkOut || '',
         staff: buildStaffArray(staffRows),
+
+        // 🔥 booking_rate as requested
+        booking_rate: buildBookingRateArray(bookingRateRows),
 
         calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
@@ -368,26 +421,22 @@ const CreatePropertyRentals = () => {
       append('commission_rate', processed.commission_rate);
       append('concierge_services', processed.concierge_services);
 
-      // ---------- METADATA PART ----------
-      // main media metadata (if your backend uses it)
+      // METADATA PART
       const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
       mediaMeta.forEach((meta) =>
         fd.append('media_metadata', JSON.stringify(meta))
       );
 
-      // bedroom metadata EXACTLY like Postman: bedrooms_meta = [ {index, name, description}, ... ]
       const bedroomsMeta = bedroomImages.map((img, idx) => ({
         index: idx,
         name: img.name || `Bedroom ${idx + 1}`,
         description: img.description || '',
       }));
       append('bedrooms_meta', bedroomsMeta);
-      // ---------- END METADATA PART ----------
 
       // files
       mediaImages.forEach((img) => fd.append('media_images', img.file));
       bedroomImages.forEach((img) => fd.append('bedrooms_images', img.file));
-
       videos.forEach((file) => {
         fd.append('videos', file);
       });
@@ -462,6 +511,9 @@ const CreatePropertyRentals = () => {
       setCheckOut('');
       setStaffRows([{ name: '', details: '' }]);
       setConciergeRows(['']);
+      setBookingRateRows([
+        { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+      ]);
       setSubmitting(false);
     } catch (err) {
       console.error('Submission error', err);
@@ -812,7 +864,7 @@ const CreatePropertyRentals = () => {
           </div>
         </div>
 
-        {/* 🎥 Videos Upload */}
+        {/* Videos Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Upload Property Videos
@@ -838,6 +890,7 @@ const CreatePropertyRentals = () => {
           </div>
         </div>
 
+        {/* Calendar Link */}
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Calendar Link (optional)
@@ -1238,6 +1291,58 @@ const CreatePropertyRentals = () => {
           </div>
         </div>
 
+        {/* 🔥 Booking Rate Section (under Staff) */}
+        <div className="border rounded-lg p-4 bg-white shadow mt-4">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
+            Booking Rate
+          </h3>
+
+          {bookingRateRows.map((row, idx) => (
+            <div key={idx} className="grid grid-cols-12 gap-3 mb-3 items-center">
+              <input
+                value={row.rentalPeriod}
+                onChange={(e) =>
+                  handleBookingRateChange(idx, 'rentalPeriod', e.target.value)
+                }
+                className="col-span-4 border rounded-lg p-2 text-sm"
+                placeholder="Rental Period (e.g. Jan 20 - Jan 30)"
+              />
+              <input
+                value={row.minimumStay}
+                onChange={(e) =>
+                  handleBookingRateChange(idx, 'minimumStay', e.target.value)
+                }
+                className="col-span-4 border rounded-lg p-2 text-sm"
+                placeholder="Minimum Stay (e.g. 10 Nights)"
+              />
+              <input
+                value={row.ratePerNight}
+                onChange={(e) =>
+                  handleBookingRateChange(idx, 'ratePerNight', e.target.value)
+                }
+                className="col-span-3 border rounded-lg p-2 text-sm"
+                placeholder="Rate Per Night (e.g. 5600)"
+                type="number"
+              />
+              <button
+                type="button"
+                onClick={() => removeBookingRateRow(idx)}
+                className="col-span-1 bg-red-100 text-red-600 rounded-lg px-2 text-sm h-10"
+              >
+                x
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addBookingRateRow}
+            className="mt-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm"
+          >
+            Add Booking Rate
+          </button>
+        </div>
+
         {/* SEO */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
@@ -1249,8 +1354,6 @@ const CreatePropertyRentals = () => {
             />
           </div>
 
-
-      
           <div className="col-span-12">
             <textarea
               name="seo_description"
@@ -1269,7 +1372,29 @@ const CreatePropertyRentals = () => {
             className="flex items-center justify-center w-full px-4 py-3 text-white rounded-lg transition shadow-md bg-teal-600 border border-teal-700 hover:bg-teal-700"
           >
             {submitting ? (
-              'Creating…'
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 mr-2 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Creating...
+              </>
             ) : (
               <>
                 <img
