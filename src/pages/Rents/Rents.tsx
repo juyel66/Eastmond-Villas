@@ -283,7 +283,17 @@ const Rents: React.FC = () => {
 
         {!loading && !error && currentVillas.length === 0 && (
           <div className="py-12 flex justify-center">
-            <div className="text-gray-600">No rentals found.</div>
+                 <div className="flex items-center justify-center py-16">
+  <div className="bg-white shadow-lg rounded-2xl p-8 text-center w-full max-w-sm border border-gray-100">
+   
+    <h2 className="text-lg font-semibold text-gray-800 mb-1">
+      No Properties Found
+    </h2>
+    <p className="text-sm text-gray-600 leading-relaxed">
+      It looks like there are no listings available at the moment.
+    </p>
+  </div>
+</div>
           </div>
         )}
 
