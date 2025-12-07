@@ -489,7 +489,7 @@ const AllReview: React.FC = () => {
             <div className="flex items-center justify-between p-4 border-b">
               <div>
                 <h3 id="view-review-title" className="text-lg font-semibold text-gray-800">Review #{selectedReview.id}</h3>
-                <div className="text-xs text-gray-500 mt-1">By: {typeof selectedReview.user === 'object' ? String((selectedReview.user as any).id ?? JSON.stringify(selectedReview.user)) : String(selectedReview.user)}</div>
+          
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-600">
