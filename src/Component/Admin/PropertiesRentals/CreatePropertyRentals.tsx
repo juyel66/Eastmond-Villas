@@ -7,14 +7,6 @@ import LocationCreateProperty from './LocationCreateProperty';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
-const splitCommaSeparated = (value) => {
-  if (!value) return [];
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-};
-
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
@@ -37,23 +29,19 @@ const CreatePropertyRentals = () => {
 
   // Images
   const [mediaImages, setMediaImages] = useState([]); // {id,url,file,isPrimary}
-  const [bedroomImages, setBedroomImages] = useState([]);
+  const [bedroomImages, setBedroomImages] = useState([]); // {id,url,file,isPrimary,name,description}
 
-  // Mark primary image by id
-  const setPrimaryImage = (id) => {
-    setMediaImages((prev) =>
-      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
-    );
-    setBedroomImages((prev) =>
-      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
-    );
-  };
+  // 🎥 Videos
+  const [videos, setVideos] = useState([]); // File[]
 
   // Multiple-use arrays
   const [signatureList, setSignatureList] = useState(['']);
   const [interiorAmenities, setInteriorAmenities] = useState(['']);
   const [outdoorAmenities, setOutdoorAmenities] = useState(['']);
   const [rules, setRules] = useState(['']);
+
+  // Concierge services rows (like staff)
+  const [conciergeRows, setConciergeRows] = useState(['']);
 
   // **Check-in and Check-out (separate fields)**
   const [checkIn, setCheckIn] = useState('');
@@ -72,9 +60,20 @@ const CreatePropertyRentals = () => {
   const rulesRefs = useRef([]);
   const signatureRefs = useRef([]);
   const staffNameRefs = useRef([]);
+  const conciergeRefs = useRef([]);
 
-  // helper: add files to state with preview
-  const handleImageUpload = (e, setState) => {
+  // Mark primary image by id
+  const setPrimaryImage = (id) => {
+    setMediaImages((prev) =>
+      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+    );
+    setBedroomImages((prev) =>
+      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+    );
+  };
+
+  // helper: add files to state with preview (for MAIN media images)
+  const handleMediaImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     const newImgs = files.map((file, i) => ({
@@ -83,16 +82,41 @@ const CreatePropertyRentals = () => {
       file,
       isPrimary: false,
     }));
-    setState((prev) => [...prev, ...newImgs]);
+    setMediaImages((prev) => [...prev, ...newImgs]);
     e.target.value = null;
     setMediaError('');
+  };
+
+  // helper: add files to state with preview (for BEDROOM images, with metadata)
+  const handleBedroomImageUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const newImgs = files.map((file, i) => ({
+      id: Date.now() + i + Math.random(),
+      url: URL.createObjectURL(file),
+      file,
+      isPrimary: false,
+      name: '',
+      description: '',
+    }));
+    setBedroomImages((prev) => [...prev, ...newImgs]);
+    e.target.value = null;
+    setMediaError('');
+  };
+
+  // 🎥 handle videos upload
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setVideos(files);
+    e.target.value = null;
   };
 
   const removeImage = (id, setState) => {
     setState((prev) => prev.filter((i) => i.id !== id));
   };
 
-  // array helpers (shared)
+  // shared array helpers
   const updateArray = (setter, arr, idx, value) => {
     const copy = [...arr];
     copy[idx] = value;
@@ -101,7 +125,6 @@ const CreatePropertyRentals = () => {
   const addArrayItem = (setter, arr, refs) => {
     setter((prev) => {
       const next = [...prev, ''];
-      // focus newly added item when available
       setTimeout(() => {
         const i = next.length - 1;
         if (refs && refs.current[i]) refs.current[i].focus();
@@ -140,22 +163,6 @@ const CreatePropertyRentals = () => {
     if (staffRows.length === 1) setStaffRows([{ name: '', details: '' }]);
   };
 
-  // signature helpers
-  const addSignatureItem = () => {
-    setSignatureList((prev) => {
-      const next = [...prev, ''];
-      setTimeout(() => {
-        const i = next.length - 1;
-        if (signatureRefs.current[i]) signatureRefs.current[i].focus();
-      }, 60);
-      return next;
-    });
-  };
-  const removeSignatureItem = (idx) => {
-    setSignatureList((prev) => prev.filter((_, i) => i !== idx));
-    if (signatureList.length === 1) setSignatureList(['']);
-  };
-
   // staff builder for payload (filter empty)
   const buildStaffArray = (rows) =>
     rows
@@ -167,7 +174,7 @@ const CreatePropertyRentals = () => {
         details: r.details?.trim() || '',
       }));
 
-  // metadata builder
+  // metadata builder for main media images
   const buildMediaMetadata = (imgs, category, startOrder = 0) =>
     imgs.map((img, idx) => ({
       category,
@@ -198,10 +205,14 @@ const CreatePropertyRentals = () => {
     return false;
   };
 
-  // validate basic fields + media (shows toast + focuses first missing field)
+  // validate before submit
   const validateBeforeSubmit = (values) => {
     const required = ['title', 'price', 'address'];
-    const labels = { title: 'Title', price: 'Price', address: 'Address' };
+    const labels = {
+      title: 'Title',
+      price: 'Price',
+      address: 'Address',
+    };
 
     for (const field of required) {
       if (!values[field] && values[field] !== 0) {
@@ -225,20 +236,30 @@ const CreatePropertyRentals = () => {
       return false;
     }
 
-    // Optional HH:MM validation for check-in/check-out if provided
-    // const hhmmRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    // if (checkIn && !hhmmRegex.test(checkIn)) {
-    //   setError('check_in', { type: 'format', message: 'Check-in must be HH:MM (00:00 - 23:59)' });
-    //   toast.error('Check-in must be HH:MM (00:00 - 23:59)');
-
-    //   return false;
-    // }
-    // if (checkOut && !hhmmRegex.test(checkOut)) {
-    //   setError('check_out', { type: 'format', message: 'Check-out must be HH:MM (00:00 - 23:59)' });
-    //   toast.error('Check-out must be HH:MM (00:00 - 23:59)');
-    //   focusField('input[name="check_out"]');
-    //   return false;
-    // }
+    // ✅ Bedroom metadata required for each bedroom image
+    if (bedroomImages.length > 0) {
+      const missingMeta = bedroomImages.find(
+        (b) => !b.name || !b.name.trim()
+      );
+      if (missingMeta) {
+        toast.error(
+          'Please fill the Bedroom Name for each bedroom image before submitting.'
+        );
+        try {
+          const idx = bedroomImages.findIndex(
+            (b) => !b.name || !b.name.trim()
+          );
+          const el = document.querySelector(
+            `[data-bedroom-name-index="${idx}"]`
+          );
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus({ preventScroll: true });
+          }
+        } catch (e) {}
+        return false;
+      }
+    }
 
     return true;
   };
@@ -252,9 +273,13 @@ const CreatePropertyRentals = () => {
     setSubmitting(true);
     try {
       const processed = {
+        // core fields + API-aligned
         title: values.title,
         description: values.description || '',
         price: values.price ? String(values.price) : '0.00',
+        price_display: values.price ? String(values.price) : '0.00',
+        booking_rate: {},
+
         listing_type: values.property_type === 'sales' ? 'sale' : 'rent',
         status: (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
         address: values.address || location.address,
@@ -263,26 +288,41 @@ const CreatePropertyRentals = () => {
         bedrooms: Number(values.bedrooms) || 0,
         bathrooms: Number(values.bathrooms) || 0,
         pool: Number(values.pool) || 0,
+
         signature_distinctions: signatureList.filter(Boolean),
         interior_amenities: interiorAmenities.filter(Boolean),
         outdoor_amenities: outdoorAmenities.filter(Boolean),
         rules_and_etiquette: rules.filter(Boolean),
-        // now include separate fields
+
         check_in: checkIn || '',
         check_out: checkOut || '',
         staff: buildStaffArray(staffRows),
+
         calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
         seo_description: values.seo_description || '',
         latitude: location.lat ?? null,
         longitude: location.lng ?? null,
+
+        security_deposit: values.security_deposit
+          ? String(values.security_deposit)
+          : '',
+        damage_deposit: values.damage_deposit
+          ? String(values.damage_deposit)
+          : '',
+        commission_rate: values.commission_rate
+          ? String(values.commission_rate)
+          : '',
+
+        concierge_services: conciergeRows
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0),
       };
 
-      // console log processed payload
       console.log('--- Processed payload to send ---');
       console.log(JSON.stringify(processed, null, 2));
 
-      // Build FormData (keeps compatibility)
+      // Build FormData
       const fd = new FormData();
       const append = (k, v) => {
         if (v === undefined || v === null) return;
@@ -290,14 +330,19 @@ const CreatePropertyRentals = () => {
           typeof v === 'string' ||
           typeof v === 'number' ||
           typeof v === 'boolean'
-        )
+        ) {
           fd.append(k, String(v));
-        else fd.append(k, JSON.stringify(v));
+        } else {
+          // non-primitive => JSON (matches Postman text with JSON)
+          fd.append(k, JSON.stringify(v));
+        }
       };
 
       append('title', processed.title);
       append('description', processed.description);
       append('price', processed.price);
+      append('price_display', processed.price_display);
+      append('booking_rate', processed.booking_rate);
       append('listing_type', processed.listing_type);
       append('status', processed.status);
       append('address', processed.address);
@@ -310,7 +355,6 @@ const CreatePropertyRentals = () => {
       append('interior_amenities', processed.interior_amenities);
       append('outdoor_amenities', processed.outdoor_amenities);
       append('rules_and_etiquette', processed.rules_and_etiquette);
-      // append separate check-in/check-out fields
       append('check_in', processed.check_in);
       append('check_out', processed.check_out);
       append('staff', processed.staff);
@@ -319,38 +363,47 @@ const CreatePropertyRentals = () => {
       append('seo_description', processed.seo_description);
       append('latitude', processed.latitude);
       append('longitude', processed.longitude);
+      append('security_deposit', processed.security_deposit);
+      append('damage_deposit', processed.damage_deposit);
+      append('commission_rate', processed.commission_rate);
+      append('concierge_services', processed.concierge_services);
 
-      // media metadata & files
+      // ---------- METADATA PART ----------
+      // main media metadata (if your backend uses it)
       const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
-      const bedroomMeta = buildMediaMetadata(
-        bedroomImages,
-        'bedroom',
-        mediaImages.length
-      );
-      const combinedMeta = [...mediaMeta, ...bedroomMeta];
-      const anyPrimary = combinedMeta.some((m) => m.is_primary);
-      if (!anyPrimary && combinedMeta.length > 0)
-        combinedMeta[0].is_primary = true;
-
-      mediaImages.forEach((img) => fd.append('media_files', img.file));
-      bedroomImages.forEach((img) => fd.append('media_files', img.file));
-      mediaImages.forEach((img) => fd.append('media_images', img.file));
-      bedroomImages.forEach((img) => fd.append('bedrooms_images', img.file));
-      combinedMeta.forEach((meta) =>
+      mediaMeta.forEach((meta) =>
         fd.append('media_metadata', JSON.stringify(meta))
       );
 
+      // bedroom metadata EXACTLY like Postman: bedrooms_meta = [ {index, name, description}, ... ]
+      const bedroomsMeta = bedroomImages.map((img, idx) => ({
+        index: idx,
+        name: img.name || `Bedroom ${idx + 1}`,
+        description: img.description || '',
+      }));
+      append('bedrooms_meta', bedroomsMeta);
+      // ---------- END METADATA PART ----------
+
+      // files
+      mediaImages.forEach((img) => fd.append('media_images', img.file));
+      bedroomImages.forEach((img) => fd.append('bedrooms_images', img.file));
+
+      videos.forEach((file) => {
+        fd.append('videos', file);
+      });
+
       console.log('--- FormData entries ---');
-      for (const pair of fd.entries()) {
-        const [k, v] = pair;
-        if (v instanceof File) console.log(k, 'File:', v.name);
-        else
+      for (const [k, v] of fd.entries()) {
+        if (v instanceof File) {
+          console.log(k, 'File:', v.name);
+        } else {
           console.log(
             k,
             typeof v === 'string' && v.length > 200
               ? v.slice(0, 200) + '...'
               : v
           );
+        }
       }
 
       // send
@@ -400,14 +453,15 @@ const CreatePropertyRentals = () => {
       reset();
       setMediaImages([]);
       setBedroomImages([]);
+      setVideos([]);
       setSignatureList(['']);
       setInteriorAmenities(['']);
       setOutdoorAmenities(['']);
       setRules(['']);
-      // reset check-in/out
       setCheckIn('');
       setCheckOut('');
       setStaffRows([{ name: '', details: '' }]);
+      setConciergeRows(['']);
       setSubmitting(false);
     } catch (err) {
       console.error('Submission error', err);
@@ -416,7 +470,6 @@ const CreatePropertyRentals = () => {
     }
   };
 
-  // Single flat UI — no FormCard wrappers
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen w-full">
       <Link
@@ -476,7 +529,9 @@ const CreatePropertyRentals = () => {
             <input
               name="title"
               {...register('title')}
-              className={`w-full border rounded-lg p-3 ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+              className={`w-full border rounded-lg p-3 ${
+                errors.title ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
             {errors.title && (
               <p className="text-sm text-red-600 mt-1">
@@ -505,7 +560,9 @@ const CreatePropertyRentals = () => {
               name="price"
               type="number"
               {...register('price')}
-              className={`w-full border rounded-lg p-3 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+              className={`w-full border rounded-lg p-3 ${
+                errors.price ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
             {errors.price && (
               <p className="text-sm text-red-600 mt-1">
@@ -598,7 +655,9 @@ const CreatePropertyRentals = () => {
             <input
               name="address"
               {...register('address')}
-              className={`w-full border rounded-lg p-3 ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+              className={`w-full border rounded-lg p-3 ${
+                errors.address ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
             {errors.address && (
               <p className="text-sm text-red-600 mt-1">
@@ -669,7 +728,7 @@ const CreatePropertyRentals = () => {
                 accept="image/*"
                 multiple
                 className="hidden"
-                onChange={(e) => handleImageUpload(e, setMediaImages)}
+                onChange={handleMediaImageUpload}
               />
             </label>
           </div>
@@ -679,36 +738,62 @@ const CreatePropertyRentals = () => {
           )}
         </div>
 
-        {/* Bedrooms Images */}
+        {/* Bedrooms Images + metadata */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Upload Bedrooms Images
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {bedroomImages.map((img) => (
-              <div
-                key={img.id}
-                className="relative border rounded-xl overflow-hidden h-32"
-              >
-                <img
-                  src={img.url}
-                  alt="bedroom"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 right-2">
-                  <button
-                    onClick={() => removeImage(img.id, setBedroomImages)}
-                    type="button"
-                    className="bg-red-500 rounded-full p-1 text-white"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+            {bedroomImages.map((img, idx) => (
+              <div key={img.id} className="space-y-2">
+                <div className="relative border rounded-xl overflow-hidden h-32">
+                  <img
+                    src={img.url}
+                    alt="bedroom"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={() => removeImage(img.id, setBedroomImages)}
+                      type="button"
+                      className="bg-red-500 rounded-full p-1 text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  {img.isPrimary && (
+                    <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
+                      Primary
+                    </span>
+                  )}
                 </div>
-                {img.isPrimary && (
-                  <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
-                    Primary
-                  </span>
-                )}
+                <input
+                  data-bedroom-name-index={idx}
+                  value={img.name || ''}
+                  onChange={(e) =>
+                    setBedroomImages((prev) =>
+                      prev.map((b) =>
+                        b.id === img.id ? { ...b, name: e.target.value } : b
+                      )
+                    )
+                  }
+                  placeholder="Bedroom name (required)"
+                  className="w-full border rounded-lg p-2 text-xs bg-gray-50"
+                />
+                <input
+                  value={img.description || ''}
+                  onChange={(e) =>
+                    setBedroomImages((prev) =>
+                      prev.map((b) =>
+                        b.id === img.id
+                          ? { ...b, description: e.target.value }
+                          : b
+                      )
+                    )
+                  }
+                  placeholder="Bedroom description (optional)"
+                  className="w-full border rounded-lg p-2 text-xs bg-gray-50"
+                />
               </div>
             ))}
 
@@ -721,9 +806,35 @@ const CreatePropertyRentals = () => {
                 accept="image/*"
                 multiple
                 className="hidden"
-                onChange={(e) => handleImageUpload(e, setBedroomImages)}
+                onChange={handleBedroomImageUpload}
               />
             </label>
+          </div>
+        </div>
+
+        {/* 🎥 Videos Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Upload Property Videos
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
+              <UploadCloud className="w-6 h-6 mb-1" />
+              <p className="text-sm">Upload Videos</p>
+              <input
+                name="videos"
+                type="file"
+                accept="video/*"
+                multiple
+                className="hidden"
+                onChange={handleVideoUpload}
+              />
+            </label>
+            {videos.length > 0 && (
+              <div className="flex items-center text-sm text-gray-600">
+                {videos.length} video file(s) selected.
+              </div>
+            )}
           </div>
         </div>
 
@@ -739,7 +850,7 @@ const CreatePropertyRentals = () => {
           />
         </div>
 
-        {/* Signature Distinctions as multiple items */}
+        {/* Signature Distinctions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Signature Distinctions
@@ -764,14 +875,22 @@ const CreatePropertyRentals = () => {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => addSignatureItem()}
+                    onClick={() =>
+                      addArrayItem(
+                        setSignatureList,
+                        signatureList,
+                        signatureRefs
+                      )
+                    }
                     className="px-3 py-2 bg-teal-600 text-white rounded-lg"
                   >
                     Add
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeSignatureItem(i)}
+                    onClick={() =>
+                      removeArrayItem(setSignatureList, signatureList, i)
+                    }
                     className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
                   >
                     x
@@ -782,7 +901,7 @@ const CreatePropertyRentals = () => {
           </div>
         </div>
 
-        {/* Floor Details */}
+        {/* Indoor / Outdoor Amenities */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -913,14 +1032,18 @@ const CreatePropertyRentals = () => {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => addArrayItem(setRules, rules, rulesRefs)}
+                    onClick={() =>
+                      addArrayItem(setRules, rules, rulesRefs)
+                    }
                     className="px-3 py-2 bg-teal-600 text-white rounded-lg"
                   >
                     Add
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeArrayItem(setRules, rules, i)}
+                    onClick={() =>
+                      removeArrayItem(setRules, rules, i)
+                    }
                     className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
                   >
                     x
@@ -931,7 +1054,7 @@ const CreatePropertyRentals = () => {
           </div>
         </div>
 
-        {/* Check-in & Check-out (separate fields) */}
+        {/* Check-in / out + deposits */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -942,7 +1065,9 @@ const CreatePropertyRentals = () => {
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               placeholder="e.g. 15:00"
-              className={`w-full border rounded-lg p-3 bg-gray-50 ${errors.check_in ? 'border-red-500' : 'border-gray-300'}`}
+              className={`w-full border rounded-lg p-3 bg-gray-50 ${
+                errors.check_in ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
             {errors.check_in && (
               <p className="text-sm text-red-600 mt-1">
@@ -963,7 +1088,9 @@ const CreatePropertyRentals = () => {
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
               placeholder="e.g. 11:00"
-              className={`w-full border rounded-lg p-3 bg-gray-50 ${errors.check_out ? 'border-red-500' : 'border-gray-300'}`}
+              className={`w-full border rounded-lg p-3 bg-gray-50 ${
+                errors.check_out ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
             {errors.check_out && (
               <p className="text-sm text-red-600 mt-1">
@@ -973,6 +1100,97 @@ const CreatePropertyRentals = () => {
             <p className="text-xs text-gray-400 mt-1">
               Format: HH:MM (24-hour). Leave blank if not applicable.
             </p>
+          </div>
+
+          <div className="col-span-12 sm:col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Security Deposit
+            </label>
+            <input
+              name="security_deposit"
+              type="number"
+              {...register('security_deposit')}
+              placeholder="10000.00"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+
+          <div className="col-span-12 sm:col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Damage Deposit
+            </label>
+            <input
+              name="damage_deposit"
+              type="number"
+              {...register('damage_deposit')}
+              placeholder="10000.00"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+
+          <div className="col-span-12 sm:col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Commission Rate (%)
+            </label>
+            <input
+              name="commission_rate"
+              type="number"
+              step="0.01"
+              {...register('commission_rate')}
+              placeholder="20.00"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+        </div>
+
+        {/* Concierge services (rows like staff) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Concierge Services (one per field)
+          </label>
+          <div className="space-y-3">
+            {conciergeRows.map((v, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  ref={(el) => (conciergeRefs.current[i] = el)}
+                  value={v}
+                  onChange={(e) =>
+                    updateArray(
+                      setConciergeRows,
+                      conciergeRows,
+                      i,
+                      e.target.value
+                    )
+                  }
+                  placeholder='e.g. "this is the courier"'
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addArrayItem(
+                        setConciergeRows,
+                        conciergeRows,
+                        conciergeRefs
+                      )
+                    }
+                    className="px-3 py-2 bg-teal-600 text-white rounded-lg"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeArrayItem(setConciergeRows, conciergeRows, i)
+                    }
+                    className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
+                  >
+                    x
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1030,6 +1248,9 @@ const CreatePropertyRentals = () => {
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
+
+
+      
           <div className="col-span-12">
             <textarea
               name="seo_description"
