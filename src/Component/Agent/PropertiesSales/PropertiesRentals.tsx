@@ -1,4 +1,3 @@
-// src/features/Properties/PropertiesSales.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -6,9 +5,9 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/features/Auth/authSlice';
 
 /**
- * PropertiesSales.tsx
- * - UI same as before
- * - NOW: Fetches **rent** properties from: ${API_BASE}/villas/properties/?listing_type=rent
+ * PropertiesSales.tsx (actually Rentals view)
+ * - UI same as before, but this page is for RENTALS
+ * - Fetches **rent** properties from: ${API_BASE}/villas/properties/?listing_type=rent
  * - Shows ONLY properties assigned to the current user (by ID)
  * - Logs raw & mapped data to console for debugging
  */
@@ -54,7 +53,7 @@ const LoadingState: React.FC = () => (
   <div className="flex justify-center items-center py-10">
     <div className="flex flex-col items-center gap-3">
       <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-gray-900 animate-spin" />
-      <p className="text-sm text-gray-600">Loading your sales properties…</p>
+      <p className="text-sm text-gray-600">Loading your rental properties…</p>
     </div>
   </div>
 );
@@ -75,7 +74,7 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
   const isError = Boolean(loadError);
 
   const title = isError
-    ? 'Unable to load sales'
+    ? 'Unable to load rentals'
     : hasSearch
       ? 'No Rentals match your search'
       : 'No Rentals properties assigned';
@@ -83,7 +82,7 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
   const description = isError
     ? 'Something went wrong while contacting the server. Please try again in a moment.'
     : hasSearch
-      ? 'Try adjusting your search term or clearing the search box to see all available sales properties.'
+      ? 'Try adjusting your search term or clearing the search box to see all available rental properties.'
       : 'Once rentals properties are assigned to your account, they will appear here.';
 
   return (
@@ -102,7 +101,7 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
             onClick={onRetry}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition"
           >
-            Retry loading sales
+            Retry loading rentals
           </button>
         )}
 
@@ -125,7 +124,7 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
   );
 };
 
-// --- PROPERTY CARD (same look as Rentals card) ---
+// --- PROPERTY CARD (same look, used for rentals) ---
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const {
     id,
@@ -330,7 +329,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
-// --- MAIN COMPONENT (Sales, now showing RENT data) ---
+// --- MAIN COMPONENT (Rentals) ---
 type Props = {
   agentId?: number | null;
 };
@@ -408,14 +407,14 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
       const data = await res.json();
 
       // 🔍 LOG RAW RESPONSE
-      console.log('[Sales→Rent] Raw response from /villas/properties:', data);
+      console.log('[Rentals] Raw response from /villas/properties:', data);
 
       const list = Array.isArray(data)
         ? data
         : data?.results ?? data?.items ?? [];
 
       // 🔍 LOG PARSED LIST
-      console.log('[Sales→Rent] Parsed rent properties list:', list);
+      console.log('[Rentals] Parsed properties list:', list);
 
       const mapped: Property[] = list.map((p: any) => {
         let img = p.main_image_url ?? p.imageUrl ?? null;
@@ -441,6 +440,15 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
           p.city ??
           '';
 
+        // Normalize listing_type
+        const listingTypeRaw = String(
+          p.listing_type ?? p.listingType ?? ''
+        ).toLowerCase();
+
+        let listingType: Property['listing_type'] = 'other';
+        if (listingTypeRaw === 'rent') listingType = 'rent';
+        else if (listingTypeRaw === 'sale') listingType = 'sale';
+
         return {
           id: Number(p.id ?? p.pk ?? Math.floor(Math.random() * 1e9)),
           title: p.title ?? p.name ?? p.slug ?? 'Untitled',
@@ -458,8 +466,7 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
           description: p.description ?? p.short_description ?? null,
           calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
           _raw: p,
-          // ✅ Default listing_type is now 'rent'
-          listing_type: p.listing_type ?? 'rent',
+          listing_type: listingType,
           assigned_agent:
             typeof p.assigned_agent === 'number'
               ? p.assigned_agent
@@ -468,7 +475,7 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
       });
 
       // 🔍 LOG MAPPED DATA
-      console.log('[Sales→Rent] Mapped rent properties:', mapped);
+      console.log('[Rentals] Mapped properties:', mapped);
 
       if (opts?.ignoreResults?.current) return;
 
@@ -507,13 +514,13 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
     loadProperties({ ignoreResults: ignore });
   };
 
-  // Filter logic: now only 'rent' listing_type, plus agent ID == current user
+  // Filter logic: only 'rent' listing_type, plus agent ID == current user
   const filteredProperties = useMemo(() => {
     const lower = searchTerm.toLowerCase();
 
     return properties.filter((p) => {
-      // ✅ Only rent
-      if ((p.listing_type ?? 'rent') !== 'rent') return false;
+      // ✅ Only rentals
+      if (p.listing_type !== 'rent') return false;
 
       if (effectiveAgentId === null) return false;
 
@@ -540,20 +547,20 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
       <div className="mx-auto">
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Properties - Sales
+            Properties - Rentals
           </h1>
           <p className="text-gray-600 text-sm">
-            Access assigned sales properties and marketing materials.
+            Access assigned rental properties and marketing materials.
           </p>
 
           <div className="mt-3 text-sm text-gray-500">
             {effectiveAgentId !== null ? (
               <>
-                Showing sales assigned to agent ID{' '}
+                Showing rentals assigned to agent ID{' '}
                 <strong>{effectiveAgentId}</strong>.
               </>
             ) : (
-              <>You are not associated with an agent account. No sales are visible.</>
+              <>You are not associated with an agent account. No rentals are visible.</>
             )}
           </div>
         </header>
@@ -562,7 +569,7 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
           <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search sales properties..."
+            placeholder="Search rental properties..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-blue-500 focus:border-blue-500 transition"
