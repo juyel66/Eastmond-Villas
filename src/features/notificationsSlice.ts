@@ -34,7 +34,7 @@ const initialState: NotificationsState = {
 
 /**
  * Decide whether an id looks like a "real" server id.
- * - Accepts: numeric strings ("1725"), UUIDs (hex-4-4-4-12), or typical server ids.
+ * - Accepts: numeric strings ("1725"), UUIDs (hex-4-4-4-4-12), or typical server ids.
  * - Rejects: synthetic ids like "summary-12345", "notif-<ts>-<rand>"
  */
 const isServerId = (id: string) => {
@@ -42,7 +42,12 @@ const isServerId = (id: string) => {
   // numeric id
   if (/^\d+$/.test(id)) return true;
   // UUID v4-ish
-  if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) return true;
+  if (
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      id
+    )
+  )
+    return true;
   // other server-style patterns you may want to accept — add here if needed
   return false;
 };
@@ -50,8 +55,14 @@ const isServerId = (id: string) => {
 /* -----------------------------------
    Fetch All Notifications
 ----------------------------------- */
+
+interface FetchNotificationsResult {
+  items: Notification[];
+  unseenCount?: number;
+}
+
 export const fetchNotifications = createAsyncThunk<
-  Notification[],
+  FetchNotificationsResult,
   void,
   { rejectValue: { message: string } }
 >("notifications/fetchNotifications", async (_, { rejectWithValue }) => {
@@ -69,25 +80,60 @@ export const fetchNotifications = createAsyncThunk<
 
     if (!res.ok) {
       const text = await res.text();
-      return rejectWithValue({ message: text || "Failed to fetch notifications" });
+      return rejectWithValue({
+        message: text || "Failed to fetch notifications",
+      });
     }
 
     const data = await res.json();
 
-    // map API → Notification shape
-    const mapped = (data || []).map((item: any) => ({
-      id: String(item.id),
-      type: item.title ?? "notification",
-      title: item.title ?? "Notification",
-      body: item.data?.message ?? item.message ?? "",
-      data: item.data ?? {},
-      read: !!item.is_read,
-      created_at: item.created_at,
-    }));
+    let rawNotifications: any[] = [];
+    let unseenCountFromApi: number | undefined;
 
-    return mapped;
+    if (Array.isArray(data)) {
+      // Old style: plain array
+      rawNotifications = data;
+    } else if (data && typeof data === "object") {
+      // New style (your sample)
+      // {
+      //   count,
+      //   next,
+      //   previous,
+      //   results: {
+      //     unseen_count,
+      //     notifications: [...]
+      //   }
+      // }
+      if (data.results && typeof data.results === "object") {
+        if (Array.isArray(data.results.notifications)) {
+          rawNotifications = data.results.notifications;
+        }
+        if (typeof data.results.unseen_count === "number") {
+          unseenCountFromApi = data.results.unseen_count;
+        }
+      } else if (Array.isArray(data.notifications)) {
+        // Another possible variant
+        rawNotifications = data.notifications;
+      }
+    }
+
+    const mapped: Notification[] = (rawNotifications || []).map(
+      (item: any): Notification => ({
+        id: String(item.id),
+        type: item.title ?? "notification",
+        title: item.title ?? "Notification",
+        body: item.data?.message ?? item.message ?? "",
+        data: item.data ?? {},
+        read: !!item.is_read,
+        created_at: item.created_at,
+      })
+    );
+
+    return { items: mapped, unseenCount: unseenCountFromApi };
   } catch (err: any) {
-    return rejectWithValue({ message: err.message || "Network error" });
+    return rejectWithValue({
+      message: err.message || "Network error",
+    });
   }
 });
 
@@ -98,8 +144,6 @@ export const fetchNotifications = createAsyncThunk<
  * markAsReadAsync now checks id pattern.
  * - If id appears to be a server id -> POST to server endpoint.
  * - If id is synthetic (summary, temp id) -> resolve immediately and update local state only.
- *
- * Adjust endpoint path if your backend uses different URL.
  */
 export const markAsReadAsync = createAsyncThunk<
   { id: string },
@@ -115,9 +159,6 @@ export const markAsReadAsync = createAsyncThunk<
 
     const token = localStorage.getItem("auth_access") || "";
 
-    // Call actual backend endpoint for marking read
-    // Confirm your backend path; current convention used earlier:
-    // POST https://api.eastmondvillas.com/api/notifications/{id}/mark-read/
     const res = await fetch(
       `https://api.eastmondvillas.com/api/notifications/${id}/mark-read/`,
       {
@@ -131,12 +172,16 @@ export const markAsReadAsync = createAsyncThunk<
 
     if (!res.ok) {
       const txt = await res.text();
-      return rejectWithValue({ message: txt || "Failed to mark notification read" });
+      return rejectWithValue({
+        message: txt || "Failed to mark notification read",
+      });
     }
 
     return { id };
   } catch (err: any) {
-    return rejectWithValue({ message: err.message || "Network error" });
+    return rejectWithValue({
+      message: err.message || "Network error",
+    });
   }
 });
 
@@ -183,8 +228,15 @@ const slice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(fetchNotifications.fulfilled, (state, action) => {
-      state.items = action.payload;
-      state.unreadCount = action.payload.filter((i) => !i.read).length;
+      state.items = action.payload.items;
+      if (
+        typeof action.payload.unseenCount === "number" &&
+        !Number.isNaN(action.payload.unseenCount)
+      ) {
+        state.unreadCount = action.payload.unseenCount;
+      } else {
+        state.unreadCount = state.items.filter((i) => !i.read).length;
+      }
     });
 
     builder.addCase(markAsReadAsync.fulfilled, (state, action) => {
@@ -198,7 +250,7 @@ const slice = createSlice({
     });
 
     // optional: handle rejected to rollback optimistic UI if you implement optimistic updates
-    builder.addCase(markAsReadAsync.rejected, (state) => {
+    builder.addCase(markAsReadAsync.rejected, () => {
       // no-op here; UI could show an error toast instead
     });
   },

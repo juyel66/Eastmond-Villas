@@ -8,18 +8,31 @@ import { addNotification } from "./features/notificationsSlice";
 // helper to map server payload -> Notification
 const mapServerToNotif = (payload: any) => {
   // Try to reuse server id if present
-  const id = payload.id ?? payload.notification_id ?? `notif-${Date.now()}-${Math.random()}`;
+  const rawId =
+    payload.id ??
+    payload.notification_id ??
+    `notif-${Date.now()}-${Math.random()}`;
+  const id = String(rawId);
 
   return {
     id,
     type: payload.type ?? payload.event ?? "notification",
-    title: payload.title ?? payload.summary ?? payload.message ?? "Notification",
-    body: payload.body ?? payload.message ?? JSON.stringify(payload.data ?? payload),
+    title:
+      payload.title ??
+      payload.summary ??
+      payload.message ??
+      "Notification",
+    body:
+      payload.body ??
+      payload.message ??
+      JSON.stringify(payload.data ?? payload),
     data: payload,
     read: !!payload.read,
     created_at: payload.created_at ?? new Date().toISOString(),
   };
 };
+
+
 
 export const RootWraper = () => {
   const ws = useRef<WebSocket | null>(null);
@@ -48,7 +61,10 @@ export const RootWraper = () => {
           console.log("WS payload:", payload);
 
           // Server may send different shapes: summary, single, array
-          if (payload.type === "unseen_notifications" && payload.count !== undefined) {
+          if (
+            payload.type === "unseen_notifications" &&
+            payload.count !== undefined
+          ) {
             const notif = {
               id: `summary-${Date.now()}`,
               type: payload.type,
@@ -60,12 +76,18 @@ export const RootWraper = () => {
             };
             dispatch(addNotification(notif));
           } else if (Array.isArray(payload)) {
-            payload.forEach((p) => dispatch(addNotification(mapServerToNotif(p))));
+            payload.forEach((p) =>
+              dispatch(addNotification(mapServerToNotif(p)))
+            );
           } else {
             dispatch(addNotification(mapServerToNotif(payload)));
           }
         } catch (err) {
-          console.warn("Failed to parse WS message:", event.data, err);
+          console.warn(
+            "Failed to parse WS message:",
+            event.data,
+            err
+          );
         }
       };
 
@@ -74,9 +96,16 @@ export const RootWraper = () => {
       };
 
       ws.current.onclose = (ev) => {
-        console.warn("WebSocket closed:", ev.code, ev.reason);
+        console.warn(
+          "WebSocket closed:",
+          ev.code,
+          ev.reason
+        );
         reconnectAttempts += 1;
-        const timeout = Math.min(30000, 1000 * 2 ** Math.min(reconnectAttempts, 5));
+        const timeout = Math.min(
+          30000,
+          1000 * 2 ** Math.min(reconnectAttempts, 5)
+        );
         reconnectTimer = window.setTimeout(connect, timeout);
       };
     };
@@ -90,7 +119,11 @@ export const RootWraper = () => {
         ws.current.onmessage = null;
         ws.current.onerror = null;
         ws.current.onclose = null;
-        try { ws.current.close(); } catch { /* ignore */ }
+        try {
+          ws.current.close();
+        } catch {
+          /* ignore */
+        }
         ws.current = null;
       }
     };

@@ -123,6 +123,68 @@ const API_BASE =
   (import.meta.env.VITE_API_BASE as string) || 'https://api.eastmondvillas.com/api';
 const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
 
+// ⭐ Helper: breakdown থেকে average rating হিসাব
+const computeAverageRatingFromBreakdown = (villa: any) => {
+  if (!villa || typeof villa !== 'object') return { average: null, total: null };
+
+  let counts: Record<number, number> = {};
+
+  // Case 1: rating_breakdown = {1: 2, 2: 5, 3: 1, 4: 10, 5: 20}
+  if (villa.rating_breakdown && typeof villa.rating_breakdown === 'object') {
+    for (const [key, value] of Object.entries(villa.rating_breakdown)) {
+      const star = Number(key);
+      if (star >= 1 && star <= 5 && typeof value === 'number') {
+        counts[star] = (counts[star] || 0) + value;
+      }
+    }
+  }
+
+  // Case 2: ratings = { "1_star": 2, "2_star": 5, ... }
+  if (villa.ratings && typeof villa.ratings === 'object') {
+    for (const [key, value] of Object.entries(villa.ratings)) {
+      if (typeof value !== 'number') continue;
+      if (key.includes('1')) counts[1] = (counts[1] || 0) + value;
+      if (key.includes('2')) counts[2] = (counts[2] || 0) + value;
+      if (key.includes('3')) counts[3] = (counts[3] || 0) + value;
+      if (key.includes('4')) counts[4] = (counts[4] || 0) + value;
+      if (key.includes('5')) counts[5] = (counts[5] || 0) + value;
+    }
+  }
+
+  // Case 3: আলাদা ফিল্ড: rating_1, rating_2, ..., ইত্যাদি হলে
+  for (let star = 1; star <= 5; star++) {
+    const possibleKeys = [
+      `rating_${star}`,
+      `star_${star}`,
+      `${star}_star`,
+      `star${star}`,
+    ];
+    for (const k of possibleKeys) {
+      const val = (villa as any)[k];
+      if (typeof val === 'number') {
+        counts[star] = (counts[star] || 0) + val;
+      }
+    }
+  }
+
+  const stars = Object.keys(counts).map(Number);
+  if (stars.length === 0) return { average: null, total: null };
+
+  let totalReviews = 0;
+  let weightedSum = 0;
+
+  for (const star of stars) {
+    const c = counts[star] || 0;
+    totalReviews += c;
+    weightedSum += star * c;
+  }
+
+  if (totalReviews === 0) return { average: null, total: null };
+
+  const avg = weightedSum / totalReviews;
+  return { average: avg, total: totalReviews };
+};
+
 // -------- Share Modal (for SignatureCard) --------
 interface ShareModalProps {
   isOpen: boolean;
@@ -318,6 +380,8 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
     is_favorite: false,
   };
 
+  // console.log("All villa data is:", villa);
+
   const v = villa || defaultVilla;
   const vId = v.id;
 
@@ -357,13 +421,37 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
       : v.address || v.city || 'Location not specified';
   const price = v.price_display || v.price || defaultVilla.price_display;
 
-  const rating =
-    v.rating ??
+  // ⭐ প্রথমে breakdown থেকে compute করার চেষ্টা করব
+  const breakdownResult = computeAverageRatingFromBreakdown(v);
+  let ratingRaw: number;
 
+  if (breakdownResult.average !== null && breakdownResult.total !== null) {
+    ratingRaw = breakdownResult.average;
+  } else {
+    ratingRaw =
+      typeof v.average_rating === 'number'
+        ? v.average_rating
+        : typeof v.rating === 'number'
+        ? v.rating
+        : defaultVilla.rating;
+  }
 
-    (v.property_stats && v.property_stats.total_bookings ? 4.6 : 0);
+  // ⭐ এক দশমিক ফরম্যাট: 4.6, 4.7, 2.4 etc.
+  const rating = Number.isFinite(ratingRaw)
+    ? parseFloat(ratingRaw.toFixed(1))
+    : defaultVilla.rating;
+
+  // ⭐ reviewCount: breakdown থেকে পাওয়া total, না থাকলে fallback
   const reviewCount =
-    v.reviewCount ?? (v.property_stats ? v.property_stats.total_bookings : 0);
+    breakdownResult.total !== null
+      ? breakdownResult.total
+      : typeof v.total_reviews === 'number'
+      ? v.total_reviews
+      : typeof v.reviewCount === 'number'
+      ? v.reviewCount
+      : v.property_stats
+      ? v.property_stats.total_bookings || 0
+      : 0;
 
   const beds = Number(
     v.bedrooms ?? v.property_info?.bedrooms ?? v.beds ?? defaultVilla.bedrooms
@@ -376,20 +464,20 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   const interior = Array.isArray(v.interior_amenities)
     ? v.interior_amenities
     : v.interior_amenities && typeof v.interior_amenities === 'object'
-    ? Object.keys(v.interior_amenities).filter((k) => v.interior_amenities[k])
+    ? Object.keys(v.interior_amenities).filter((k) => (v.interior_amenities as any)[k])
     : [];
 
   const outdoor = Array.isArray(v.outdoor_amenities)
     ? v.outdoor_amenities
     : v.outdoor_amenities && typeof v.outdoor_amenities === 'object'
-    ? Object.keys(v.outdoor_amenities).filter((k) => v.outdoor_amenities[k])
+    ? Object.keys(v.outdoor_amenities).filter((k) => (v.outdoor_amenities as any)[k])
     : [];
 
   const signature = Array.isArray(v.signature_distinctions)
     ? v.signature_distinctions
     : v.signature_distinctions && typeof v.signature_distinctions === 'object'
     ? Object.keys(v.signature_distinctions).filter(
-        (k) => v.signature_distinctions[k]
+        (k) => (v.signature_distinctions as any)[k]
       )
     : [];
 
