@@ -311,7 +311,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     typeof window !== 'undefined'
       ? window.location.origin
       : 'https://example.com';
-  const propertyUrl = `${origin}/properties/${propertyId}`;
+  const propertyUrl = `${origin}/property/${propertyId}`;
   const encoded = encodeURIComponent(propertyUrl);
   const encodedTitle = encodeURIComponent(propertyTitle);
 

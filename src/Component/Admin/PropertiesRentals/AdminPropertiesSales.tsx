@@ -1,6 +1,6 @@
 // src/features/Properties/AdminPropertiesSales.tsx
-import React, { useState, useMemo, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useMemo, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Trash2,
   Search,
@@ -8,30 +8,32 @@ import {
   AlertTriangle,
   CheckCircle,
   LucideTableProperties,
-} from "lucide-react";
-import Swal from "sweetalert2";
-import { Link } from "react-router-dom";
+} from 'lucide-react';
+import Swal from 'sweetalert2';
+import { Link } from 'react-router-dom';
 
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store"; // optional typed root state
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '@/store'; // optional typed root state
 
 import {
   fetchProperties,
   updateProperty,
   deleteProperty,
-} from "../../../features/Properties/PropertiesSlice";
+} from '../../../features/Properties/PropertiesSlice';
+
+import CreatePropertySales from './CreatePropertiesSales';
 
 /* ---------- small inline toast ---------- */
 const ToastNotification: React.FC<{
   message: string;
-  type?: "success" | "error";
+  type?: 'success' | 'error';
   visible: boolean;
-}> = ({ message, type = "success", visible }) => {
+}> = ({ message, type = 'success', visible }) => {
   if (!visible) return null;
   const baseClass =
-    "fixed bottom-4 right-4 p-4 rounded-lg shadow-xl text-white transition-opacity duration-300 z-50";
-  const typeClass = type === "success" ? "bg-green-500" : "bg-red-500";
-  const Icon = type === "success" ? CheckCircle : AlertTriangle;
+    'fixed bottom-4 right-4 p-4 rounded-lg shadow-xl text-white transition-opacity duration-300 z-50';
+  const typeClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const Icon = type === 'success' ? CheckCircle : AlertTriangle;
   return (
     <div className={`${baseClass} ${typeClass} flex items-center space-x-2`}>
       <Icon className="h-5 w-5" />
@@ -49,30 +51,34 @@ function toArray(payload: any): any[] {
   return [];
 }
 
-const availableStatuses = ["All Status", "published", "pending", "draft"];
+const availableStatuses = ['All Status', 'published', 'pending', 'draft'];
 
 /* ---------- helper to decide if property is a "sale" listing ---------- */
 function isSaleProperty(p: any): boolean {
   if (!p) return false;
   const val =
-    (p.listing_type ?? p.listingType ?? p.property_type ?? p.type ?? p.rateType) ??
-    "";
+    p.listing_type ??
+    p.listingType ??
+    p.property_type ??
+    p.type ??
+    p.rateType ??
+    '';
   if (!val) return false;
   const normalized = String(val).toLowerCase();
   // treat common variants as sale
-  return ["sale", "sell", "for sale", "sales"].includes(normalized);
+  return ['sale', 'sell', 'for sale', 'sales'].includes(normalized);
 }
 
 /* ---------- small helper: truncate description to 20 chars with ellipsis ---------- */
 const truncate = (maybeStr: any, maxLen = 20) => {
   const s =
-    typeof maybeStr === "string"
+    typeof maybeStr === 'string'
       ? maybeStr
       : maybeStr === null || maybeStr === undefined
-      ? ""
-      : String(maybeStr);
+        ? ''
+        : String(maybeStr);
   if (s.length <= maxLen) return s;
-  return s.slice(0, maxLen) + "...";
+  return s.slice(0, maxLen) + '...';
 };
 
 const AdminPropertiesSales: React.FC = () => {
@@ -82,11 +88,11 @@ const AdminPropertiesSales: React.FC = () => {
   const loading = slice?.loading;
   const error = slice?.error;
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Status');
   const [toast, setToast] = useState({
-    message: "",
-    type: "" as "success" | "error" | "",
+    message: '',
+    type: '' as 'success' | 'error' | '',
     visible: false,
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -94,7 +100,6 @@ const AdminPropertiesSales: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<any | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // normalized array from redux
@@ -113,25 +118,29 @@ const AdminPropertiesSales: React.FC = () => {
   useEffect(() => {
     // dispatch and log the thunk result to console
     const p = dispatch(fetchProperties());
-    p
-      .then((res: any) => {
-        console.log("[fetchProperties] dispatched result:", res);
-        console.log("[fetchProperties] payload:", res?.payload ?? res);
-      })
-      .catch((err: any) => {
-        console.error("[fetchProperties] dispatch error:", err);
-      });
+    p.then((res: any) => {
+      console.log('[fetchProperties] dispatched result:', res);
+      console.log('[fetchProperties] payload:', res?.payload ?? res);
+    }).catch((err: any) => {
+      console.error('[fetchProperties] dispatch error:', err);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    console.log("[propertyBooking.properties] rawProperties changed:", rawProperties);
-    console.log("[localProperties] length:", localProperties.length);
+    console.log(
+      '[propertyBooking.properties] rawProperties changed:',
+      rawProperties
+    );
+    console.log('[localProperties] length:', localProperties.length);
   }, [rawProperties, localProperties]);
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = (
+    message: string,
+    type: 'success' | 'error' = 'success'
+  ) => {
     setToast({ message, type, visible: true });
-    setTimeout(() => setToast({ message: "", type: "", visible: false }), 3000);
+    setTimeout(() => setToast({ message: '', type: '', visible: false }), 3000);
   };
 
   const handleEdit = (id: number) => {
@@ -145,13 +154,13 @@ const AdminPropertiesSales: React.FC = () => {
   const handleDelete = (id: number) => {
     const found = localProperties.find((d) => Number(d.id) === Number(id));
     Swal.fire({
-      title: "Are you sure?",
+      title: 'Are you sure?',
       html: `<div>Delete property <strong>${found?.title ?? `#${id}`}</strong>?</div>`,
-      icon: "warning",
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
       reverseButtons: true,
     }).then(async (result) => {
       if (result.isConfirmed) {
@@ -163,68 +172,26 @@ const AdminPropertiesSales: React.FC = () => {
           await dispatch(deleteProperty(id)).unwrap();
 
           // remove locally
-          setLocalProperties((prev) => prev.filter((x) => Number(x.id) !== Number(id)));
+          setLocalProperties((prev) =>
+            prev.filter((x) => Number(x.id) !== Number(id))
+          );
 
-          showToast(`Property ${id} deleted successfully!`, "success");
+          showToast(`Property ${id} deleted successfully!`, 'success');
 
           // refresh redux list to be safe/in-sync
           dispatch(fetchProperties());
         } catch (err: any) {
-          console.error("Delete property error:", err);
+          console.error('Delete property error:', err);
           Swal.fire({
-            title: "Error",
-            text: err?.detail || err?.message || "Failed to delete property",
-            icon: "error",
+            title: 'Error',
+            text: err?.detail || err?.message || 'Failed to delete property',
+            icon: 'error',
           });
         } finally {
           setDeletingId(null);
         }
       }
     });
-  };
-
-  const handleModalSave = async () => {
-    if (!editItem) return;
-    const id = Number(editItem.id);
-
-    // build updates object — include only fields you expect to update
-    const updates: any = {
-      title: editItem.title,
-      price: editItem.price,
-      status: editItem.status,
-      location: editItem.location ?? editItem.city,
-    };
-
-    try {
-      setIsSaving(true);
-      // call thunk
-      // @ts-ignore unwrap
-      const resp = await dispatch(updateProperty({ propertyId: id, updates })).unwrap();
-
-      // resp is the updated object returned by server
-      // Update localProperties instantly using spread operator
-      setLocalProperties((prev) =>
-        prev.map((p) => (Number(p.id) === Number(id) ? { ...p, ...resp } : p))
-      );
-
-      showToast(`Property ${id} updated successfully!`, "success");
-
-      // close modal
-      setIsModalOpen(false);
-      setEditItem(null);
-
-      // refresh redux store
-      dispatch(fetchProperties());
-    } catch (err: any) {
-      console.error("Update error:", err);
-      Swal.fire({
-        title: "Error",
-        text: err?.detail || err?.message || "Failed to update property",
-        icon: "error",
-      });
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   useEffect(() => {
@@ -235,21 +202,34 @@ const AdminPropertiesSales: React.FC = () => {
     const searchLower = searchTerm.toLowerCase().trim();
     return localProperties.filter((project: any) => {
       const statusMatch =
-        statusFilter === "All Status" ||
-        String(project.status ?? "").toLowerCase() === statusFilter.toLowerCase();
+        statusFilter === 'All Status' ||
+        String(project.status ?? '').toLowerCase() ===
+          statusFilter.toLowerCase();
       const searchMatch =
         !searchLower ||
-        String(project.title ?? "").toLowerCase().includes(searchLower) ||
-        String(project.location ?? "").toLowerCase().includes(searchLower) ||
-        String(project.type ?? "").toLowerCase().includes(searchLower);
+        String(project.title ?? '')
+          .toLowerCase()
+          .includes(searchLower) ||
+        String(project.location ?? '')
+          .toLowerCase()
+          .includes(searchLower) ||
+        String(project.type ?? '')
+          .toLowerCase()
+          .includes(searchLower);
       return statusMatch && searchMatch;
     });
   }, [localProperties, searchTerm, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / itemsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProjects.length / itemsPerPage)
+  );
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProjects = filteredProjects.slice(indexOfFirstItem, indexOfLastItem);
+  const currentProjects = filteredProjects.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const paginate = (pageNumber: number) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) setCurrentPage(pageNumber);
@@ -257,12 +237,20 @@ const AdminPropertiesSales: React.FC = () => {
 
   return (
     <div>
-      <ToastNotification message={toast.message} type={toast.type as any} visible={toast.visible} />
+      <ToastNotification
+        message={toast.message}
+        type={toast.type as any}
+        visible={toast.visible}
+      />
 
       <div className="flex justify-between items-center mt-5">
         <div>
-          <h1 className="text-3xl font-semibold">Properties - Sales (Sale only)</h1>
-          <p className="text-gray-500">Your sale properties, beautifully organized.</p>
+          <h1 className="text-3xl font-semibold">
+            Properties - Sales (Sale only)
+          </h1>
+          <p className="text-gray-500">
+            Your sale properties, beautifully organized.
+          </p>
         </div>
         <Link
           to="/dashboard/sales/admin-create-property-sales"
@@ -347,7 +335,7 @@ const AdminPropertiesSales: React.FC = () => {
                           item?.main_image_url ||
                           item?.imageUrl ||
                           item?.media_images?.[0]?.image ||
-                          "https://placehold.co/64x64"
+                          'https://placehold.co/64x64'
                         }
                         alt={item.title || item.name || `Property ${item.id}`}
                         className="h-16 w-16 rounded object-cover"
@@ -357,7 +345,7 @@ const AdminPropertiesSales: React.FC = () => {
                           {item.title ?? item.name ?? `Untitled #${item.id}`}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {truncate(item.details ?? item.description ?? "", 20)}
+                          {truncate(item.details ?? item.description ?? '', 20)}
                         </div>
                       </div>
                     </td>
@@ -365,26 +353,39 @@ const AdminPropertiesSales: React.FC = () => {
                       {item.location ?? item.city ?? item.address}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {item.price_display ?? item.price ?? item.total_price ?? "-"}
+                      {item.price_display ??
+                        item.price ??
+                        item.total_price ??
+                        '-'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {String(item.listing_type ?? item.rateType ?? item.property_type ?? item.type ?? "-")}
+                      {String(
+                        item.listing_type ??
+                          item.rateType ??
+                          item.property_type ??
+                          item.type ??
+                          '-'
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {item.updated_at ?? item.updateDate ?? "-"}
+                      {item.updated_at ?? item.updateDate ?? '-'}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          (item.status ?? "draft").toLowerCase() === "published"
-                            ? "bg-blue-100 text-blue-700"
-                            : (item.status ?? "draft").toLowerCase() === "pending"
-                            ? "bg-orange-100 text-orange-700"
-                            : "bg-gray-100 text-gray-700"
+                          (item.status ?? 'draft').toLowerCase() === 'published'
+                            ? 'bg-blue-100 text-blue-700'
+                            : (item.status ?? 'draft').toLowerCase() ===
+                                'pending'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {(item.status ?? "draft").toString().charAt(0).toUpperCase() +
-                          (item.status ?? "draft").toString().slice(1)}
+                        {(item.status ?? 'draft')
+                          .toString()
+                          .charAt(0)
+                          .toUpperCase() +
+                          (item.status ?? 'draft').toString().slice(1)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -412,8 +413,15 @@ const AdminPropertiesSales: React.FC = () => {
 
                 {filteredProjects.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                      {loading ? "Loading..." : error ? `Failed to load: ${String(error)}` : "No sale properties found."}
+                    <td
+                      colSpan={8}
+                      className="px-6 py-8 text-center text-gray-500"
+                    >
+                      {loading
+                        ? 'Loading...'
+                        : error
+                          ? `Failed to load: ${String(error)}`
+                          : 'No sale properties found.'}
                     </td>
                   </tr>
                 )}
@@ -439,8 +447,8 @@ const AdminPropertiesSales: React.FC = () => {
                     onClick={() => paginate(i + 1)}
                     className={`px-3 py-1 text-sm font-medium rounded cursor-pointer ${
                       currentPage === i + 1
-                        ? "border border-blue-500 text-blue-600 bg-blue-100"
-                        : "text-gray-600 hover:bg-gray-100"
+                        ? 'border border-blue-500 text-blue-600 bg-blue-100'
+                        : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     {i + 1}
@@ -462,54 +470,26 @@ const AdminPropertiesSales: React.FC = () => {
 
       {/* Edit modal */}
       {isModalOpen && editItem && (
-        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
-            <h2 className="text-xl font-semibold mb-4">Edit Property (ID: {editItem.id})</h2>
-            <div className="space-y-3">
-              <label className="block text-sm font-medium">Title</label>
-              <input
-                type="text"
-                value={editItem.title ?? ""}
-                onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
-                className="w-full border rounded p-2"
-              />
-
-              <label className="block text-sm font-medium">Price</label>
-              <input
-                type="text"
-                value={editItem.price ?? editItem.price_display ?? ""}
-                onChange={(e) => setEditItem({ ...editItem, price: e.target.value })}
-                className="w-full border rounded p-2"
-              />
-
-              <label className="block text-sm font-medium">Location</label>
-              <input
-                type="text"
-                value={editItem.location ?? editItem.city ?? ""}
-                onChange={(e) => setEditItem({ ...editItem, location: e.target.value })}
-                className="w-full border rounded p-2"
-              />
-
-              <label className="block text-sm font-medium">Status</label>
-              <select
-                value={editItem.status ?? "draft"}
-                onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}
-                className="w-full border rounded p-2"
-              >
-                <option value="published">Published</option>
-                {/* <option value="pending">Pending</option> */}
-                <option value="draft">Draft</option>
-              </select>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <Button onClick={() => { setIsModalOpen(false); setEditItem(null); }} className="bg-gray-200 text-gray-700">
-                Cancel
-              </Button>
-              <Button onClick={handleModalSave} className="bg-blue-600 text-white" disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
+        <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl overflow-y-auto max-h-[95vh] relative">
+            <button
+              onClick={() => {
+                setIsModalOpen(false);
+                setEditItem(null);
+              }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+            >
+              ✕
+            </button>
+            <CreatePropertySales
+              isEdit={true}
+              editData={editItem}
+              onClose={() => {
+                setIsModalOpen(false);
+                setEditItem(null);
+                dispatch(fetchProperties()); // refresh list after edit
+              }}
+            />
           </div>
         </div>
       )}

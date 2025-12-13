@@ -1,5 +1,5 @@
 // src/components/CreatePropertyRentals.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User, UploadCloud, X, Save, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -10,7 +10,11 @@ import Swal from 'sweetalert2';
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
-const CreatePropertyRentals = () => {
+const CreatePropertyRentals = ({
+  isEdit = false,
+  editData = null,
+  onClose = null,
+}) => {
   const {
     register,
     handleSubmit,
@@ -18,7 +22,106 @@ const CreatePropertyRentals = () => {
     reset,
     setError,
     clearErrors,
+    getValues,
   } = useForm({ mode: 'onTouched' });
+
+  useEffect(() => {
+    if (isEdit && editData) {
+      // Populate form with editData
+      reset({
+        title: editData.title || '',
+        description: editData.description || '',
+        price: editData.price || editData.price_display || '',
+        property_type: 'rentals', // assuming rentals
+        status: editData.status || 'draft',
+        add_guest: editData.add_guest || '',
+        bedrooms: editData.bedrooms || '',
+        bathrooms: editData.bathrooms || '',
+        pool: editData.pool || '',
+        address: editData.address || '',
+        city: editData.city || '',
+        calendar_link: editData.calendar_link || '',
+        seo_title: editData.seo_title || '',
+        seo_description: editData.seo_description || '',
+        security_deposit: editData.security_deposit || '',
+        damage_deposit: editData.damage_deposit || '',
+        commission_rate: editData.commission_rate || '',
+      });
+
+      // Populate location
+      if (editData.latitude && editData.longitude) {
+        setLocation({
+          lat: editData.latitude,
+          lng: editData.longitude,
+          address: editData.address || '123 Ocean Drive, Miami',
+        });
+      }
+
+      // Populate arrays
+      setSignatureList(editData.signature_distinctions || ['']);
+      setInteriorAmenities(editData.interior_amenities || ['']);
+      setOutdoorAmenities(editData.outdoor_amenities || ['']);
+      setRules(editData.rules_and_etiquette || ['']);
+      setConciergeRows(editData.concierge_services || ['']);
+      setCheckIn(editData.check_in || '');
+      setCheckOut(editData.check_out || '');
+
+      // Staff
+      if (editData.staff && Array.isArray(editData.staff)) {
+        setStaffRows(
+          editData.staff.map((s) => ({
+            name: s.name || '',
+            details: s.details || '',
+          }))
+        );
+      }
+
+      // Booking rate - assuming it's an array of strings
+      if (editData.booking_rate && Array.isArray(editData.booking_rate)) {
+        const rows = [];
+        for (let i = 0; i < editData.booking_rate.length; i += 3) {
+          rows.push({
+            rentalPeriod: editData.booking_rate[i] || '',
+            minimumStay: editData.booking_rate[i + 1] || '',
+            ratePerNight: editData.booking_rate[i + 2] || '',
+          });
+        }
+        setBookingRateRows(
+          rows.length
+            ? rows
+            : [{ rentalPeriod: '', minimumStay: '', ratePerNight: '' }]
+        );
+      }
+
+      // Populate images
+      if (editData.media_images && Array.isArray(editData.media_images)) {
+        setMediaImages(
+          editData.media_images.map((img, i) => ({
+            id: Date.now() + i + Math.random(),
+            url: img.url || img,
+            file: null, // no file for existing
+            isPrimary: img.is_primary || false,
+          }))
+        );
+      }
+
+      if (editData.bedrooms_images && Array.isArray(editData.bedrooms_images)) {
+        setBedroomImages(
+          editData.bedrooms_images.map((img, i) => ({
+            id: Date.now() + i + Math.random(),
+            url: img.url || img,
+            file: null,
+            isPrimary: img.is_primary || false,
+            name: img.name || '',
+            description: img.description || '',
+          }))
+        );
+      }
+
+      // For videos, since videos is File[], can't set to URLs, so leave empty
+      // But perhaps show existing videos count or something
+    }
+  }, [isEdit, editData, reset]);
 
   // Location
   const [location, setLocation] = useState({
@@ -278,7 +381,7 @@ const CreatePropertyRentals = () => {
     }
 
     const totalFiles = (mediaImages.length || 0) + (bedroomImages.length || 0);
-    if (totalFiles === 0) {
+    if (!isEdit && totalFiles === 0) {
       setMediaError('At least one property image is required.');
       toast.error('At least one property image is required.');
       const fileEl = document.querySelector('input[type="file"]');
@@ -288,17 +391,13 @@ const CreatePropertyRentals = () => {
     }
 
     if (bedroomImages.length > 0) {
-      const missingMeta = bedroomImages.find(
-        (b) => !b.name || !b.name.trim()
-      );
+      const missingMeta = bedroomImages.find((b) => !b.name || !b.name.trim());
       if (missingMeta) {
         toast.error(
           'Please fill the Bedroom Name for each bedroom image before submitting.'
         );
         try {
-          const idx = bedroomImages.findIndex(
-            (b) => !b.name || !b.name.trim()
-          );
+          const idx = bedroomImages.findIndex((b) => !b.name || !b.name.trim());
           const el = document.querySelector(
             `[data-bedroom-name-index="${idx}"]`
           );
@@ -315,7 +414,7 @@ const CreatePropertyRentals = () => {
   };
 
   // final submit
-  const onSubmit = async (values) => {
+  const onSubmit = async (values, isDraft = false) => {
     clearErrors();
     setMediaError('');
     if (!validateBeforeSubmit(values)) return;
@@ -331,7 +430,9 @@ const CreatePropertyRentals = () => {
 
         // rentals only
         listing_type: 'rent',
-        status: (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
+        status: isDraft
+          ? 'draft'
+          : (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 1,
@@ -466,11 +567,16 @@ const CreatePropertyRentals = () => {
       const headers = {};
       if (access) headers['Authorization'] = `Bearer ${access}`;
 
-      const res = await fetch(`${API_BASE}/villas/properties/`, {
-        method: 'POST',
-        headers,
-        body: fd,
-      });
+      const res = await fetch(
+        isEdit
+          ? `${API_BASE}/villas/properties/${editData.id}/`
+          : `${API_BASE}/villas/properties/`,
+        {
+          method: isEdit ? 'PUT' : 'POST',
+          headers,
+          body: fd,
+        }
+      );
       const body = await res.json().catch(() => null);
 
       if (!res.ok) {
@@ -493,28 +599,33 @@ const CreatePropertyRentals = () => {
 
       console.log('Created property response:', body);
       Swal.fire({
-        title: 'Created!',
-        text: 'Property created successfully.',
+        title: isEdit ? 'Updated!' : 'Created!',
+        text: isEdit
+          ? 'Property updated successfully.'
+          : 'Property created successfully.',
         icon: 'success',
       });
 
       // reset UI (keep location)
-      reset();
-      setMediaImages([]);
-      setBedroomImages([]);
-      setVideos([]);
-      setSignatureList(['']);
-      setInteriorAmenities(['']);
-      setOutdoorAmenities(['']);
-      setRules(['']);
-      setCheckIn('');
-      setCheckOut('');
-      setStaffRows([{ name: '', details: '' }]);
-      setConciergeRows(['']);
-      setBookingRateRows([
-        { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
-      ]);
+      if (!isEdit) {
+        reset();
+        setMediaImages([]);
+        setBedroomImages([]);
+        setVideos([]);
+        setSignatureList(['']);
+        setInteriorAmenities(['']);
+        setOutdoorAmenities(['']);
+        setRules(['']);
+        setCheckIn('');
+        setCheckOut('');
+        setStaffRows([{ name: '', details: '' }]);
+        setConciergeRows(['']);
+        setBookingRateRows([
+          { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+        ]);
+      }
       setSubmitting(false);
+      if (onClose) onClose();
     } catch (err) {
       console.error('Submission error', err);
       toast.error('Submission error — check console.');
@@ -524,21 +635,27 @@ const CreatePropertyRentals = () => {
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen w-full">
-      <Link
-        to="/dashboard/admin-properties-rentals"
-        className="flex items-center text-gray-500 hover:text-gray-800 transition-colors mb-4"
-      >
-        <ChevronLeft className="w-5 h-5 mr-1" />
-        <span className="text-sm font-medium">Back</span>
-      </Link>
+      {!isEdit && (
+        <div className="w-15">
+          <Link
+            to="/dashboard/admin-properties-rentals"
+            className="flex items-center text-gray-500 hover:text-gray-800 transition-colors mb-4"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1" />
+            <span className="text-sm font-medium">Back</span>
+          </Link>
+        </div>
+      )}
 
       <div className="lg:flex space-x-10 justify-between items-center mb-6 mt-2 w-full">
         <div>
           <h1 className="text-3xl font-semibold text-gray-800">
-            Create New Property Listing
+            {isEdit ? 'Edit Property Listing' : 'Create New Property Listing'}
           </h1>
           <p className="text-gray-500 mt-2">
-            Fill out the details to create a comprehensive property listing.
+            {isEdit
+              ? 'Update the details of the property listing.'
+              : 'Fill out the details to create a comprehensive property listing.'}
           </p>
         </div>
         <div className="flex mt-2 items-center gap-4">
@@ -551,25 +668,29 @@ const CreatePropertyRentals = () => {
         </div>
       </div>
 
-      <div className="text-2xl mt-2 font-semibold mb-2">Add Location</div>
-      <div className="mb-5">
-        <LocationCreateProperty
-          lat={location.lat}
-          lng={location.lng}
-          text={location.address}
-          onLocationAdd={(villaData) =>
-            setLocation({
-              lat: villaData.lat,
-              lng: villaData.lng,
-              address: villaData.name,
-              description: villaData.description,
-            })
-          }
-        />
-      </div>
+      {!isEdit && (
+        <>
+          <div className="text-2xl mt-2 font-semibold mb-2">Add Location</div>
+          <div className="mb-5">
+            <LocationCreateProperty
+              lat={location.lat}
+              lng={location.lng}
+              text={location.address}
+              onLocationAdd={(villaData) =>
+                setLocation({
+                  lat: villaData.lat,
+                  lng: villaData.lng,
+                  address: villaData.name,
+                  description: villaData.description,
+                })
+              }
+            />
+          </div>
+        </>
+      )}
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit((values) => onSubmit(values, false))}
         className="max-w-full mx-auto space-y-6"
       >
         {/* Basic Info */}
@@ -673,6 +794,7 @@ const CreatePropertyRentals = () => {
             <input
               name="bedrooms"
               type="number"
+              step="0.1"
               {...register('bedrooms')}
               className="w-full border rounded-lg p-3"
             />
@@ -684,6 +806,7 @@ const CreatePropertyRentals = () => {
             <input
               name="bathrooms"
               type="number"
+              step="0.1"
               {...register('bathrooms')}
               className="w-full border rounded-lg p-3"
             />
@@ -729,166 +852,189 @@ const CreatePropertyRentals = () => {
           </div>
         </div>
 
-        {/* Media & Assets */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Upload Media Images
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {mediaImages.map((img) => (
-              <div
-                key={img.id}
-                className="relative border rounded-xl overflow-hidden h-32"
-              >
-                <img
-                  src={img.url}
-                  alt="preview"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute left-2 bottom-2 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPrimaryImage(img.id)}
-                    className="px-2 py-1 bg-white/80 rounded text-xs"
+        {!isEdit && (
+          <>
+            {/* Media & Assets */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Upload Media Images
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                {mediaImages.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative border rounded-xl overflow-hidden h-32"
                   >
-                    ★
-                  </button>
-                </div>
-                <div className="absolute top-2 right-2">
-                  <button
-                    onClick={() => removeImage(img.id, setMediaImages)}
-                    type="button"
-                    className="bg-red-500 rounded-full p-1 text-white"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-                {img.isPrimary && (
-                  <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
-                    Primary
-                  </span>
-                )}
-              </div>
-            ))}
-
-            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
-              <UploadCloud className="w-6 h-6 mb-1" />
-              <p className="text-sm">Upload Media Images</p>
-              <input
-                name="media_files"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleMediaImageUpload}
-              />
-            </label>
-          </div>
-
-          {mediaError && (
-            <p className="text-sm text-red-600 mt-2">{mediaError}</p>
-          )}
-        </div>
-
-        {/* Bedrooms Images + metadata */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Upload Bedrooms Images
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {bedroomImages.map((img, idx) => (
-              <div key={img.id} className="space-y-2">
-                <div className="relative border rounded-xl overflow-hidden h-32">
-                  <img
-                    src={img.url}
-                    alt="bedroom"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 right-2">
-                    <button
-                      onClick={() => removeImage(img.id, setBedroomImages)}
-                      type="button"
-                      className="bg-red-500 rounded-full p-1 text-white"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                    <img
+                      src={img.url}
+                      alt="preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute left-2 bottom-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPrimaryImage(img.id)}
+                        className="px-2 py-1 bg-white/80 rounded text-xs"
+                      >
+                        ★
+                      </button>
+                    </div>
+                    <div className="absolute top-2 right-2">
+                      <button
+                        onClick={() => removeImage(img.id, setMediaImages)}
+                        type="button"
+                        className="bg-red-500 rounded-full p-1 text-white"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    {img.isPrimary && (
+                      <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
+                        Primary
+                      </span>
+                    )}
                   </div>
-                  {img.isPrimary && (
-                    <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
-                      Primary
-                    </span>
+                ))}
+
+                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
+                  <UploadCloud className="w-6 h-6 mb-1" />
+                  <p className="text-sm">Upload Media Images</p>
+                  <input
+                    name="media_files"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleMediaImageUpload}
+                  />
+                </label>
+              </div>
+
+              {mediaError && (
+                <p className="text-sm text-red-600 mt-2">{mediaError}</p>
+              )}
+            </div>
+
+            {/* Bedrooms Images + metadata */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Upload Bedrooms Images
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                {bedroomImages.map((img, idx) => (
+                  <div key={img.id} className="space-y-2">
+                    <div className="relative border rounded-xl overflow-hidden h-32">
+                      <img
+                        src={img.url}
+                        alt="bedroom"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <button
+                          onClick={() => removeImage(img.id, setBedroomImages)}
+                          type="button"
+                          className="bg-red-500 rounded-full p-1 text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {img.isPrimary && (
+                        <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      data-bedroom-name-index={idx}
+                      value={img.name || ''}
+                      onChange={(e) =>
+                        setBedroomImages((prev) =>
+                          prev.map((b) =>
+                            b.id === img.id ? { ...b, name: e.target.value } : b
+                          )
+                        )
+                      }
+                      placeholder="Bedroom name (required)"
+                      className="w-full border rounded-lg p-2 text-xs bg-gray-50"
+                    />
+                    <input
+                      value={img.description || ''}
+                      onChange={(e) =>
+                        setBedroomImages((prev) =>
+                          prev.map((b) =>
+                            b.id === img.id
+                              ? { ...b, description: e.target.value }
+                              : b
+                          )
+                        )
+                      }
+                      placeholder="Bedroom description (optional)"
+                      className="w-full border rounded-lg p-2 text-xs bg-gray-50"
+                    />
+                  </div>
+                ))}
+
+                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
+                  <UploadCloud className="w-6 h-6 mb-1" />
+                  <p className="text-sm">Upload Bedrooms Images</p>
+                  <input
+                    name="bedrooms_images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleBedroomImageUpload}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Videos Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Upload Property Videos
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
+                  <UploadCloud className="w-6 h-6 mb-1" />
+                  <p className="text-sm">Upload Videos</p>
+                  <input
+                    name="videos"
+                    type="file"
+                    accept="video/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleVideoUpload}
+                  />
+                </label>
+                {videos.length > 0 && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    {videos.length} video file(s) selected.
+                  </div>
+                )}
+                {isEdit &&
+                  editData.videos &&
+                  Array.isArray(editData.videos) &&
+                  editData.videos.length > 0 && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      {editData.videos.length} existing video(s):{' '}
+                      {editData.videos.map((v, i) => (
+                        <a
+                          key={i}
+                          href={v.url || v}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 text-blue-500 underline"
+                        >
+                          Video {i + 1}
+                        </a>
+                      ))}
+                    </div>
                   )}
-                </div>
-                <input
-                  data-bedroom-name-index={idx}
-                  value={img.name || ''}
-                  onChange={(e) =>
-                    setBedroomImages((prev) =>
-                      prev.map((b) =>
-                        b.id === img.id ? { ...b, name: e.target.value } : b
-                      )
-                    )
-                  }
-                  placeholder="Bedroom name (required)"
-                  className="w-full border rounded-lg p-2 text-xs bg-gray-50"
-                />
-                <input
-                  value={img.description || ''}
-                  onChange={(e) =>
-                    setBedroomImages((prev) =>
-                      prev.map((b) =>
-                        b.id === img.id
-                          ? { ...b, description: e.target.value }
-                          : b
-                      )
-                    )
-                  }
-                  placeholder="Bedroom description (optional)"
-                  className="w-full border rounded-lg p-2 text-xs bg-gray-50"
-                />
               </div>
-            ))}
-
-            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
-              <UploadCloud className="w-6 h-6 mb-1" />
-              <p className="text-sm">Upload Bedrooms Images</p>
-              <input
-                name="bedrooms_images"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleBedroomImageUpload}
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* Videos Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Upload Property Videos
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
-              <UploadCloud className="w-6 h-6 mb-1" />
-              <p className="text-sm">Upload Videos</p>
-              <input
-                name="videos"
-                type="file"
-                accept="video/*"
-                multiple
-                className="hidden"
-                onChange={handleVideoUpload}
-              />
-            </label>
-            {videos.length > 0 && (
-              <div className="flex items-center text-sm text-gray-600">
-                {videos.length} video file(s) selected.
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
 
         {/* Calendar Link */}
         <div className="mt-4">
@@ -1085,18 +1231,14 @@ const CreatePropertyRentals = () => {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      addArrayItem(setRules, rules, rulesRefs)
-                    }
+                    onClick={() => addArrayItem(setRules, rules, rulesRefs)}
                     className="px-3 py-2 bg-teal-600 text-white rounded-lg"
                   >
                     Add
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      removeArrayItem(setRules, rules, i)
-                    }
+                    onClick={() => removeArrayItem(setRules, rules, i)}
                     className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
                   >
                     x
@@ -1298,7 +1440,10 @@ const CreatePropertyRentals = () => {
           </h3>
 
           {bookingRateRows.map((row, idx) => (
-            <div key={idx} className="grid grid-cols-12 gap-3 mb-3 items-center">
+            <div
+              key={idx}
+              className="grid grid-cols-12 gap-3 mb-3 items-center"
+            >
               <input
                 value={row.rentalPeriod}
                 onChange={(e) =>
@@ -1369,7 +1514,7 @@ const CreatePropertyRentals = () => {
         <div className="flex flex-col gap-3 mt-6 w-full mb-10">
           <button
             type="submit"
-            className="flex items-center justify-center w-full px-4 py-3 text-white rounded-lg transition shadow-md bg-teal-600 border border-teal-700 hover:bg-teal-700"
+            className="flex items-center cursor-pointer justify-center w-full px-4 py-3 text-white rounded-lg transition shadow-md bg-teal-600 border border-teal-700 hover:bg-teal-700"
           >
             {submitting ? (
               <>
@@ -1393,38 +1538,41 @@ const CreatePropertyRentals = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Creating...
+                {isEdit ? 'Updating...' : 'Creating...'}
               </>
             ) : (
               <>
                 <img
-                  className="mr-2 w-5 h-5"
+                  className="mr-2 w-5 h-5 cursor-pointer"
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760999922/Icon_41_fxo3ap.png"
                   alt="icon"
                 />{' '}
-                Create Property
+                {isEdit ? 'Update Property' : 'Create Property'}
               </>
             )}
           </button>
 
-          <button
-            type="button"
-            className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
-            onClick={() =>
-              toast(
-                'Save as draft clicked — implement server call with status=draft'
-              )
-            }
-          >
-            <Save className="w-5 h-5 mr-2" /> Save as Draft
-          </button>
+          {!isEdit && (
+            <>
+              <button
+                type="button"
+                className="flex items-center cursor-pointer justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
+                onClick={async () => {
+                  const values = getValues();
+                  await onSubmit(values, true);
+                }}
+              >
+                <Save className="w-5 h-5 mr-2" /> Save as Draft
+              </button>
 
-          <Link
-            to="/dashboard/admin-properties-rentals"
-            className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
-          >
-            Cancel
-          </Link>
+              <Link
+                to="/dashboard/admin-properties-rentals"
+                className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
+              >
+                Cancel
+              </Link>
+            </>
+          )}
         </div>
       </form>
     </div>
