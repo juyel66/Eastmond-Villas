@@ -50,7 +50,12 @@ const writeFavorites = (email: string, list: string[]) => {
 
 // --- Icon Components ---
 const LocationIcon = () => (
-  <svg className="w-4 h-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg
+    className="w-4 h-4 text-gray-500 mr-1"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -116,16 +121,19 @@ const ShareIcon = () => (
 );
 
 // Local fallback image (for missing media)
-const LOCAL_FALLBACK_IMAGE = '/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png';
+const LOCAL_FALLBACK_IMAGE =
+  '/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png';
 
 // API base
 const API_BASE =
-  (import.meta.env.VITE_API_BASE as string) || 'https://api.eastmondvillas.com/api';
+  (import.meta.env.VITE_API_BASE as string) ||
+  'https://api.eastmondvillas.com/api';
 const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
 
 // ⭐ Helper: breakdown থেকে average rating হিসাব
 const computeAverageRatingFromBreakdown = (villa: any) => {
-  if (!villa || typeof villa !== 'object') return { average: null, total: null };
+  if (!villa || typeof villa !== 'object')
+    return { average: null, total: null };
 
   let counts: Record<number, number> = {};
 
@@ -329,7 +337,11 @@ const ShareModal: React.FC<ShareModalProps> = ({
           />
           <div className="flex-1">
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
-            <div className="text-sm text-gray-500 truncate">{propertyUrl}</div>
+            <div className="text-sm text-gray-500">
+              {propertyUrl.length > 25
+                ? propertyUrl.substring(0, 25) + '...'
+                : propertyUrl}
+            </div>
           </div>
           <button
             onClick={copyLink}
@@ -389,7 +401,9 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   const currentUser = useSelector(selectCurrentUser);
 
   const [isFavorite, setIsFavorite] = useState<boolean>(() => {
-    const apiInitial = Boolean(v.is_favorite ?? v.favorite ?? v.isFavorite ?? false);
+    const apiInitial = Boolean(
+      v.is_favorite ?? v.favorite ?? v.isFavorite ?? false
+    );
 
     try {
       if (typeof window === 'undefined') return apiInitial;
@@ -432,8 +446,8 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
       typeof v.average_rating === 'number'
         ? v.average_rating
         : typeof v.rating === 'number'
-        ? v.rating
-        : defaultVilla.rating;
+          ? v.rating
+          : defaultVilla.rating;
   }
 
   // ⭐ এক দশমিক ফরম্যাট: 4.6, 4.7, 2.4 etc.
@@ -446,40 +460,47 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
     breakdownResult.total !== null
       ? breakdownResult.total
       : typeof v.total_reviews === 'number'
-      ? v.total_reviews
-      : typeof v.reviewCount === 'number'
-      ? v.reviewCount
-      : v.property_stats
-      ? v.property_stats.total_bookings || 0
-      : 0;
+        ? v.total_reviews
+        : typeof v.reviewCount === 'number'
+          ? v.reviewCount
+          : v.property_stats
+            ? v.property_stats.total_bookings || 0
+            : 0;
 
   const beds = Number(
     v.bedrooms ?? v.property_info?.bedrooms ?? v.beds ?? defaultVilla.bedrooms
   );
   const baths = Number(
-    v.bathrooms ?? v.property_info?.bathrooms ?? v.baths ?? defaultVilla.bathrooms
+    v.bathrooms ??
+      v.property_info?.bathrooms ??
+      v.baths ??
+      defaultVilla.bathrooms
   );
   const poolCount = Number(v.pool ?? v.has_pool ?? defaultVilla.pool);
 
   const interior = Array.isArray(v.interior_amenities)
     ? v.interior_amenities
     : v.interior_amenities && typeof v.interior_amenities === 'object'
-    ? Object.keys(v.interior_amenities).filter((k) => (v.interior_amenities as any)[k])
-    : [];
+      ? Object.keys(v.interior_amenities).filter(
+          (k) => (v.interior_amenities as any)[k]
+        )
+      : [];
 
   const outdoor = Array.isArray(v.outdoor_amenities)
     ? v.outdoor_amenities
     : v.outdoor_amenities && typeof v.outdoor_amenities === 'object'
-    ? Object.keys(v.outdoor_amenities).filter((k) => (v.outdoor_amenities as any)[k])
-    : [];
+      ? Object.keys(v.outdoor_amenities).filter(
+          (k) => (v.outdoor_amenities as any)[k]
+        )
+      : [];
 
   const signature = Array.isArray(v.signature_distinctions)
     ? v.signature_distinctions
     : v.signature_distinctions && typeof v.signature_distinctions === 'object'
-    ? Object.keys(v.signature_distinctions).filter(
-        (k) => (v.signature_distinctions as any)[k]
-      )
-    : [];
+      ? Object.keys(v.signature_distinctions).filter(
+          (k) => (v.signature_distinctions as any)[k]
+        )
+      : [];
 
   const amenities = Array.from(
     new Set([
@@ -492,7 +513,8 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   let imageUrl = LOCAL_FALLBACK_IMAGE;
   if (Array.isArray(v.media_images) && v.media_images.length > 0) {
     const first = v.media_images[0];
-    imageUrl = first.file_url || first.image || first.file || LOCAL_FALLBACK_IMAGE;
+    imageUrl =
+      first.file_url || first.image || first.file || LOCAL_FALLBACK_IMAGE;
   } else if (v.main_image_url) {
     imageUrl = v.main_image_url;
   } else if (v.media && Array.isArray(v.media) && v.media.length > 0) {
@@ -505,11 +527,13 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   const detailsPath = vId
     ? `/property/${encodeURIComponent(vId)}`
     : v.slug
-    ? `/property/${encodeURIComponent(v.slug)}`
-    : `/property`;
+      ? `/property/${encodeURIComponent(v.slug)}`
+      : `/property`;
 
   const origin =
-    typeof window !== 'undefined' ? window.location.origin : 'https://example.com';
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : 'https://example.com';
   const propertyUrl = `${origin}${detailsPath}`;
 
   // Favorite toggle handler
@@ -652,7 +676,11 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
       <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl w-full">
         {/* Image */}
         <div className="relative h-60 w-full md:h-64">
-          <img className="w-full h-full object-cover" src={imageUrl} alt={title} />
+          <img
+            className="w-full h-full object-cover"
+            src={imageUrl}
+            alt={title}
+          />
 
           {/* Rating */}
           <div className="absolute top-3 left-3 flex items-center bg-white text-black text-sm font-semibold px-3 py-1 rounded-full backdrop-blur-sm">
