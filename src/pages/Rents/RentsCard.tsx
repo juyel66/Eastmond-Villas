@@ -221,7 +221,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
           />
           <div className="flex-1">
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
-            <div className="text-sm text-gray-500 truncate">{propertyUrl}</div>
+            <div className="text-sm text-gray-500">
+  {propertyUrl.length > 26
+    ? propertyUrl.slice(0, 26) + "..."
+    : propertyUrl}
+</div>
+
           </div>
           <button
             onClick={copyLink}

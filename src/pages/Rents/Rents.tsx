@@ -52,6 +52,7 @@ const Pagination: React.FC<PaginationProps> = ({
           ? 'Showing 0 results'
           : `Showing ${start} to ${end} of ${totalResults} results`}
       </div>
+      
       <div className="flex items-center">
         <button
           className="px-4 py-2 mx-1 rounded-lg border hover:bg-gray-100 disabled:text-gray-500"
