@@ -553,16 +553,6 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
             Access assigned rental properties and marketing materials.
           </p>
 
-          <div className="mt-3 text-sm text-gray-500">
-            {effectiveAgentId !== null ? (
-              <>
-                Showing rentals assigned to agent ID{' '}
-                <strong>{effectiveAgentId}</strong>.
-              </>
-            ) : (
-              <>You are not associated with an agent account. No rentals are visible.</>
-            )}
-          </div>
         </header>
 
         <div className="relative mb-8">

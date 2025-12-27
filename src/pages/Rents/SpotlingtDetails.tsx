@@ -10,7 +10,7 @@ interface SpotlightItemProps {
 // Reusable component for a single spotlight card
 const SpotlightCard: React.FC<SpotlightItemProps> = ({ icon, title, description }) => {
   return (
-<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 text-left">
+<div className="bg-white p-6 border rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 text-left">
   {/* Icon on top */}
   <div className="rounded-xl p-3 inline-flex items-center justify-center mb-4">
     {icon || (
@@ -64,14 +64,9 @@ const SpotlightDetails: React.FC = () => {
   ];
 
   return (
-    <section className="py-16 mt-36 bg-gray-50 relative overflow-hidden">
+    <section className="py-16 mt-36  relative overflow-hidden">
       {/* Background Wavy Patterns (using absolute positioning and z-index) */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-30 z-0 pointer-events-none">
-        {/* These div elements mimic the wavy background. You could use SVG for more exact shapes. */}
-        <div className="absolute w-[400px] h-[400px] rounded-full bg-blue-100 -top-20 -left-20 animate-pulse-slow"></div>
-        <div className="absolute w-[500px] h-[500px] rounded-full bg-green-100 -bottom-40 -right-40 animate-pulse-slow delay-200"></div>
-        <div className="absolute w-[300px] h-[300px] rounded-full bg-purple-100 top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 animate-pulse-slow delay-400"></div>
-      </div>
+     
 
 
       <div className="container mx-auto px-4 relative z-10"> {/* z-10 ensures content is above background */}

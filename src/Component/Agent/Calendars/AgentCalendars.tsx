@@ -663,7 +663,7 @@ export default function Calendars() {
                           key={`${prop.id}-${d}`}
                           // VIEW-ONLY: no onClick, no booking, no change
                           title={tooltip}
-                          className={`flex-shrink-0 flex items-center justify-center select-none transition-all cursor-default`}
+                          className={`flex-shrink-0 flex items-center justify-center select-none  transition-all cursor-default`}
                           style={{
                             minWidth: 44,
                             minHeight: 44,
@@ -674,8 +674,8 @@ export default function Calendars() {
                           <div
                             className={`w-full h-full flex items-center justify-center rounded-lg border text-sm font-semibold ${
                               booked
-                                ? "bg-yellow-100 border-yellow-200 text-yellow-800"
-                                : "bg-green-50 border-green-100 text-green-700"
+                                ? "bg-red-50 text-red-600 border-red-200"
+                                : "bg-green-50 text-green-700 border-green-20"
                             }`}
                             style={{ padding: 6 }}
                           >

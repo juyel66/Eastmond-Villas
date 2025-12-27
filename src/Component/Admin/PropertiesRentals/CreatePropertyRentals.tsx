@@ -1,6 +1,6 @@
 // src/components/CreatePropertyRentals.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { User, UploadCloud, X, Save, ChevronLeft } from 'lucide-react';
+import { User, UploadCloud, X, Save, ChevronLeft, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import LocationCreateProperty from './LocationCreateProperty';
@@ -9,6 +9,128 @@ import Swal from 'sweetalert2';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
+
+// Image Preview Component
+const ImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, type = 'media' }) => {
+  return (
+    <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
+      <div className="w-full h-full flex items-center justify-center">
+        <img
+          src={image.url}
+          alt={`preview-${index}`}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error('Failed to load preview image:', image.url);
+            e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
+            e.target.className = "w-full h-full object-contain p-2";
+          }}
+        />
+      </div>
+
+
+      
+      
+      {/* Remove button */}
+      <button
+        onClick={() => onRemove(image.id)}
+        type="button"
+        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 text-white transition-colors"
+        title="Remove image"
+      >
+        <Trash2 className="w-3 h-3" />
+      </button>
+
+
+
+      
+      {/* Primary badge */}
+      {isPrimary && (
+        <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
+          Primary
+        </span>
+      )}
+      
+      {/* Set primary button */}
+      {!isPrimary && (
+        <button
+          type="button"
+          onClick={() => onSetPrimary(image.id, type)}
+          className="absolute left-2 bottom-2 bg-white/80 hover:bg-white text-gray-800 text-xs px-2 py-1 rounded transition-colors"
+          title="Set as primary"
+        >
+          Set Primary
+        </button>
+      )}
+    </div>
+  );
+};
+
+// Bedroom Image Preview Component
+const BedroomImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, onNameChange, onDescriptionChange }) => {
+  return (
+    <div className="space-y-2">
+      <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
+        <div className="w-full h-full flex items-center justify-center">
+          <img
+            src={image.url}
+            alt={`bedroom-${index}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Failed to load bedroom image:', image.url);
+              e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
+              e.target.className = "w-full h-full object-contain p-2";
+            }}
+          />
+        </div>
+        
+        {/* Remove button */}
+        <button
+          onClick={() => onRemove(image.id)}
+          type="button"
+          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 text-white transition-colors"
+          title="Remove image"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+        
+        {/* Primary badge */}
+        {isPrimary && (
+          <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
+            Primary
+          </span>
+        )}
+        
+        {/* Set primary button */}
+        {!isPrimary && (
+          <button
+            type="button"
+            onClick={() => onSetPrimary(image.id, 'bedroom')}
+            className="absolute left-2 bottom-2 bg-white/80 hover:bg-white text-gray-800 text-xs px-2 py-1 rounded transition-colors"
+            title="Set as primary"
+          >
+            Set Primary
+          </button>
+        )}
+      </div>
+      
+      <input
+        data-bedroom-name-index={index}
+        value={image.name || ''}
+        onChange={(e) => onNameChange(image.id, e.target.value)}
+        placeholder="Bedroom name (required)"
+        className="w-full border rounded-lg p-2 text-sm bg-gray-50 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
+        required
+      />
+      
+      <input
+        value={image.description || ''}
+        onChange={(e) => onDescriptionChange(image.id, e.target.value)}
+        placeholder="Bedroom description (optional)"
+        className="w-full border rounded-lg p-2 text-sm bg-gray-50 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
+      />
+    </div>
+  );
+};
 
 const CreatePropertyRentals = ({
   isEdit = false,
@@ -23,17 +145,68 @@ const CreatePropertyRentals = ({
     setError,
     clearErrors,
     getValues,
+    watch,
   } = useForm({ mode: 'onTouched' });
+
+  const [location, setLocation] = useState({
+    lat: 25.79,
+    lng: -80.13,
+    address: '123 Ocean Drive, Miami',
+  });
+
+  const [mediaImages, setMediaImages] = useState([]);
+  const [bedroomImages, setBedroomImages] = useState([]);
+  const [videos, setVideos] = useState([]);
+
+  const [signatureList, setSignatureList] = useState(['']);
+  const [interiorAmenities, setInteriorAmenities] = useState(['']);
+  const [outdoorAmenities, setOutdoorAmenities] = useState(['']);
+  const [rules, setRules] = useState(['']);
+  const [conciergeRows, setConciergeRows] = useState(['']);
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+  const [staffRows, setStaffRows] = useState([{ name: '', details: '' }]);
+  const [bookingRateRows, setBookingRateRows] = useState([
+    { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+  ]);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [mediaError, setMediaError] = useState('');
+
+  const interiorRefs = useRef([]);
+  const outdoorRefs = useRef([]);
+  const rulesRefs = useRef([]);
+  const signatureRefs = useRef([]);
+  const staffNameRefs = useRef([]);
+  const conciergeRefs = useRef([]);
+
+  // Function to ensure URL is absolute
+  const getAbsoluteUrl = (url) => {
+    if (!url) return '';
+    
+    // If it's already an absolute URL
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+      return url;
+    }
+    
+    // If it's a relative URL, prepend API base URL
+    if (url.startsWith('/')) {
+      return `${API_BASE.replace('/api', '')}${url}`;
+    }
+    
+    // If it's just a path, prepend API base
+    return `${API_BASE.replace('/api', '')}/${url}`;
+  };
 
   useEffect(() => {
     if (isEdit && editData) {
       // Populate form with editData
-      reset({
+      const formData = {
         title: editData.title || '',
         description: editData.description || '',
         price: editData.price || editData.price_display || '',
-        property_type: 'rentals', // assuming rentals
-        status: editData.status || 'draft',
+        property_type: editData.property_type || 'rentals',
+        status: editData.status || 'Draft',
         add_guest: editData.add_guest || '',
         bedrooms: editData.bedrooms || '',
         bathrooms: editData.bathrooms || '',
@@ -46,7 +219,8 @@ const CreatePropertyRentals = ({
         security_deposit: editData.security_deposit || '',
         damage_deposit: editData.damage_deposit || '',
         commission_rate: editData.commission_rate || '',
-      });
+      };
+      reset(formData);
 
       // Populate location
       if (editData.latitude && editData.longitude) {
@@ -58,25 +232,28 @@ const CreatePropertyRentals = ({
       }
 
       // Populate arrays
-      setSignatureList(editData.signature_distinctions || ['']);
-      setInteriorAmenities(editData.interior_amenities || ['']);
-      setOutdoorAmenities(editData.outdoor_amenities || ['']);
-      setRules(editData.rules_and_etiquette || ['']);
-      setConciergeRows(editData.concierge_services || ['']);
+      setSignatureList(editData.signature_distinctions?.length > 0 ? editData.signature_distinctions : ['']);
+      setInteriorAmenities(editData.interior_amenities?.length > 0 ? editData.interior_amenities : ['']);
+      setOutdoorAmenities(editData.outdoor_amenities?.length > 0 ? editData.outdoor_amenities : ['']);
+      setRules(editData.rules_and_etiquette?.length > 0 ? editData.rules_and_etiquette : ['']);
+      setConciergeRows(editData.concierge_services?.length > 0 ? editData.concierge_services : ['']);
+      
       setCheckIn(editData.check_in || '');
       setCheckOut(editData.check_out || '');
 
       // Staff
-      if (editData.staff && Array.isArray(editData.staff)) {
+      if (editData.staff && Array.isArray(editData.staff) && editData.staff.length > 0) {
         setStaffRows(
           editData.staff.map((s) => ({
             name: s.name || '',
             details: s.details || '',
           }))
         );
+      } else {
+        setStaffRows([{ name: '', details: '' }]);
       }
 
-      // Booking rate - assuming it's an array of strings
+      // Booking rate
       if (editData.booking_rate && Array.isArray(editData.booking_rate)) {
         const rows = [];
         for (let i = 0; i < editData.booking_rate.length; i += 3) {
@@ -87,152 +264,222 @@ const CreatePropertyRentals = ({
           });
         }
         setBookingRateRows(
-          rows.length
-            ? rows
+          rows.length > 0 
+            ? rows 
             : [{ rentalPeriod: '', minimumStay: '', ratePerNight: '' }]
         );
       }
 
-      // Populate images
-      if (editData.media_images && Array.isArray(editData.media_images)) {
-        setMediaImages(
-          editData.media_images.map((img, i) => ({
-            id: Date.now() + i + Math.random(),
-            url: img.url || img,
-            file: null, // no file for existing
-            isPrimary: img.is_primary || false,
-          }))
-        );
-      }
-
-      if (editData.bedrooms_images && Array.isArray(editData.bedrooms_images)) {
-        setBedroomImages(
-          editData.bedrooms_images.map((img, i) => ({
-            id: Date.now() + i + Math.random(),
-            url: img.url || img,
+      // Handle media images (only store for reference, won't display in edit mode)
+      const processMediaImages = () => {
+        let mediaImgs = [];
+        
+        if (editData.media_images && Array.isArray(editData.media_images)) {
+          mediaImgs = editData.media_images.map((img, i) => {
+            const imageUrl = typeof img === 'string' ? img : (img.url || img.image || img);
+            const isPrimary = typeof img === 'object' ? (img.is_primary || img.isPrimary || false) : false;
+            
+            return {
+              id: `media-${Date.now()}-${i}`,
+              url: getAbsoluteUrl(imageUrl),
+              file: null,
+              isPrimary: isPrimary,
+              originalData: img
+            };
+          });
+        }
+        
+        if (mediaImgs.length === 0 && editData.image) {
+          mediaImgs.push({
+            id: `media-${Date.now()}-0`,
+            url: getAbsoluteUrl(editData.image),
             file: null,
-            isPrimary: img.is_primary || false,
-            name: img.name || '',
-            description: img.description || '',
-          }))
-        );
-      }
+            isPrimary: true,
+            originalData: { url: editData.image, is_primary: true }
+          });
+        }
+        
+        setMediaImages(mediaImgs);
+      };
 
-      // For videos, since videos is File[], can't set to URLs, so leave empty
-      // But perhaps show existing videos count or something
+      // Handle bedroom images (only store for reference, won't display in edit mode)
+      const processBedroomImages = () => {
+        let bedroomImgs = [];
+        
+        if (editData.bedrooms_images && Array.isArray(editData.bedrooms_images)) {
+          bedroomImgs = editData.bedrooms_images.map((img, i) => {
+            const imageUrl = typeof img === 'string' ? img : (img.url || img.image || img);
+            const isPrimary = typeof img === 'object' ? (img.is_primary || img.isPrimary || false) : false;
+            const name = typeof img === 'object' ? (img.name || img.title || `Bedroom ${i + 1}`) : `Bedroom ${i + 1}`;
+            const description = typeof img === 'object' ? (img.description || img.caption || '') : '';
+            
+            return {
+              id: `bedroom-${Date.now()}-${i}`,
+              url: getAbsoluteUrl(imageUrl),
+              file: null,
+              isPrimary: isPrimary,
+              name: name,
+              description: description,
+              originalData: img
+            };
+          });
+        }
+        
+        setBedroomImages(bedroomImgs);
+      };
+
+      processMediaImages();
+      processBedroomImages();
+
+      // Handle videos (only store for reference, won't display in edit mode)
+      if (editData.videos && Array.isArray(editData.videos) && editData.videos.length > 0) {
+        console.log(`${editData.videos.length} existing videos found`);
+      }
+    } else {
+      // For create mode
+      reset({
+        title: '',
+        description: '',
+        price: '',
+        property_type: 'rentals',
+        status: 'Draft',
+        add_guest: '',
+        bedrooms: '',
+        bathrooms: '',
+        pool: '',
+        address: '',
+        city: '',
+        calendar_link: '',
+        seo_title: '',
+        seo_description: '',
+        security_deposit: '',
+        damage_deposit: '',
+        commission_rate: '',
+      });
+      
+      setSignatureList(['']);
+      setInteriorAmenities(['']);
+      setOutdoorAmenities(['']);
+      setRules(['']);
+      setConciergeRows(['']);
+      setCheckIn('');
+      setCheckOut('');
+      setStaffRows([{ name: '', details: '' }]);
+      setBookingRateRows([{ rentalPeriod: '', minimumStay: '', ratePerNight: '' }]);
+      setMediaImages([]);
+      setBedroomImages([]);
+      setVideos([]);
     }
   }, [isEdit, editData, reset]);
 
-  // Location
-  const [location, setLocation] = useState({
-    lat: 25.79,
-    lng: -80.13,
-    address: '123 Ocean Drive, Miami',
-  });
-
-  // Images
-  const [mediaImages, setMediaImages] = useState([]); // {id,url,file,isPrimary}
-  const [bedroomImages, setBedroomImages] = useState([]); // {id,url,file,isPrimary,name,description}
-
-  // Videos
-  const [videos, setVideos] = useState([]); // File[]
-
-  // Multiple-use arrays
-  const [signatureList, setSignatureList] = useState(['']);
-  const [interiorAmenities, setInteriorAmenities] = useState(['']);
-  const [outdoorAmenities, setOutdoorAmenities] = useState(['']);
-  const [rules, setRules] = useState(['']);
-
-  // Concierge services rows (like staff)
-  const [conciergeRows, setConciergeRows] = useState(['']);
-
-  // Check-in and Check-out
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
-
-  // Staff rows (name + details)
-  const [staffRows, setStaffRows] = useState([{ name: '', details: '' }]);
-
-  // 🔥 Booking Rate rows (Rental Period, Minimum Stay, Rate Per Night)
-  const [bookingRateRows, setBookingRateRows] = useState([
-    { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
-  ]);
-
-  // UI state
-  const [submitting, setSubmitting] = useState(false);
-  const [mediaError, setMediaError] = useState('');
-
-  // refs for focusing new inputs
-  const interiorRefs = useRef([]);
-  const outdoorRefs = useRef([]);
-  const rulesRefs = useRef([]);
-  const signatureRefs = useRef([]);
-  const staffNameRefs = useRef([]);
-  const conciergeRefs = useRef([]);
-
-  // Mark primary image by id
-  const setPrimaryImage = (id) => {
-    setMediaImages((prev) =>
-      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
-    );
-    setBedroomImages((prev) =>
-      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
-    );
+  const setPrimaryImage = (id, imageType = 'media') => {
+    if (imageType === 'media') {
+      setMediaImages((prev) =>
+        prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+      );
+      toast.success('Primary media image set');
+    } else {
+      setBedroomImages((prev) =>
+        prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+      );
+      toast.success('Primary bedroom image set');
+    }
   };
 
-  // helper: add files to state with preview (for MAIN media images)
   const handleMediaImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const newImgs = files.map((file, i) => ({
-      id: Date.now() + i + Math.random(),
-      url: URL.createObjectURL(file),
-      file,
-      isPrimary: false,
-    }));
-    setMediaImages((prev) => [...prev, ...newImgs]);
+    
+    const newImgs = files.map((file, i) => {
+      const url = URL.createObjectURL(file);
+      return {
+        id: `new-media-${Date.now()}-${i}`,
+        url: url,
+        file,
+        isPrimary: mediaImages.length === 0 && i === 0,
+      };
+    });
+    
+    setMediaImages((prev) => {
+      const updated = [...prev, ...newImgs];
+      // Ensure only one primary
+      const primaryCount = updated.filter(img => img.isPrimary).length;
+      if (primaryCount > 1) {
+        // Keep the first one as primary
+        let foundFirst = false;
+        return updated.map(img => {
+          if (img.isPrimary) {
+            if (!foundFirst) {
+              foundFirst = true;
+              return img;
+            }
+            return { ...img, isPrimary: false };
+          }
+          return img;
+        });
+      }
+      return updated;
+    });
+    
     e.target.value = null;
     setMediaError('');
+    toast.success(`Added ${files.length} media image(s)`);
   };
 
-  // helper: add files to state with preview (for BEDROOM images, with metadata)
   const handleBedroomImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const newImgs = files.map((file, i) => ({
-      id: Date.now() + i + Math.random(),
-      url: URL.createObjectURL(file),
-      file,
-      isPrimary: false,
-      name: '',
-      description: '',
-    }));
+    
+    const newImgs = files.map((file, i) => {
+      const url = URL.createObjectURL(file);
+      return {
+        id: `new-bedroom-${Date.now()}-${i}`,
+        url: url,
+        file,
+        isPrimary: false,
+        name: `Bedroom ${bedroomImages.length + i + 1}`,
+        description: '',
+      };
+    });
+    
     setBedroomImages((prev) => [...prev, ...newImgs]);
     e.target.value = null;
-    setMediaError('');
+    toast.success(`Added ${files.length} bedroom image(s)`);
   };
 
-  // handle videos upload
   const handleVideoUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setVideos(files);
     e.target.value = null;
+    toast.success(`Added ${files.length} video file(s)`);
   };
 
-  const removeImage = (id, setState) => {
-    setState((prev) => prev.filter((i) => i.id !== id));
+  const removeImage = (id, setState, type = 'media') => {
+    setState((prev) => {
+      const filtered = prev.filter((i) => i.id !== id);
+      
+      // If we removed the primary image, set the first image as primary
+      const removedImage = prev.find(i => i.id === id);
+      if (removedImage?.isPrimary && filtered.length > 0) {
+        filtered[0].isPrimary = true;
+      }
+      
+      return filtered;
+    });
+    
+    toast.success(`Removed ${type} image`);
   };
 
-  // shared array helpers
   const updateArray = (setter, arr, idx, value) => {
     const copy = [...arr];
     copy[idx] = value;
     setter(copy);
   };
-  const addArrayItem = (setter, arr, refs) => {
+
+  const addArrayItem = (setter, arr, refs, placeholder = '') => {
     setter((prev) => {
-      const next = [...prev, ''];
+      const next = [...prev, placeholder];
       setTimeout(() => {
         const i = next.length - 1;
         if (refs && refs.current[i]) refs.current[i].focus();
@@ -240,6 +487,7 @@ const CreatePropertyRentals = ({
       return next;
     });
   };
+
   const removeArrayItem = (setter, arr, idx) => {
     if (arr.length === 1) {
       setter(['']);
@@ -248,7 +496,6 @@ const CreatePropertyRentals = ({
     setter((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // staff row helpers
   const updateStaffRow = (idx, key, value) => {
     setStaffRows((prev) => {
       const copy = prev.map((r) => ({ ...r }));
@@ -256,6 +503,7 @@ const CreatePropertyRentals = ({
       return copy;
     });
   };
+
   const addStaffRow = () => {
     setStaffRows((prev) => {
       const next = [...prev, { name: '', details: '' }];
@@ -266,9 +514,13 @@ const CreatePropertyRentals = ({
       return next;
     });
   };
+
   const removeStaffRow = (idx) => {
+    if (staffRows.length === 1) {
+      setStaffRows([{ name: '', details: '' }]);
+      return;
+    }
     setStaffRows((prev) => prev.filter((_, i) => i !== idx));
-    if (staffRows.length === 1) setStaffRows([{ name: '', details: '' }]);
   };
 
   const buildStaffArray = (rows) =>
@@ -281,7 +533,6 @@ const CreatePropertyRentals = ({
         details: r.details?.trim() || '',
       }));
 
-  // 🔥 Booking Rate helpers
   const handleBookingRateChange = (idx, key, value) => {
     setBookingRateRows((prev) => {
       const copy = prev.map((r) => ({ ...r }));
@@ -298,21 +549,15 @@ const CreatePropertyRentals = ({
   };
 
   const removeBookingRateRow = (idx) => {
-    setBookingRateRows((prev) => prev.filter((_, i) => i !== idx));
     if (bookingRateRows.length === 1) {
       setBookingRateRows([
         { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
       ]);
+      return;
     }
+    setBookingRateRows((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // convert to backend format:
-  // "booking_rate": [
-  //   "jan 20 - jan 30",
-  //   "10 days",
-  //   "5600",
-  //   ...more if multiple rows
-  // ]
   const buildBookingRateArray = (rows) => {
     return rows
       .filter(
@@ -328,7 +573,6 @@ const CreatePropertyRentals = ({
       ]);
   };
 
-  // metadata builder for main media images
   const buildMediaMetadata = (imgs, category, startOrder = 0) =>
     imgs.map((img, idx) => ({
       category,
@@ -337,7 +581,6 @@ const CreatePropertyRentals = ({
       order: startOrder + idx,
     }));
 
-  // helper to focus + scroll to a field by name or selector
   const focusField = (nameOrSelector) => {
     try {
       let el = null;
@@ -359,7 +602,6 @@ const CreatePropertyRentals = ({
     return false;
   };
 
-  // validate before submit
   const validateBeforeSubmit = (values) => {
     const required = ['title', 'price', 'address'];
     const labels = {
@@ -413,7 +655,6 @@ const CreatePropertyRentals = ({
     return true;
   };
 
-  // final submit
   const onSubmit = async (values, isDraft = false) => {
     clearErrors();
     setMediaError('');
@@ -422,42 +663,34 @@ const CreatePropertyRentals = ({
     setSubmitting(true);
     try {
       const processed = {
-        // core fields + API-aligned
         title: values.title,
         description: values.description || '',
         price: values.price ? String(values.price) : '0.00',
         price_display: values.price ? String(values.price) : '0.00',
-
-        // rentals only
+        property_type: values.property_type || 'rentals',
         listing_type: 'rent',
         status: isDraft
           ? 'draft'
-          : (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
+          : (values.status || 'Draft').toLowerCase().replace(/\s+/g, '_'),
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 1,
         bedrooms: Number(values.bedrooms) || 0,
         bathrooms: Number(values.bathrooms) || 0,
         pool: Number(values.pool) || 0,
-
         signature_distinctions: signatureList.filter(Boolean),
         interior_amenities: interiorAmenities.filter(Boolean),
         outdoor_amenities: outdoorAmenities.filter(Boolean),
         rules_and_etiquette: rules.filter(Boolean),
-
         check_in: checkIn || '',
         check_out: checkOut || '',
         staff: buildStaffArray(staffRows),
-
-        // 🔥 booking_rate as requested
         booking_rate: buildBookingRateArray(bookingRateRows),
-
         calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
         seo_description: values.seo_description || '',
         latitude: location.lat ?? null,
         longitude: location.lng ?? null,
-
         security_deposit: values.security_deposit
           ? String(values.security_deposit)
           : '',
@@ -467,7 +700,6 @@ const CreatePropertyRentals = ({
         commission_rate: values.commission_rate
           ? String(values.commission_rate)
           : '',
-
         concierge_services: conciergeRows
           .map((s) => s.trim())
           .filter((s) => s.length > 0),
@@ -476,7 +708,6 @@ const CreatePropertyRentals = ({
       console.log('--- Processed payload to send ---');
       console.log(JSON.stringify(processed, null, 2));
 
-      // Build FormData
       const fd = new FormData();
       const append = (k, v) => {
         if (v === undefined || v === null) return;
@@ -487,7 +718,6 @@ const CreatePropertyRentals = ({
         ) {
           fd.append(k, String(v));
         } else {
-          // non-primitive => JSON (matches Postman text with JSON)
           fd.append(k, JSON.stringify(v));
         }
       };
@@ -496,6 +726,7 @@ const CreatePropertyRentals = ({
       append('description', processed.description);
       append('price', processed.price);
       append('price_display', processed.price_display);
+      append('property_type', processed.property_type);
       append('booking_rate', processed.booking_rate);
       append('listing_type', processed.listing_type);
       append('status', processed.status);
@@ -522,7 +753,6 @@ const CreatePropertyRentals = ({
       append('commission_rate', processed.commission_rate);
       append('concierge_services', processed.concierge_services);
 
-      // METADATA PART
       const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
       mediaMeta.forEach((meta) =>
         fd.append('media_metadata', JSON.stringify(meta))
@@ -535,9 +765,19 @@ const CreatePropertyRentals = ({
       }));
       append('bedrooms_meta', bedroomsMeta);
 
-      // files
-      mediaImages.forEach((img) => fd.append('media_images', img.file));
-      bedroomImages.forEach((img) => fd.append('bedrooms_images', img.file));
+      // Only append new files, not existing URLs
+      mediaImages.forEach((img) => {
+        if (img.file) {
+          fd.append('media_images', img.file);
+        }
+      });
+      
+      bedroomImages.forEach((img) => {
+        if (img.file) {
+          fd.append('bedrooms_images', img.file);
+        }
+      });
+      
       videos.forEach((file) => {
         fd.append('videos', file);
       });
@@ -556,7 +796,6 @@ const CreatePropertyRentals = ({
         }
       }
 
-      // send
       const access = (() => {
         try {
           return localStorage.getItem('auth_access');
@@ -606,7 +845,6 @@ const CreatePropertyRentals = ({
         icon: 'success',
       });
 
-      // reset UI (keep location)
       if (!isEdit) {
         reset();
         setMediaImages([]);
@@ -633,8 +871,25 @@ const CreatePropertyRentals = ({
     }
   };
 
+  const updateBedroomImageName = (id, name) => {
+    setBedroomImages((prev) =>
+      prev.map((b) =>
+        b.id === id ? { ...b, name } : b
+      )
+    );
+  };
+
+  const updateBedroomImageDescription = (id, description) => {
+    setBedroomImages((prev) =>
+      prev.map((b) =>
+        b.id === id ? { ...b, description } : b
+      )
+    );
+  };
+
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen w-full">
+
       {!isEdit && (
         <div className="w-15">
           <Link
@@ -697,7 +952,7 @@ const CreatePropertyRentals = ({
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Title
+              Property Title *
             </label>
             <input
               name="title"
@@ -705,6 +960,7 @@ const CreatePropertyRentals = ({
               className={`w-full border rounded-lg p-3 ${
                 errors.title ? 'border-red-500' : 'border-gray-300'
               }`}
+              placeholder="Enter property title"
             />
             {errors.title && (
               <p className="text-sm text-red-600 mt-1">
@@ -722,12 +978,13 @@ const CreatePropertyRentals = ({
               {...register('description')}
               rows="3"
               className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter property description"
             />
           </div>
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
+              Price *
             </label>
             <input
               name="price"
@@ -736,6 +993,7 @@ const CreatePropertyRentals = ({
               className={`w-full border rounded-lg p-3 ${
                 errors.price ? 'border-red-500' : 'border-gray-300'
               }`}
+              placeholder="Enter price"
             />
             {errors.price && (
               <p className="text-sm text-red-600 mt-1">
@@ -749,12 +1007,10 @@ const CreatePropertyRentals = ({
               Property Type
             </label>
             <select
-              name="property_type"
-              {...register('property_type')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
+              disabled
+              className="w-full border rounded-lg p-3 bg-gray-100 text-gray-600"
             >
-              <option value="">Select type</option>
-              <option value="rentals">Rentals</option>
+              <option>Rentals</option>
             </select>
           </div>
 
@@ -766,28 +1022,32 @@ const CreatePropertyRentals = ({
               name="status"
               {...register('status')}
               className="w-full border rounded-lg p-3 bg-gray-50"
+              defaultValue={isEdit && editData ? editData.status : 'Draft'}
             >
-              <option>Draft</option>
-              <option>Pending Review</option>
-              <option>Published</option>
-              <option>Archived</option>
+              <option value="Draft">Draft</option>
+              <option value="Pending Review">Pending Review</option>
+              <option value="Published">Published</option>
+              <option value="Archived">Archived</option>
             </select>
+            <div className="mt-1 text-sm text-gray-500">
+              Current Status: <span className="font-medium">{isEdit && editData ? editData.status : 'Draft'}</span>
+            </div>
           </div>
 
-          <div className="col-span-12">
+          <div className="col-span-12 md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Add Guest
             </label>
             <input
               name="add_guest"
               type="number"
-              placeholder="Add guest"
+              placeholder="Number of guests"
               {...register('add_guest')}
               className="w-full border rounded-lg p-3"
             />
           </div>
 
-          <div className="col-span-12 sm:col-span-4">
+          <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Bedrooms
             </label>
@@ -797,9 +1057,11 @@ const CreatePropertyRentals = ({
               step="0.1"
               {...register('bedrooms')}
               className="w-full border rounded-lg p-3"
+              placeholder="Number of bedrooms"
             />
           </div>
-          <div className="col-span-12 sm:col-span-4">
+          
+          <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Bathrooms
             </label>
@@ -809,9 +1071,11 @@ const CreatePropertyRentals = ({
               step="0.1"
               {...register('bathrooms')}
               className="w-full border rounded-lg p-3"
+              placeholder="Number of bathrooms"
             />
           </div>
-          <div className="col-span-12 sm:col-span-4">
+          
+          <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Pools
             </label>
@@ -820,12 +1084,13 @@ const CreatePropertyRentals = ({
               type="number"
               {...register('pool')}
               className="w-full border rounded-lg p-3"
+              placeholder="Number of pools"
             />
           </div>
 
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
+              Address *
             </label>
             <input
               name="address"
@@ -833,6 +1098,7 @@ const CreatePropertyRentals = ({
               className={`w-full border rounded-lg p-3 ${
                 errors.address ? 'border-red-500' : 'border-gray-300'
               }`}
+              placeholder="Enter property address"
             />
             {errors.address && (
               <p className="text-sm text-red-600 mt-1">
@@ -840,6 +1106,7 @@ const CreatePropertyRentals = ({
               </p>
             )}
           </div>
+          
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               City
@@ -848,192 +1115,176 @@ const CreatePropertyRentals = ({
               name="city"
               {...register('city')}
               className="w-full border rounded-lg p-3"
+              placeholder="Enter city"
             />
           </div>
         </div>
 
+        {/* Media Images Section - Only show in Create mode */}
         {!isEdit && (
-          <>
-            {/* Media & Assets */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload Media Images
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Property Media Images <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {mediaImages.map((img) => (
-                  <div
-                    key={img.id}
-                    className="relative border rounded-xl overflow-hidden h-32"
-                  >
-                    <img
-                      src={img.url}
-                      alt="preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute left-2 bottom-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPrimaryImage(img.id)}
-                        className="px-2 py-1 bg-white/80 rounded text-xs"
-                      >
-                        ★
-                      </button>
-                    </div>
-                    <div className="absolute top-2 right-2">
-                      <button
-                        onClick={() => removeImage(img.id, setMediaImages)}
-                        type="button"
-                        className="bg-red-500 rounded-full p-1 text-white"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                    {img.isPrimary && (
-                      <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
-                        Primary
-                      </span>
-                    )}
-                  </div>
-                ))}
-
-                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
-                  <UploadCloud className="w-6 h-6 mb-1" />
-                  <p className="text-sm">Upload Media Images</p>
-                  <input
-                    name="media_files"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleMediaImageUpload}
-                  />
-                </label>
+              <div className="text-sm text-gray-500">
+                {mediaImages.length} image(s) uploaded
               </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {mediaImages.map((img, index) => (
+                <ImagePreview
+                  key={img.id}
+                  image={img}
+                  index={index}
+                  onRemove={(id) => removeImage(id, setMediaImages, 'media')}
+                  onSetPrimary={setPrimaryImage}
+                  isPrimary={img.isPrimary}
+                  type="media"
+                />
+              ))}
 
-              {mediaError && (
-                <p className="text-sm text-red-600 mt-2">{mediaError}</p>
-              )}
+              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
+                <UploadCloud className="w-8 h-8 mb-2" />
+                <p className="text-sm font-medium">Upload Media Images</p>
+                <p className="text-xs text-gray-400 mt-1">Click or drag & drop</p>
+                <input
+                  name="media_files"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleMediaImageUpload}
+                />
+              </label>
             </div>
 
-            {/* Bedrooms Images + metadata */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload Bedrooms Images
+            {mediaError && (
+              <p className="text-sm text-red-600 mt-2">{mediaError}</p>
+            )}
+            
+            {mediaImages.length === 0 ? (
+              <p className="text-sm text-gray-500 mt-2">
+                No media images uploaded yet. At least one image is required.
+              </p>
+            ) : (
+              <div className="mt-2 text-sm text-gray-600">
+                <span className="font-medium">{mediaImages.length}</span> media image(s) uploaded. 
+                {mediaImages.filter(img => img.isPrimary).length > 0 ? (
+                  <span className="ml-2 text-teal-600">
+                    Primary image is set.
+                  </span>
+                ) : (
+                  <span className="ml-2 text-amber-600">
+                    Please set a primary image.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bedrooms Images Section - HIDDEN in Edit mode */}
+        {!isEdit && (
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Bedroom Images
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {bedroomImages.map((img, idx) => (
-                  <div key={img.id} className="space-y-2">
-                    <div className="relative border rounded-xl overflow-hidden h-32">
-                      <img
-                        src={img.url}
-                        alt="bedroom"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
+              <div className="text-sm text-gray-500">
+                {bedroomImages.length} image(s) uploaded
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {bedroomImages.map((img, index) => (
+                <BedroomImagePreview
+                  key={img.id}
+                  image={img}
+                  index={index}
+                  onRemove={(id) => removeImage(id, setBedroomImages, 'bedroom')}
+                  onSetPrimary={setPrimaryImage}
+                  isPrimary={img.isPrimary}
+                  onNameChange={updateBedroomImageName}
+                  onDescriptionChange={updateBedroomImageDescription}
+                />
+              ))}
+
+              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
+                <UploadCloud className="w-8 h-8 mb-2" />
+                <p className="text-sm font-medium">Upload Bedrooms Images</p>
+                <p className="text-xs text-gray-400 mt-1">Click or drag & drop</p>
+                <input
+                  name="bedrooms_images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleBedroomImageUpload}
+                />
+              </label>
+            </div>
+            
+            {bedroomImages.length === 0 ? (
+              <p className="text-sm text-gray-500 mt-2">
+                No bedroom images uploaded yet. You can add new images.
+              </p>
+            ) : (
+              <div className="mt-2 text-sm text-gray-600">
+                <span className="font-medium">{bedroomImages.length}</span> bedroom image(s) uploaded.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Videos Upload Section - HIDDEN in Edit mode */}
+        {!isEdit && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload Property Videos
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
+                <UploadCloud className="w-8 h-8 mb-2" />
+                <p className="text-sm font-medium">Upload Videos</p>
+                <p className="text-xs text-gray-400 mt-1">Click or drag & drop</p>
+                <input
+                  name="videos"
+                  type="file"
+                  accept="video/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleVideoUpload}
+                />
+              </label>
+              
+              {videos.length > 0 && (
+                <div className="flex flex-col justify-center">
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">{videos.length}</span> video file(s) selected:
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500 space-y-1">
+                    {videos.map((video, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="truncate">{video.name}</span>
                         <button
-                          onClick={() => removeImage(img.id, setBedroomImages)}
                           type="button"
-                          className="bg-red-500 rounded-full p-1 text-white"
+                          onClick={() => {
+                            setVideos(prev => prev.filter((_, i) => i !== idx));
+                            toast.success('Removed video file');
+                          }}
+                          className="text-red-500 hover:text-red-700"
                         >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
-                      {img.isPrimary && (
-                        <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
-                          Primary
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      data-bedroom-name-index={idx}
-                      value={img.name || ''}
-                      onChange={(e) =>
-                        setBedroomImages((prev) =>
-                          prev.map((b) =>
-                            b.id === img.id ? { ...b, name: e.target.value } : b
-                          )
-                        )
-                      }
-                      placeholder="Bedroom name (required)"
-                      className="w-full border rounded-lg p-2 text-xs bg-gray-50"
-                    />
-                    <input
-                      value={img.description || ''}
-                      onChange={(e) =>
-                        setBedroomImages((prev) =>
-                          prev.map((b) =>
-                            b.id === img.id
-                              ? { ...b, description: e.target.value }
-                              : b
-                          )
-                        )
-                      }
-                      placeholder="Bedroom description (optional)"
-                      className="w-full border rounded-lg p-2 text-xs bg-gray-50"
-                    />
+                    ))}
                   </div>
-                ))}
-
-                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
-                  <UploadCloud className="w-6 h-6 mb-1" />
-                  <p className="text-sm">Upload Bedrooms Images</p>
-                  <input
-                    name="bedrooms_images"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleBedroomImageUpload}
-                  />
-                </label>
-              </div>
+                </div>
+              )}
             </div>
-
-            {/* Videos Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload Property Videos
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
-                  <UploadCloud className="w-6 h-6 mb-1" />
-                  <p className="text-sm">Upload Videos</p>
-                  <input
-                    name="videos"
-                    type="file"
-                    accept="video/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleVideoUpload}
-                  />
-                </label>
-                {videos.length > 0 && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    {videos.length} video file(s) selected.
-                  </div>
-                )}
-                {isEdit &&
-                  editData.videos &&
-                  Array.isArray(editData.videos) &&
-                  editData.videos.length > 0 && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      {editData.videos.length} existing video(s):{' '}
-                      {editData.videos.map((v, i) => (
-                        <a
-                          key={i}
-                          href={v.url || v}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-2 text-blue-500 underline"
-                        >
-                          Video {i + 1}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-              </div>
-            </div>
-          </>
+          </div>
         )}
 
         {/* Calendar Link */}
@@ -1068,7 +1319,7 @@ const CreatePropertyRentals = ({
                       e.target.value
                     )
                   }
-                  placeholder="e.g. Ocean view"
+                  placeholder="e.g. Ocean view, Mountain view, Private beach"
                   className="flex-1 border rounded-lg p-2 bg-gray-50"
                 />
                 <div className="flex gap-2">
@@ -1078,10 +1329,11 @@ const CreatePropertyRentals = ({
                       addArrayItem(
                         setSignatureList,
                         signatureList,
-                        signatureRefs
+                        signatureRefs,
+                        ''
                       )
                     }
-                    className="px-3 py-2 bg-teal-600 text-white rounded-lg"
+                    className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
                   >
                     Add
                   </button>
@@ -1090,13 +1342,18 @@ const CreatePropertyRentals = ({
                     onClick={() =>
                       removeArrayItem(setSignatureList, signatureList, i)
                     }
-                    className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
+                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                   >
-                    x
+                    Remove
                   </button>
                 </div>
               </div>
             ))}
+            {signatureList.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No signature distinctions added yet. Click "Add" to add one.
+              </p>
+            )}
           </div>
         </div>
 
@@ -1120,7 +1377,7 @@ const CreatePropertyRentals = ({
                         e.target.value
                       )
                     }
-                    placeholder="e.g. WiFi"
+                    placeholder="e.g. WiFi, Air conditioning, Smart TV"
                     className="flex-1 border rounded-lg p-2 bg-gray-50"
                   />
                   <div className="flex gap-2">
@@ -1130,10 +1387,11 @@ const CreatePropertyRentals = ({
                         addArrayItem(
                           setInteriorAmenities,
                           interiorAmenities,
-                          interiorRefs
+                          interiorRefs,
+                          ''
                         )
                       }
-                      className="px-3 py-2 bg-teal-600 text-white rounded-lg"
+                      className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
                     >
                       Add
                     </button>
@@ -1146,13 +1404,18 @@ const CreatePropertyRentals = ({
                           i
                         )
                       }
-                      className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
+                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                     >
-                      x
+                      Remove
                     </button>
                   </div>
                 </div>
               ))}
+              {interiorAmenities.length === 0 && (
+                <p className="text-sm text-gray-500 italic">
+                  No indoor amenities added yet. Click "Add" to add one.
+                </p>
+              )}
             </div>
           </div>
 
@@ -1174,7 +1437,7 @@ const CreatePropertyRentals = ({
                         e.target.value
                       )
                     }
-                    placeholder="e.g. Parking"
+                    placeholder="e.g. Parking, Swimming pool, Garden"
                     className="flex-1 border rounded-lg p-2 bg-gray-50"
                   />
                   <div className="flex gap-2">
@@ -1184,10 +1447,11 @@ const CreatePropertyRentals = ({
                         addArrayItem(
                           setOutdoorAmenities,
                           outdoorAmenities,
-                          outdoorRefs
+                          outdoorRefs,
+                          ''
                         )
                       }
-                      className="px-3 py-2 bg-teal-600 text-white rounded-lg"
+                      className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
                     >
                       Add
                     </button>
@@ -1200,13 +1464,18 @@ const CreatePropertyRentals = ({
                           i
                         )
                       }
-                      className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
+                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                     >
-                      x
+                      Remove
                     </button>
                   </div>
                 </div>
               ))}
+              {outdoorAmenities.length === 0 && (
+                <p className="text-sm text-gray-500 italic">
+                  No outdoor amenities added yet. Click "Add" to add one.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -1225,27 +1494,32 @@ const CreatePropertyRentals = ({
                   onChange={(e) =>
                     updateArray(setRules, rules, i, e.target.value)
                   }
-                  placeholder="e.g. No Smoking Indoors"
+                  placeholder="e.g. No Smoking Indoors, No Pets Allowed, Quiet Hours 10PM-8AM"
                   className="flex-1 border rounded-lg p-2 bg-gray-50"
                 />
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => addArrayItem(setRules, rules, rulesRefs)}
-                    className="px-3 py-2 bg-teal-600 text-white rounded-lg"
+                    onClick={() => addArrayItem(setRules, rules, rulesRefs, '')}
+                    className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
                   >
                     Add
                   </button>
                   <button
                     type="button"
                     onClick={() => removeArrayItem(setRules, rules, i)}
-                    className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
+                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                   >
-                    x
+                    Remove
                   </button>
                 </div>
               </div>
             ))}
+            {rules.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No rules added yet. Click "Add" to add one.
+              </p>
+            )}
           </div>
         </div>
 
@@ -1253,47 +1527,33 @@ const CreatePropertyRentals = ({
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-in (HH:MM)
+              Check-in Time
             </label>
             <input
               name="check_in"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              placeholder="e.g. 15:00"
-              className={`w-full border rounded-lg p-3 bg-gray-50 ${
-                errors.check_in ? 'border-red-500' : 'border-gray-300'
-              }`}
+              placeholder="e.g. 15:00 (3:00 PM)"
+              className="w-full border rounded-lg p-3 bg-gray-50"
             />
-            {errors.check_in && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.check_in.message}
-              </p>
-            )}
             <p className="text-xs text-gray-400 mt-1">
-              Format: HH:MM (24-hour). Leave blank if not applicable.
+              Format: HH:MM (24-hour). Leave empty if not applicable.
             </p>
           </div>
 
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-out (HH:MM)
+              Check-out Time
             </label>
             <input
               name="check_out"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
-              placeholder="e.g. 11:00"
-              className={`w-full border rounded-lg p-3 bg-gray-50 ${
-                errors.check_out ? 'border-red-500' : 'border-gray-300'
-              }`}
+              placeholder="e.g. 11:00 (11:00 AM)"
+              className="w-full border rounded-lg p-3 bg-gray-50"
             />
-            {errors.check_out && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.check_out.message}
-              </p>
-            )}
             <p className="text-xs text-gray-400 mt-1">
-              Format: HH:MM (24-hour). Leave blank if not applicable.
+              Format: HH:MM (24-hour). Leave empty if not applicable.
             </p>
           </div>
 
@@ -1338,10 +1598,10 @@ const CreatePropertyRentals = ({
           </div>
         </div>
 
-        {/* Concierge services (rows like staff) */}
+        {/* Concierge services */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Concierge Services (one per field)
+            Concierge Services
           </label>
           <div className="space-y-3">
             {conciergeRows.map((v, i) => (
@@ -1357,7 +1617,7 @@ const CreatePropertyRentals = ({
                       e.target.value
                     )
                   }
-                  placeholder='e.g. "this is the courier"'
+                  placeholder='e.g. "24/7 Concierge", "Airport Pickup", "Restaurant Reservations"'
                   className="flex-1 border rounded-lg p-2 bg-gray-50"
                 />
                 <div className="flex gap-2">
@@ -1367,10 +1627,11 @@ const CreatePropertyRentals = ({
                       addArrayItem(
                         setConciergeRows,
                         conciergeRows,
-                        conciergeRefs
+                        conciergeRefs,
+                        ''
                       )
                     }
-                    className="px-3 py-2 bg-teal-600 text-white rounded-lg"
+                    className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
                   >
                     Add
                   </button>
@@ -1379,13 +1640,18 @@ const CreatePropertyRentals = ({
                     onClick={() =>
                       removeArrayItem(setConciergeRows, conciergeRows, i)
                     }
-                    className="px-2 py-1 bg-red-100 text-red-600 rounded-lg"
+                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                   >
-                    x
+                    Remove
                   </button>
                 </div>
               </div>
             ))}
+            {conciergeRows.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No concierge services added yet. Click "Add" to add one.
+              </p>
+            )}
           </div>
         </div>
 
@@ -1401,7 +1667,7 @@ const CreatePropertyRentals = ({
                   ref={(el) => (staffNameRefs.current[idx] = el)}
                   value={r.name}
                   onChange={(e) => updateStaffRow(idx, 'name', e.target.value)}
-                  placeholder="Name"
+                  placeholder="Staff Name"
                   className="flex-1 border rounded-lg p-2"
                 />
                 <input
@@ -1409,31 +1675,36 @@ const CreatePropertyRentals = ({
                   onChange={(e) =>
                     updateStaffRow(idx, 'details', e.target.value)
                   }
-                  placeholder="Details (role, phone)"
+                  placeholder="Details (role, phone, email)"
                   className="flex-1 border rounded-lg p-2"
                 />
                 <div className="flex flex-col gap-2">
                   <button
                     type="button"
                     onClick={addStaffRow}
-                    className="px-3 py-1 bg-teal-600 text-white rounded"
+                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
                   >
                     Add
                   </button>
                   <button
                     type="button"
                     onClick={() => removeStaffRow(idx)}
-                    className="px-2 py-1 bg-red-100 text-red-600 rounded"
+                    className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
                   >
-                    x
+                    Remove
                   </button>
                 </div>
               </div>
             ))}
+            {staffRows.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No staff members added yet. Click "Add" to add one.
+              </p>
+            )}
           </div>
         </div>
 
-        {/* 🔥 Booking Rate Section (under Staff) */}
+        {/* Booking Rate Section */}
         <div className="border rounded-lg p-4 bg-white shadow mt-4">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
             Booking Rate
@@ -1472,9 +1743,9 @@ const CreatePropertyRentals = ({
               <button
                 type="button"
                 onClick={() => removeBookingRateRow(idx)}
-                className="col-span-1 bg-red-100 text-red-600 rounded-lg px-2 text-sm h-10"
+                className="col-span-1 bg-red-100 text-red-600 rounded-lg px-3 py-2 text-sm hover:bg-red-200"
               >
-                x
+                Remove
               </button>
             </div>
           ))}
@@ -1486,24 +1757,36 @@ const CreatePropertyRentals = ({
           >
             Add Booking Rate
           </button>
+          
+          {bookingRateRows.length === 0 && (
+            <p className="text-sm text-gray-500 italic mt-2">
+              No booking rates added yet. Click "Add Booking Rate" to add one.
+            </p>
+          )}
         </div>
 
         {/* SEO */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SEO Title
+            </label>
             <input
               name="seo_title"
               {...register('seo_title')}
-              placeholder="SEO title"
+              placeholder="SEO title for search engines"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
 
           <div className="col-span-12">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SEO Description
+            </label>
             <textarea
               name="seo_description"
               {...register('seo_description')}
-              placeholder="SEO description"
+              placeholder="SEO description for search engines"
               className="w-full border rounded-lg p-3 bg-gray-50"
               rows="2"
             />
@@ -1514,7 +1797,8 @@ const CreatePropertyRentals = ({
         <div className="flex flex-col gap-3 mt-6 w-full mb-10">
           <button
             type="submit"
-            className="flex items-center cursor-pointer justify-center w-full px-4 py-3 text-white rounded-lg transition shadow-md bg-teal-600 border border-teal-700 hover:bg-teal-700"
+            disabled={submitting}
+            className="flex items-center cursor-pointer justify-center w-full px-4 py-3 text-white rounded-lg transition shadow-md bg-teal-600 border border-teal-700 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>
@@ -1561,6 +1845,7 @@ const CreatePropertyRentals = ({
                   const values = getValues();
                   await onSubmit(values, true);
                 }}
+                disabled={submitting}
               >
                 <Save className="w-5 h-5 mr-2" /> Save as Draft
               </button>
@@ -1572,6 +1857,16 @@ const CreatePropertyRentals = ({
                 Cancel
               </Link>
             </>
+          )}
+          
+          {isEdit && onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
+            >
+              Cancel
+            </button>
           )}
         </div>
       </form>

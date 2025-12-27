@@ -181,6 +181,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}
     >
+
+      
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 m-4 transform transition-all duration-300"
         onClick={(e) => e.stopPropagation()}
@@ -523,6 +525,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760830630/user-fill_gkf8xf.png"
                   alt=""
+                     className='w-[18px] h-[18px]'
                 />
                 <span className="text-sm mt-1">
                   {guestsCount} {pluralize(guestsCount, 'Guest')}
@@ -535,6 +538,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
               <img
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_3_rwdb0z.png"
                 alt=""
+                   className='w-[18px] h-[18px]'
               />
               <span className="text-sm mt-1">
                 {bedsCount} {pluralize(bedsCount, 'Bed')}
@@ -546,6 +550,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
               <img
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_4_zsqcrj.png"
                 alt=""
+                className='w-[18px] h-[18px]'
               />
               <span className="text-sm mt-1">
                 {bathsCount} {pluralize(bathsCount, 'Bath')}
@@ -557,6 +562,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
               <img
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827483/Frame_5_cyajjb.png"
                 alt=""
+                   className='w-[19px] h-[19px]'
               />
               <span className="text-sm mt-1">
                 {poolCount} {pluralize(poolCount, 'Pool')}
@@ -573,30 +579,50 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => setIsShareModalOpen(true)}
-              className="flex-1 bg-teal-600 text-white py-3 rounded"
-            >
-              Share
-            </button>
+
+
+           <button
+  onClick={() => setIsShareModalOpen(true)}
+  className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded"
+>
+  <img
+    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_qgrxix.png"
+    alt="share"
+    className="w-5 h-5"
+  />
+  <span>Share</span>
+</button>
+
 
             {/* Book Now: only visible for rent-type properties */}
             {isRentType ? (
-              <button
-                onClick={() => {
-                  // if not logged in, redirect to login right away
-                  const token = getAccessToken();
-                  if (!token) {
-                    toast.error('Please log in to book.');
-                    window.location.assign('/login');
-                    return;
-                  }
-                  setIsModalOpen(true);
-                }}
-                className="flex-1 bg-teal-600 text-white py-3 rounded"
-              >
-                Book Now
-              </button>
+
+
+
+             <button
+  onClick={() => {
+    // if not logged in, redirect to login right away
+    const token = getAccessToken();
+    if (!token) {
+      toast.error("Please log in to book.");
+      window.location.assign("/login");
+      return;
+    }
+    setIsModalOpen(true);
+  }}
+  className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded"
+>
+  <img
+    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_1_gnvufv.png"
+    alt="book"
+    className="w-5 h-5"
+  />
+  <span>Book Now</span>
+</button>
+
+
+
+
             ) : null}
           </div>
 

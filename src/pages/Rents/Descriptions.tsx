@@ -13,7 +13,7 @@ const Description: React.FC<DescriptionProps> = ({
   const toggleShow = () => setShowFull((prev) => !prev);
 
   const text = descriptionData;
-  const shortText = text.slice(0, 250) + '...';
+  const shortText = text.slice(0, 450) + '...';
   const title = 'About This Property';
 
   return (

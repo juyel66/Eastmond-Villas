@@ -1,5 +1,5 @@
-// ImageGallerySections.tsx (or .jsx)
-import React, { useState } from "react";
+// ImageGallerySections.tsx
+import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 
 import VideoExperience from "./VideoExperience";
@@ -76,6 +76,90 @@ const drawImageCoverToCanvas = (imgEl, canvas, targetW, targetH) => {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(imgEl, sx, sy, sw, sh, 0, 0, targetW, targetH);
+};
+
+// Image Modal Component
+const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
+  const [currentImgIndex, setCurrentImgIndex] = useState(currentIndex);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') onNext();
+      if (e.key === 'ArrowLeft') onPrev();
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, onNext, onPrev]);
+
+  useEffect(() => {
+    setCurrentImgIndex(currentIndex);
+  }, [currentIndex]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-9999"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center"
+      >
+        ×
+      </button>
+      
+      <button
+        onClick={onPrev}
+        disabled={currentImgIndex === 0}
+        className="absolute left-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
+      >
+        ‹
+      </button>
+      
+      <div className="relative max-w-4xl max-h-[80vh]">
+        <img
+          src={images[currentImgIndex]?.url}
+          alt={`Gallery image ${currentImgIndex + 1}`}
+          className="w-full h-full object-contain rounded-lg"
+        />
+        
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+          <div className="flex space-x-2 overflow-x-auto max-w-full px-4">
+            {images.map((img, index) => (
+              <button
+                key={img.id}
+                onClick={() => setCurrentImgIndex(index)}
+                className={`w-16 h-16 flex-shrink-0 rounded overflow-hidden ${
+                  index === currentImgIndex ? 'border-2 border-teal-500' : 'border border-gray-300'
+                }`}
+              >
+                <img
+                  src={img.url}
+                  alt={`Thumbnail ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      <button
+        onClick={onNext}
+        disabled={currentImgIndex === images.length - 1}
+        className="absolute right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
+      >
+        ›
+      </button>
+      
+      <div className="absolute bottom-2 left-0 right-0 text-center text-white text-sm">
+        Image {currentImgIndex + 1} of {images.length}
+      </div>
+    </div>
+  );
 };
 
 // --------- MAIN COMPONENT ----------
@@ -189,9 +273,32 @@ const ImageGallerySection = ({ villa }) => {
   });
 
   const [showAll, setShowAll] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
-  // -------- DOWNLOAD RECORD + PDF EXPORT
+  // Image Modal functions
+  const openImageModal = (index) => {
+    setSelectedImageIndex(index);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeImageModal = () => {
+    setSelectedImageIndex(null);
+    document.body.style.overflow = 'auto';
+  };
+
+  const goToNextImage = () => {
+    if (selectedImageIndex < media_images.length - 1) {
+      setSelectedImageIndex(prev => prev + 1);
+    }
+  };
+
+  const goToPrevImage = () => {
+    if (selectedImageIndex > 0) {
+      setSelectedImageIndex(prev => prev - 1);
+    }
+  };
+
+  // -------- ENHANCED PDF DOWNLOAD --------
   const handleDownloadPDF = async () => {
     const villaId = villa.id;
     const token =
@@ -212,6 +319,7 @@ const ImageGallerySection = ({ villa }) => {
     };
 
     try {
+      // Record download in API
       let res;
       try {
         res = await tryRequest("POST");
@@ -251,161 +359,317 @@ const ImageGallerySection = ({ villa }) => {
         return;
       }
 
-      let resJson = null;
-      try {
-        resJson = await res.json().catch(() => null);
-      } catch {
-        resJson = null;
-      }
+      console.log("Download recorded successfully for property:", villaId);
 
-      console.log(
-        "Download recorded successfully for property:",
-        villaId,
-        resJson
-      );
-
+      // Create PDF with all data in serial format
       const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 12;
-      const gap = 6;
-      const cols = 3;
-      const rows = 4;
-      const perPage = cols * rows;
+      const margin = 15;
+      let yPos = margin;
 
-      const headerHeight = 26;
-      const footerHeight = 12;
-      const availableWidth =
-        pageWidth - margin * 2 - gap * (cols - 1);
-      const availableHeight =
-        pageHeight -
-        margin * 2 -
-        headerHeight -
-        footerHeight -
-        gap * (rows - 1);
-
-      const imgW = Number((availableWidth / cols).toFixed(2));
-      const imgH = Number((availableHeight / rows).toFixed(2));
-      const yStart = margin + headerHeight;
-
-      const imgUrls = media_images.map((m) => m.url || LOCAL_FALLBACK);
-      if (imgUrls.length === 0) imgUrls.push(LOCAL_FALLBACK);
-      const totalPages = Math.ceil(imgUrls.length / perPage);
-
-      const drawHeader = (pageIndex) => {
-        pdf.setFontSize(18);
-        pdf.setTextColor(20, 40, 40);
-        const title = villaName || "Property Gallery";
-        pdf.text(title, pageWidth / 2, margin + 8, {
-          align: "center",
-        });
-        if (villa.price) {
-          pdf.setFontSize(11);
-          const priceText =
-            typeof villa.price === "number"
-              ? `Price: US$ ${villa.price.toLocaleString()}`
-              : `Price: ${villa.price}`;
-          pdf.text(priceText, pageWidth / 2, margin + 14, {
-            align: "center",
-          });
+      // Function to add text with page break check
+      const addText = (text, fontSize = 12, isBold = false, align = "left", color = null) => {
+        if (yPos > pageHeight - margin) {
+          pdf.addPage();
+          yPos = margin;
         }
-        pdf.setDrawColor(200);
-        pdf.setLineWidth(0.4);
-        pdf.line(
-          margin,
-          margin + 18,
-          pageWidth - margin,
-          margin + 18
-        );
+        
+        pdf.setFontSize(fontSize);
+        if (isBold) pdf.setFont(undefined, 'bold');
+        else pdf.setFont(undefined, 'normal');
+        
+        if (color) pdf.setTextColor(color[0], color[1], color[2]);
+        else pdf.setTextColor(0, 0, 0);
+        
+        const textX = align === "center" ? pageWidth / 2 : margin;
+        pdf.text(text, textX, yPos, { align });
+        yPos += fontSize / 3;
       };
 
-      for (let p = 0; p < totalPages; p++) {
-        drawHeader(p + 1);
-
-        for (let i = 0; i < perPage; i++) {
-          const currentIndex = p * perPage + i;
-          if (currentIndex >= imgUrls.length) break;
-
-          const col = i % cols;
-          const row = Math.floor(i / cols);
-
-          const x = margin + col * (imgW + gap);
-          const y = yStart + row * (imgH + gap);
-
-          const imgEl = await loadImageWithFallback(
-            imgUrls[currentIndex]
-          );
-          if (!imgEl) continue;
-
-          const pxPerMm = 3.78;
-          const canvasWpx = Math.max(
-            600,
-            Math.round(imgW * pxPerMm)
-          );
-          const canvasHpx = Math.max(
-            800,
-            Math.round(imgH * pxPerMm)
-          );
-
-          const canvas = document.createElement("canvas");
-          drawImageCoverToCanvas(
-            imgEl,
-            canvas,
-            canvasWpx,
-            canvasHpx
-          );
-
-          let imgData;
-          try {
-            imgData = canvas.toDataURL("image/jpeg", 0.92);
-          } catch (err) {
-            console.warn(
-              "Canvas toDataURL failed, using fallback image src:",
-              err
-            );
-            const fallbackCanvas =
-              document.createElement("canvas");
-            fallbackCanvas.width = 800;
-            fallbackCanvas.height = 600;
-            const fctx = fallbackCanvas.getContext("2d");
-            const fallbackImg = await loadImageWithFallback(
-              LOCAL_FALLBACK
-            );
-            if (fallbackImg)
-              fctx.drawImage(
-                fallbackImg,
-                0,
-                0,
-                fallbackCanvas.width,
-                fallbackCanvas.height
-              );
-            imgData = fallbackCanvas.toDataURL(
-              "image/jpeg",
-              0.9
-            );
-          }
-
-          pdf.addImage(imgData, "JPEG", x, y, imgW, imgH);
+      // Function to add list items
+      const addListItems = (items, title = null) => {
+        if (title) {
+          addText(title, 14, true, "left", [0, 105, 92]); // Teal color
+          yPos += 4;
         }
+        
+        items.forEach((item, index) => {
+          if (yPos > pageHeight - margin) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          
+          pdf.setFontSize(11);
+          pdf.setFont(undefined, 'normal');
+          pdf.setTextColor(0, 0, 0);
+          pdf.text(`• ${item}`, margin + 5, yPos);
+          yPos += 5;
+        });
+        yPos += 8;
+      };
 
-        pdf.setFontSize(9);
-        pdf.setTextColor(120);
-        const footerText = `Page ${p + 1} of ${totalPages}`;
-        pdf.text(
-          footerText,
-          pageWidth / 2,
-          pageHeight - margin + 2,
-          { align: "center" }
-        );
+      // Add main title
+      addText(villaName, 22, true, "center", [0, 105, 92]);
+      yPos += 10;
 
-        if (p < totalPages - 1) pdf.addPage();
+      // Add media images in grid
+      if (media_images.length > 0) {
+        addText("Property Gallery", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        
+        const cols = 2;
+        const rows = 2;
+        const perPage = cols * rows;
+        const imgWidth = (pageWidth - margin * 2 - 10) / cols;
+        const imgHeight = imgWidth * 0.75;
+        
+        for (let i = 0; i < Math.min(media_images.length, 8); i++) {
+          if (i > 0 && i % perPage === 0) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          
+          const col = i % cols;
+          const row = Math.floor(i / cols) % rows;
+          
+          const x = margin + col * (imgWidth + 10);
+          const y = yPos + row * (imgHeight + 10);
+          
+          try {
+            const imgEl = await loadImageWithFallback(media_images[i].url);
+            if (imgEl) {
+              const canvas = document.createElement("canvas");
+              drawImageCoverToCanvas(imgEl, canvas, 300, 225); // 300x225 pixels
+              const imgData = canvas.toDataURL("image/jpeg", 0.85);
+              pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
+            }
+          } catch (err) {
+            console.warn("Failed to load image for PDF:", err);
+          }
+          
+          // Add page if needed
+          if ((i + 1) % perPage === 0 && i < media_images.length - 1) {
+            yPos = margin + rows * (imgHeight + 10);
+          }
+        }
+        
+        pdf.addPage();
+        yPos = margin;
       }
 
+      // Add Signature Distinctions
+      if (signature_distinctions.length > 0) {
+        addText("Signature Distinctions", 18, true, "left", [0, 105, 92]);
+        yPos += 8;
+        signature_distinctions.forEach((item, i) => {
+          if (yPos > pageHeight - margin) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          pdf.setFontSize(11);
+          pdf.text(`✓ ${item}`, margin, yPos);
+          yPos += 6;
+        });
+        yPos += 10;
+      }
+
+      // Add About This Property (Description)
+      if (description) {
+        addText("About This Property", 18, true, "left", [0, 105, 92]);
+        yPos += 8;
+        
+        // Split description into lines
+        const maxLineWidth = pageWidth - margin * 2;
+        pdf.setFontSize(10);
+        const lines = pdf.splitTextToSize(description, maxLineWidth);
+        
+        lines.forEach(line => {
+          if (yPos > pageHeight - margin) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          pdf.text(line, margin, yPos);
+          yPos += 5;
+        });
+        yPos += 10;
+      }
+
+      // Add Finer Details - Interior Amenities
+      if (interior_amenities.length > 0) {
+        addText("Finer Details - Interior Amenities", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        addListItems(interior_amenities);
+      }
+
+      // Add Finer Details - Outdoor Amenities
+      if (outdoor_amenities.length > 0) {
+        addText("Finer Details - Outdoor Amenities", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        addListItems(outdoor_amenities);
+      }
+
+      // Add Rules & Etiquette (only for rent type)
+      if (isRentType && rules_and_etiquette.length > 0) {
+        addText("Rules & Etiquette", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        addListItems(rules_and_etiquette);
+      }
+
+      // Add Check-in/out
+      if (isRentType && (check_in_out_time.check_in || check_in_out_time.check_out)) {
+        addText("Check-in/out", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        
+        if (check_in_out_time.check_in) {
+          pdf.setFontSize(11);
+          pdf.text(`Check-In: ${check_in_out_time.check_in}`, margin, yPos);
+          yPos += 6;
+        }
+        
+        if (check_in_out_time.check_out) {
+          if (yPos > pageHeight - margin) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          pdf.setFontSize(11);
+          pdf.text(`Check-Out: ${check_in_out_time.check_out}`, margin, yPos);
+          yPos += 6;
+        }
+        
+        if (check_in_out_time.description) {
+          if (yPos > pageHeight - margin) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          const descLines = pdf.splitTextToSize(check_in_out_time.description, pageWidth - margin * 2);
+          descLines.forEach(line => {
+            if (yPos > pageHeight - margin) {
+              pdf.addPage();
+              yPos = margin;
+            }
+            pdf.text(line, margin, yPos);
+            yPos += 5;
+          });
+        }
+        yPos += 10;
+      }
+
+      // Add Staff
+      if (isRentType && staffArray.length > 0) {
+        addText("Staff", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        
+        staffArray.forEach((staff, i) => {
+          if (yPos > pageHeight - margin) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          pdf.setFontSize(11);
+          pdf.setFont(undefined, 'bold');
+          pdf.text(staff.name, margin, yPos);
+          yPos += 5;
+          
+          if (staff.details) {
+            pdf.setFont(undefined, 'normal');
+            const detailsLines = pdf.splitTextToSize(staff.details, pageWidth - margin * 2 - 10);
+            detailsLines.forEach(line => {
+              if (yPos > pageHeight - margin) {
+                pdf.addPage();
+                yPos = margin;
+              }
+              pdf.text(line, margin + 5, yPos);
+              yPos += 5;
+            });
+          }
+          yPos += 5;
+        });
+        yPos += 5;
+      }
+
+      // Add Concierge Service
+      if (isRentType && concierge_service.length > 0) {
+        addText("Concierge Service", 16, true, "left", [0, 0, 0]);
+        yPos += 8;
+        addListItems(concierge_service);
+      }
+
+      // Add Property Details at the end
+      pdf.addPage();
+      yPos = margin;
+      
+      addText("Property Information", 18, true, "center", [0, 105, 92]);
+      yPos += 15;
+      
+      const details = [
+        { label: "Property Name", value: villaName },
+        { label: "Address", value: location.address || "N/A" },
+        { label: "Bedrooms", value: villa.bedrooms_count || "N/A" },
+        { label: "Bathrooms", value: villa.bathrooms_count || "N/A" },
+        { label: "Property Type", value: villa.listing_type || "N/A" },
+      ];
+      
+      if (villa.price) {
+        details.push({ 
+          label: "Price", 
+          value: `US$ ${villa.price.toLocaleString()}` 
+        });
+      }
+      
+      if (isRentType && security_deposit) {
+        details.push({ 
+          label: "Security Deposit", 
+          value: `US$ ${security_deposit}` 
+        });
+      }
+      
+      details.forEach((detail, i) => {
+        if (yPos > pageHeight - margin) {
+          pdf.addPage();
+          yPos = margin;
+        }
+        
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'bold');
+        pdf.setTextColor(0, 105, 92);
+        pdf.text(detail.label + ":", margin, yPos);
+        
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(0, 0, 0);
+        const textWidth = pdf.getTextWidth(detail.label + ": ");
+        pdf.text(detail.value, margin + textWidth, yPos);
+        
+        yPos += 8;
+      });
+
+      // Add footer on all pages
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150);
+        pdf.text(
+          `Page ${i} of ${totalPages} • Generated on ${new Date().toLocaleDateString()}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: "center" }
+        );
+      }
+
+      // Save PDF
       pdf.save(
         `${(villaName || "EV_Brochure")
           .replace(/\s+/g, "_")
-          .trim()}.pdf`
+          .trim()}_Brochure.pdf`
       );
+      
+      Swal.fire({
+        icon: "success",
+        title: "Brochure Downloaded",
+        text: "Property brochure has been generated successfully!",
+        timer: 2000
+      });
+
     } catch (err) {
       console.error("PDF/download flow error:", err);
       Swal.fire({
@@ -430,14 +694,15 @@ const ImageGallerySection = ({ villa }) => {
 
           <div className="grid grid-cols-3 gap-4">
             {(showAll ? media_images : media_images.slice(0, 6)).map(
-              (img) => (
+              (img, index) => (
                 <div
                   key={img.id}
                   className="aspect-4/3 bg-gray-200 rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
-                  onClick={() => setSelectedImage(img.url)}
+                  onClick={() => openImageModal(index)}
                 >
                   <img
                     src={img.url}
+                    alt={`Gallery image ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -612,17 +877,15 @@ const ImageGallerySection = ({ villa }) => {
 
       <AddReviewForm propertyId={villaId} />
 
-      {selectedImage && (
-        <div
-          className="fixed inset-0 bg-opacity-80 flex justify-center items-center z-9999"
-          style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
-          onClick={() => setSelectedImage(null)}
-        >
-          <img
-            src={selectedImage}
-            className="w-full h-[80vh] object-contain rounded-xl shadow-2xl"
-          />
-        </div>
+      {/* Image Modal */}
+      {selectedImageIndex !== null && (
+        <ImageModal
+          images={media_images}
+          currentIndex={selectedImageIndex}
+          onClose={closeImageModal}
+          onNext={goToNextImage}
+          onPrev={goToPrevImage}
+        />
       )}
     </section>
   );

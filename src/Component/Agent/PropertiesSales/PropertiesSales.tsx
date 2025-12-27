@@ -543,7 +543,7 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
             Access assigned sales properties and marketing materials.
           </p>
 
-          <div className="mt-3 text-sm text-gray-500">
+          {/* <div className="mt-3 text-sm text-gray-500">
             {effectiveAgentId !== null ? (
               <>
                 Showing sales assigned to agent ID{' '}
@@ -552,7 +552,7 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
             ) : (
               <>You are not associated with an agent account. No sales are visible.</>
             )}
-          </div>
+          </div> */}
         </header>
 
         <div className="relative mb-8">
