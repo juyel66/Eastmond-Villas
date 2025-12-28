@@ -1,4 +1,5 @@
 import React from 'react';
+import containerImg from "../../assets/Container (1).svg"
 
 interface LuxuryFeatureCardProps {
   imageUrl: string;
@@ -31,7 +32,7 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({ imageUrl, brandNa
           {/* Icon (Simulated green crown/logo icon) */}
           <div className=" h-6 mr-3 flex items-center justify-center  rounded-md">
             {/* Crown/Logo Icon - Using a simple SVG or a library icon */}
-           <img className='w-12 h-12' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png" alt="" />
+           <img className='w-10 h-10' src={containerImg} alt="" />
           </div>
           
           <div>
