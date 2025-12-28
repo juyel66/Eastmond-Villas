@@ -667,16 +667,17 @@ const CreatePropertySales = ({
               name="status"
               {...register('status')}
               className="w-full border rounded-lg p-3 bg-gray-50"
-              defaultValue={isEdit && editData ? editData.status : 'Draft'}
+
+              // defaultValue={isEdit && editData ? editData.status : 'Draft'}
             >
-              <option value="Draft">Draft</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Published">Published</option>
-              <option value="Archived">Archived</option>
+              <option value="draft">Draft</option>
+              <option value="pending_peview">Pending Review</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
             </select>
-            <div className="mt-1 text-sm text-gray-500">
+            {/* <div className="mt-1 text-sm text-gray-500">
               Current Status: <span className="font-medium">{isEdit && editData ? editData.status : 'Draft'}</span>
-            </div>
+            </div> */}
           </div>
 
           <div className="col-span-12 md:col-span-3">
