@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import youtubeImg from "../../assets/youtube.svg";
 
 const VideoExperience = ({ videos = [], villa }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,16 +30,18 @@ const VideoExperience = ({ videos = [], villa }) => {
             <img
               src={thumbnail}
               alt={villa?.title || "Villa Video Thumbnail"}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover "
             />
 
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <button
                 onClick={() => setIsPlaying(true)}
-                className="w-20 h-20 rounded-full bg-white text-black text-3xl flex items-center justify-center hover:scale-110 transition"
+                className="w-24 h-24 rounded-full cursor-pointer  text-black text-7xl flex items-center justify-center hover:scale-105 transition"
               >
-                ▶
+
+                <img src={youtubeImg} alt="" />
+           
               </button>
             </div>
           </>
