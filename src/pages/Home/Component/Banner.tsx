@@ -109,16 +109,24 @@
 
 
 import React from "react";
+import begImg from "../../../assets/beg.svg"
 
 const FeaturedBadge = () => (
-  <div className="flex items-center lg:w-4/13 px-3 py-1 bg-black/40 backdrop-blur-sm rounded-full text-white text-sm font-semibold border border-white/20 relative whitespace-nowrap transition-all duration-500 ease-in-out">
+  <div className="flex  items-center px-2 py-1.5 md:px-3 md:py-2 bg-white/10  rounded-full text-white text-sm md:text-base font-medium border border-white relative whitespace-nowrap transition-all duration-300 ease-in-out w-fit max-w-full">
+  {/* Icon */}
+  <div className="flex-shrink-0 w-5 h-5 md:w-6 md:h-6">
     <img
-      className="w-6 h-6"
-      src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760898796/Icon_22_fqdcfj.png"
-      alt=""
+      className="w-full h-full object-contain"
+      src={begImg}
+      alt="Platform icon"
     />
-    <span className="ml-2">Barbados's #1 Luxury Villa Platform</span>
   </div>
+  
+  {/* Text */}
+  <span className="ml-1.5 md:ml-2.5 text-xs md:text-sm lg:text-base font-semibold truncate max-w-[200px] sm:max-w-[250px] md:max-w-[300px] lg:max-w-none">
+    Barbados's #1 Luxury Villa Platform
+  </span>
+</div>
 );
 
 interface CallToActionButtonsProps {
@@ -127,8 +135,7 @@ interface CallToActionButtonsProps {
 
 const CallToActionButtons: React.FC<CallToActionButtonsProps> = ({ onExploreClick }) => (
   <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0 mt-6 transition-all duration-500 ease-in-out">
-    {/* Replaced Link behavior with a button that calls the provided scroll handler.
-        Styling and inner markup kept exactly the same to preserve design. */}
+
     <button
       onClick={onExploreClick}
       className="flex items-center justify-center space-x-2 px-8 py-3 bg-teal-500 text-white font-semibold rounded-lg shadow-xl hover:bg-teal-600 transition duration-300 text-sm"
@@ -143,7 +150,7 @@ const CallToActionButtons: React.FC<CallToActionButtonsProps> = ({ onExploreClic
 
     <a
       href="/contact"
-      className="flex items-center justify-center space-x-2 px-8 py-3 border-2 border-teal-500 text-white font-semibold rounded-lg bg-black/10 backdrop-blur-sm hover:bg-white/10 transition duration-300 text-sm"
+      className="flex items-center justify-center space-x-2 px-8 py-3 border-2 border-teal-500 text-white font-semibold rounded-lg   hover:bg-white/10 transition duration-300 text-sm"
     >
       <img
         className="w-6 h-6"
@@ -168,7 +175,7 @@ const ClientAvatars = () => (
       ))}
     </div>
     <span className="text-white text-sm font-medium ml-0 sm:ml-4 whitespace-nowrap">
-      Join with thousands of Satisfied Clients
+      Join with <span className="font-extrabold">thousands of Satisfied Clients</span>
     </span>
   </div>
 );
@@ -182,7 +189,7 @@ const Banner: React.FC<BannerProps> = ({ onExploreClick }) => {
     "https://res.cloudinary.com/dqkczdjjs/video/upload/v1760120464/d_v_jsxaky.mp4";
 
   return (
-    <div className="relative w-full h-[550px] overflow-hidden transition-all duration-700 ease-in-out">
+    <div className="relative w-full h-[550px] rounded-xl overflow-hidden transition-all  duration-700 ease-in-out">
       <video
         className="absolute inset-0 w-full h-full object-cover"
         src={videoSource}
@@ -191,7 +198,7 @@ const Banner: React.FC<BannerProps> = ({ onExploreClick }) => {
         muted
         playsInline
       />
-      <div className="absolute inset-0 bg-black/20"></div>
+      <div className="absolute inset-0 bg-black/20 "></div>
 
       <div className="relative z-10 flex flex-col justify-center h-full container mx-auto p-4 transition-all duration-700 ease-in-out">
         <FeaturedBadge />
