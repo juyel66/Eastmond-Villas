@@ -21,7 +21,7 @@ const StorySection: React.FC = () => {
             </div>
 
             <div className="flex justify-center lg:justify-end lg:col-span-1">
-              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl overflow-hidden">
+              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl rounded-tr-xl rounded-bl-xl shadow-xl overflow-hidden">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761523975/medium-shot-plus-sized-woman-influencer_23-2151414147_1_n5fjkm.png"
                   alt="Framed Eastmond Villas logo in a luxury interior"
@@ -39,7 +39,7 @@ const StorySection: React.FC = () => {
         <div className="">
           <div className="lg:grid lg:grid-cols-3 lg:gap-16 xl:gap-24 items-center">
             <div className="flex justify-center lg:justify-start mb-12 lg:mb-0 lg:col-span-1">
-              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl overflow-hidden">
+              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl  rounded-br-4xl rounded-tr-xl rounded-bl-xl shadow-xl overflow-hidden">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760220353/medium-shot-plus-sized-woman-influencer_23-2151414147_2_5_fz3dmp.png"
                   alt="Luxury Villa Interior with sea view"
@@ -77,7 +77,7 @@ const StorySection: React.FC = () => {
             </div>
 
             <div className="flex justify-center lg:justify-end lg:col-span-1">
-              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl overflow-hidden">
+              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl rounded-tr-xl rounded-bl-xl overflow-hidden">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760219929/medium-shot-plus-sized-woman-influencer_23-2151414147_2_1_ckmbpy.png"
                   alt="Framed Eastmond Villas logo in a luxury interior"
@@ -95,7 +95,7 @@ const StorySection: React.FC = () => {
         <div className="">
           <div className="lg:grid lg:grid-cols-3 lg:gap-16 xl:gap-24 items-center">
             <div className="flex justify-center lg:justify-start mb-12 lg:mb-0 lg:col-span-1">
-              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl overflow-hidden">
+              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl rounded-tr-xl rounded-bl-xl shadow-xl overflow-hidden">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760220019/medium-shot-plus-sized-woman-influencer_23-2151414147_2_2_daibdq.png"
                   alt="Luxury Villa Interior with sea view"
@@ -130,7 +130,7 @@ const StorySection: React.FC = () => {
             </div>
 
             <div className="flex justify-center lg:justify-end lg:col-span-1">
-              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl overflow-hidden">
+              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl rounded-tr-xl rounded-bl-xl shadow-xl overflow-hidden">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760220066/medium-shot-plus-sized-woman-influencer_23-2151414147_2_3_v9nrjr.png"
                   alt="Framed Eastmond Villas logo in a luxury interior"
@@ -148,7 +148,7 @@ const StorySection: React.FC = () => {
         <div className="">
           <div className="lg:grid lg:grid-cols-3 lg:gap-16 xl:gap-24 items-center">
             <div className="flex justify-center lg:justify-start mb-12 lg:mb-0 lg:col-span-1">
-              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-br-4xl shadow-xl overflow-hidden">
+              <div className="relative w-full max-w-sm lg:max-w-none lg:w-full aspect-[4/3] rounded-tl-4xl rounded-tr-xl rounded-bl-xl rounded-br-4xl shadow-xl overflow-hidden">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760220096/medium-shot-plus-sized-woman-influencer_23-2151414147_2_4_xtxpzs.png"
                   alt="Luxury Villa Interior with sea view"
