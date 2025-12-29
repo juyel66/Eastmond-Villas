@@ -237,7 +237,7 @@ const Rents: React.FC = () => {
       className="relative bg-cover bg-center bg-no-repeat  "
       style={{
         backgroundImage:
-          "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
+          "url('/images/bg_shape.svg')",
         marginBottom: '1000px',
       }}
     >
@@ -303,7 +303,7 @@ const Rents: React.FC = () => {
           currentVillas.map((villa) => (
             <div
               key={villa.id}
-              className="bg-white/90 rounded-xl shadow-md overflow-hidden backdrop-blur-md"
+              className=""
             >
               <RentsCard property={villa} />
             </div>
