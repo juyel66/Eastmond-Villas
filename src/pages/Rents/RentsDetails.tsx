@@ -25,6 +25,13 @@ import ImageGallerySections from './ImageGallerySections';
 import RentsDetailsBanner from './RentsDetailsBanner';
 import SpotlightDetails from './SpotlingtDetails';
 
+
+
+
+
+
+
+
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
