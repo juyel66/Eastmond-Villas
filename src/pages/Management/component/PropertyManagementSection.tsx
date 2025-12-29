@@ -9,7 +9,7 @@ const PropertyManagementSection = () => {
 
    style={{
           backgroundImage:
-            "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
+            "url('/images/bg_shape.svg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -51,7 +51,7 @@ const PropertyManagementSection = () => {
  </div>
 
       {/* Other sections with container */}
-      <section className="container mx-auto px-4 pb-5 ">
+      <section className="container mx-auto px-4 pb-15 ">
         <FeatureSection
           title="Premium Rental Management"
           description="For owners who wish to generate income, our elite rental management program maximizes occupancy and revenue while safeguarding your asset. We handle:"
