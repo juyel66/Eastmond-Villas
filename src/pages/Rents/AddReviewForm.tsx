@@ -260,14 +260,14 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
     <div className="">
       <div>
         <header className="mb-6 mt-5 text-center ">
-          <h2 className="text-4xl  font-bold text-gray-800">Add Your Review</h2>
+          <h2 className="text-4xl  font-semibold text-gray-800">Add Your Review</h2>
         </header>
       </div>
 
-      <div className=" mx-auto  mt-8 p-8 bg-white shadow-lg rounded-lg border border-gray-200">
+      <div className=" mx-auto  mt-8 p-8 bg-white  rounded-lg  ">
         <p className="text-gray-500 text-sm mt-2 mb-4">
           Your email address will not be published.{' '}
-          <span className="text-red-500">Required fields are marked</span>
+          <span className="">Required fields are marked</span>
         </p>
 
         <p className="mb-4 text-sm font-medium text-red-500">
