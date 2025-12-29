@@ -13,15 +13,15 @@ const Description: React.FC<DescriptionProps> = ({
   const toggleShow = () => setShowFull((prev) => !prev);
 
   const text = descriptionData;
-  const shortText = text.slice(0, 450) + '...';
-  const title = 'About This Property';
+  const shortText = text.slice(0, 550) + '...';
+  const title = 'Descriptions';
 
   return (
     <div className="flex mt-20 gap-5 flex-col md:flex-row items-start justify-center">
       <div className="w-full md:w-1/2 bg-white rounded-lg flex items-start justify-start">
         <div className="h-96 w-full flex items-start justify-start">
           <div className="h-full w-full p-4 text-left">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">{title}</h2>
+            <h2 className="text-2xl font-bold text-[#0F172A] mb-4">{title}</h2>
             <div className="text-gray-600 text-base leading-relaxed mb-4">
               {showFull ? text : shortText}
             </div>
