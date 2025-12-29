@@ -30,7 +30,7 @@ const ExperiencesPage = () => {
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center p-6 sm:p-10">
         {/* Main Heading */}
         <h1 className="lg:text-5xl sm:text-5xl text-2xl font-extrabold text-white mb-4">
-          More Than Just a <span className="text-teal-400">Villa</span>
+          More Than Just a <span className="text-teal-400 italic">Villa</span>
         </h1>
 
         {/* Description */}
@@ -43,7 +43,7 @@ const ExperiencesPage = () => {
         {/* Button */}
         <button
           className="inline-flex items-center lg:px-8 px-6 lg:py-4 py-2 bg-teal-600 hover:bg-teal-700
-                                   text-white text-lg font-semibold rounded-full shadow-lg
+                                   text-white text-lg font-semibold rounded-lg shadow-lg
                                    transition duration-300 ease-in-out mt-3"
         >
           <div className="mr-2">
