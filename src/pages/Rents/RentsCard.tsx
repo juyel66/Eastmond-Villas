@@ -5,6 +5,10 @@ import { CiShare2 } from "react-icons/ci";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+import bathImg from "../../assets/bath.svg"
+import polImg from "../../assets/pol.svg"
+import mapImg from "../../assets/map.svg"
+import bedsImg from "../../assets/beddds.svg"
 
 import {
   FaFacebookF,
@@ -295,7 +299,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     {
       icon: (
         <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_3_rwdb0z.png"
+          src={bathImg}
           alt="bed"
           className="w-5 h-5"
         />
@@ -307,7 +311,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     {
       icon: (
         <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_4_zsqcrj.png"
+          src={bedsImg}
           alt="bath"
           className="w-5 h-5"
         />
@@ -319,7 +323,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     {
       icon: (
         <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827483/Frame_5_cyajjb.png"
+          src={polImg}
           alt="pool"
           className="w-5 h-5"
         />
@@ -543,7 +547,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               </h3>
               <p className="text-sm  sm:text-base mt-2 text-gray-500 flex items-center font-medium">
                 <img
-                  src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760829803/Frame_6_keemxx.png"
+                  src={mapImg}
                   alt="location"
                   className="w-5  h-5 mr-1"
                 />{" "}
