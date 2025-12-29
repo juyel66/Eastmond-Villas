@@ -11,7 +11,14 @@ const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
 // Image Preview Component
-const ImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, type = 'media' }) => {
+const ImagePreview = ({
+  image,
+  index,
+  onRemove,
+  onSetPrimary,
+  isPrimary,
+  type = 'media',
+}) => {
   return (
     <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
       <div className="w-full h-full flex items-center justify-center">
@@ -21,15 +28,13 @@ const ImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, type = 
           className="w-full h-full object-cover"
           onError={(e) => {
             console.error('Failed to load preview image:', image.url);
-            e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
-            e.target.className = "w-full h-full object-contain p-2";
+            e.target.src =
+              'https://via.placeholder.com/300x200?text=Image+Not+Found';
+            e.target.className = 'w-full h-full object-contain p-2';
           }}
         />
       </div>
 
-
-      
-      
       {/* Remove button */}
       <button
         onClick={() => onRemove(image.id)}
@@ -40,16 +45,13 @@ const ImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, type = 
         <Trash2 className="w-3 h-3" />
       </button>
 
-
-
-      
       {/* Primary badge */}
       {isPrimary && (
         <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
           Primary
         </span>
       )}
-      
+
       {/* Set primary button */}
       {!isPrimary && (
         <button
@@ -66,7 +68,15 @@ const ImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, type = 
 };
 
 // Bedroom Image Preview Component
-const BedroomImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, onNameChange, onDescriptionChange }) => {
+const BedroomImagePreview = ({
+  image,
+  index,
+  onRemove,
+  onSetPrimary,
+  isPrimary,
+  onNameChange,
+  onDescriptionChange,
+}) => {
   return (
     <div className="space-y-2">
       <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
@@ -77,12 +87,13 @@ const BedroomImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, 
             className="w-full h-full object-cover"
             onError={(e) => {
               console.error('Failed to load bedroom image:', image.url);
-              e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
-              e.target.className = "w-full h-full object-contain p-2";
+              e.target.src =
+                'https://via.placeholder.com/300x200?text=Image+Not+Found';
+              e.target.className = 'w-full h-full object-contain p-2';
             }}
           />
         </div>
-        
+
         {/* Remove button */}
         <button
           onClick={() => onRemove(image.id)}
@@ -92,14 +103,14 @@ const BedroomImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, 
         >
           <Trash2 className="w-3 h-3" />
         </button>
-        
+
         {/* Primary badge */}
         {isPrimary && (
           <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">
             Primary
           </span>
         )}
-        
+
         {/* Set primary button */}
         {!isPrimary && (
           <button
@@ -112,7 +123,7 @@ const BedroomImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, 
           </button>
         )}
       </div>
-      
+
       <input
         data-bedroom-name-index={index}
         value={image.name || ''}
@@ -121,7 +132,7 @@ const BedroomImagePreview = ({ image, index, onRemove, onSetPrimary, isPrimary, 
         className="w-full border rounded-lg p-2 text-sm bg-gray-50 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
         required
       />
-      
+
       <input
         value={image.description || ''}
         onChange={(e) => onDescriptionChange(image.id, e.target.value)}
@@ -183,17 +194,21 @@ const CreatePropertyRentals = ({
   // Function to ensure URL is absolute
   const getAbsoluteUrl = (url) => {
     if (!url) return '';
-    
+
     // If it's already an absolute URL
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+    if (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('blob:')
+    ) {
       return url;
     }
-    
+
     // If it's a relative URL, prepend API base URL
     if (url.startsWith('/')) {
       return `${API_BASE.replace('/api', '')}${url}`;
     }
-    
+
     // If it's just a path, prepend API base
     return `${API_BASE.replace('/api', '')}/${url}`;
   };
@@ -232,17 +247,41 @@ const CreatePropertyRentals = ({
       }
 
       // Populate arrays
-      setSignatureList(editData.signature_distinctions?.length > 0 ? editData.signature_distinctions : ['']);
-      setInteriorAmenities(editData.interior_amenities?.length > 0 ? editData.interior_amenities : ['']);
-      setOutdoorAmenities(editData.outdoor_amenities?.length > 0 ? editData.outdoor_amenities : ['']);
-      setRules(editData.rules_and_etiquette?.length > 0 ? editData.rules_and_etiquette : ['']);
-      setConciergeRows(editData.concierge_services?.length > 0 ? editData.concierge_services : ['']);
-      
+      setSignatureList(
+        editData.signature_distinctions?.length > 0
+          ? editData.signature_distinctions
+          : ['']
+      );
+      setInteriorAmenities(
+        editData.interior_amenities?.length > 0
+          ? editData.interior_amenities
+          : ['']
+      );
+      setOutdoorAmenities(
+        editData.outdoor_amenities?.length > 0
+          ? editData.outdoor_amenities
+          : ['']
+      );
+      setRules(
+        editData.rules_and_etiquette?.length > 0
+          ? editData.rules_and_etiquette
+          : ['']
+      );
+      setConciergeRows(
+        editData.concierge_services?.length > 0
+          ? editData.concierge_services
+          : ['']
+      );
+
       setCheckIn(editData.check_in || '');
       setCheckOut(editData.check_out || '');
 
       // Staff
-      if (editData.staff && Array.isArray(editData.staff) && editData.staff.length > 0) {
+      if (
+        editData.staff &&
+        Array.isArray(editData.staff) &&
+        editData.staff.length > 0
+      ) {
         setStaffRows(
           editData.staff.map((s) => ({
             name: s.name || '',
@@ -264,8 +303,8 @@ const CreatePropertyRentals = ({
           });
         }
         setBookingRateRows(
-          rows.length > 0 
-            ? rows 
+          rows.length > 0
+            ? rows
             : [{ rentalPeriod: '', minimumStay: '', ratePerNight: '' }]
         );
       }
@@ -273,46 +312,63 @@ const CreatePropertyRentals = ({
       // Handle media images (only store for reference, won't display in edit mode)
       const processMediaImages = () => {
         let mediaImgs = [];
-        
+
         if (editData.media_images && Array.isArray(editData.media_images)) {
           mediaImgs = editData.media_images.map((img, i) => {
-            const imageUrl = typeof img === 'string' ? img : (img.url || img.image || img);
-            const isPrimary = typeof img === 'object' ? (img.is_primary || img.isPrimary || false) : false;
-            
+            const imageUrl =
+              typeof img === 'string' ? img : img.url || img.image || img;
+            const isPrimary =
+              typeof img === 'object'
+                ? img.is_primary || img.isPrimary || false
+                : false;
+
             return {
               id: `media-${Date.now()}-${i}`,
               url: getAbsoluteUrl(imageUrl),
               file: null,
               isPrimary: isPrimary,
-              originalData: img
+              originalData: img,
             };
           });
         }
-        
+
         if (mediaImgs.length === 0 && editData.image) {
           mediaImgs.push({
             id: `media-${Date.now()}-0`,
             url: getAbsoluteUrl(editData.image),
             file: null,
             isPrimary: true,
-            originalData: { url: editData.image, is_primary: true }
+            originalData: { url: editData.image, is_primary: true },
           });
         }
-        
+
         setMediaImages(mediaImgs);
       };
 
       // Handle bedroom images (only store for reference, won't display in edit mode)
       const processBedroomImages = () => {
         let bedroomImgs = [];
-        
-        if (editData.bedrooms_images && Array.isArray(editData.bedrooms_images)) {
+
+        if (
+          editData.bedrooms_images &&
+          Array.isArray(editData.bedrooms_images)
+        ) {
           bedroomImgs = editData.bedrooms_images.map((img, i) => {
-            const imageUrl = typeof img === 'string' ? img : (img.url || img.image || img);
-            const isPrimary = typeof img === 'object' ? (img.is_primary || img.isPrimary || false) : false;
-            const name = typeof img === 'object' ? (img.name || img.title || `Bedroom ${i + 1}`) : `Bedroom ${i + 1}`;
-            const description = typeof img === 'object' ? (img.description || img.caption || '') : '';
-            
+            const imageUrl =
+              typeof img === 'string' ? img : img.url || img.image || img;
+            const isPrimary =
+              typeof img === 'object'
+                ? img.is_primary || img.isPrimary || false
+                : false;
+            const name =
+              typeof img === 'object'
+                ? img.name || img.title || `Bedroom ${i + 1}`
+                : `Bedroom ${i + 1}`;
+            const description =
+              typeof img === 'object'
+                ? img.description || img.caption || ''
+                : '';
+
             return {
               id: `bedroom-${Date.now()}-${i}`,
               url: getAbsoluteUrl(imageUrl),
@@ -320,11 +376,11 @@ const CreatePropertyRentals = ({
               isPrimary: isPrimary,
               name: name,
               description: description,
-              originalData: img
+              originalData: img,
             };
           });
         }
-        
+
         setBedroomImages(bedroomImgs);
       };
 
@@ -332,7 +388,11 @@ const CreatePropertyRentals = ({
       processBedroomImages();
 
       // Handle videos (only store for reference, won't display in edit mode)
-      if (editData.videos && Array.isArray(editData.videos) && editData.videos.length > 0) {
+      if (
+        editData.videos &&
+        Array.isArray(editData.videos) &&
+        editData.videos.length > 0
+      ) {
         console.log(`${editData.videos.length} existing videos found`);
       }
     } else {
@@ -356,7 +416,7 @@ const CreatePropertyRentals = ({
         damage_deposit: '',
         commission_rate: '',
       });
-      
+
       setSignatureList(['']);
       setInteriorAmenities(['']);
       setOutdoorAmenities(['']);
@@ -365,7 +425,9 @@ const CreatePropertyRentals = ({
       setCheckIn('');
       setCheckOut('');
       setStaffRows([{ name: '', details: '' }]);
-      setBookingRateRows([{ rentalPeriod: '', minimumStay: '', ratePerNight: '' }]);
+      setBookingRateRows([
+        { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
+      ]);
       setMediaImages([]);
       setBedroomImages([]);
       setVideos([]);
@@ -389,7 +451,7 @@ const CreatePropertyRentals = ({
   const handleMediaImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    
+
     const newImgs = files.map((file, i) => {
       const url = URL.createObjectURL(file);
       return {
@@ -399,15 +461,15 @@ const CreatePropertyRentals = ({
         isPrimary: mediaImages.length === 0 && i === 0,
       };
     });
-    
+
     setMediaImages((prev) => {
       const updated = [...prev, ...newImgs];
       // Ensure only one primary
-      const primaryCount = updated.filter(img => img.isPrimary).length;
+      const primaryCount = updated.filter((img) => img.isPrimary).length;
       if (primaryCount > 1) {
         // Keep the first one as primary
         let foundFirst = false;
-        return updated.map(img => {
+        return updated.map((img) => {
           if (img.isPrimary) {
             if (!foundFirst) {
               foundFirst = true;
@@ -420,7 +482,7 @@ const CreatePropertyRentals = ({
       }
       return updated;
     });
-    
+
     e.target.value = null;
     setMediaError('');
     toast.success(`Added ${files.length} media image(s)`);
@@ -429,7 +491,7 @@ const CreatePropertyRentals = ({
   const handleBedroomImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    
+
     const newImgs = files.map((file, i) => {
       const url = URL.createObjectURL(file);
       return {
@@ -441,7 +503,7 @@ const CreatePropertyRentals = ({
         description: '',
       };
     });
-    
+
     setBedroomImages((prev) => [...prev, ...newImgs]);
     e.target.value = null;
     toast.success(`Added ${files.length} bedroom image(s)`);
@@ -458,16 +520,16 @@ const CreatePropertyRentals = ({
   const removeImage = (id, setState, type = 'media') => {
     setState((prev) => {
       const filtered = prev.filter((i) => i.id !== id);
-      
+
       // If we removed the primary image, set the first image as primary
-      const removedImage = prev.find(i => i.id === id);
+      const removedImage = prev.find((i) => i.id === id);
       if (removedImage?.isPrimary && filtered.length > 0) {
         filtered[0].isPrimary = true;
       }
-      
+
       return filtered;
     });
-    
+
     toast.success(`Removed ${type} image`);
   };
 
@@ -771,13 +833,13 @@ const CreatePropertyRentals = ({
           fd.append('media_images', img.file);
         }
       });
-      
+
       bedroomImages.forEach((img) => {
         if (img.file) {
           fd.append('bedrooms_images', img.file);
         }
       });
-      
+
       videos.forEach((file) => {
         fd.append('videos', file);
       });
@@ -873,23 +935,18 @@ const CreatePropertyRentals = ({
 
   const updateBedroomImageName = (id, name) => {
     setBedroomImages((prev) =>
-      prev.map((b) =>
-        b.id === id ? { ...b, name } : b
-      )
+      prev.map((b) => (b.id === id ? { ...b, name } : b))
     );
   };
 
   const updateBedroomImageDescription = (id, description) => {
     setBedroomImages((prev) =>
-      prev.map((b) =>
-        b.id === id ? { ...b, description } : b
-      )
+      prev.map((b) => (b.id === id ? { ...b, description } : b))
     );
   };
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen w-full">
-
       {!isEdit && (
         <div className="w-15">
           <Link
@@ -1019,19 +1076,23 @@ const CreatePropertyRentals = ({
               Status
             </label>
             <select
-              name="status"
               {...register('status')}
               className="w-full border rounded-lg p-3 bg-gray-50"
-              defaultValue={isEdit && editData ? editData.status : 'Draft'}
+              // defaultValue={isEdit && editData ? editData.status : 'Draft'}
             >
-              <option value="Draft">Draft</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Published">Published</option>
-              <option value="Archived">Archived</option>
+              <option defaultChecked value="draft">
+                Draft
+              </option>
+              <option value="pending_review">Pending Review</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
             </select>
-            <div className="mt-1 text-sm text-gray-500">
-              Current Status: <span className="font-medium">{isEdit && editData ? editData.status : 'Draft'}</span>
-            </div>
+            {/* <div className="mt-1 text-sm text-gray-500">
+              Current Status:{' '}
+              <span className="font-medium">
+                {isEdit && editData ? editData.status : 'Draft'}
+              </span>
+            </div> */}
           </div>
 
           <div className="col-span-12 md:col-span-3">
@@ -1060,7 +1121,7 @@ const CreatePropertyRentals = ({
               placeholder="Number of bedrooms"
             />
           </div>
-          
+
           <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Bathrooms
@@ -1074,7 +1135,7 @@ const CreatePropertyRentals = ({
               placeholder="Number of bathrooms"
             />
           </div>
-          
+
           <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Pools
@@ -1106,7 +1167,7 @@ const CreatePropertyRentals = ({
               </p>
             )}
           </div>
-          
+
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               City
@@ -1131,7 +1192,7 @@ const CreatePropertyRentals = ({
                 {mediaImages.length} image(s) uploaded
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
               {mediaImages.map((img, index) => (
                 <ImagePreview
@@ -1148,7 +1209,9 @@ const CreatePropertyRentals = ({
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
                 <UploadCloud className="w-8 h-8 mb-2" />
                 <p className="text-sm font-medium">Upload Media Images</p>
-                <p className="text-xs text-gray-400 mt-1">Click or drag & drop</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Click or drag & drop
+                </p>
                 <input
                   name="media_files"
                   type="file"
@@ -1163,15 +1226,16 @@ const CreatePropertyRentals = ({
             {mediaError && (
               <p className="text-sm text-red-600 mt-2">{mediaError}</p>
             )}
-            
+
             {mediaImages.length === 0 ? (
               <p className="text-sm text-gray-500 mt-2">
                 No media images uploaded yet. At least one image is required.
               </p>
             ) : (
               <div className="mt-2 text-sm text-gray-600">
-                <span className="font-medium">{mediaImages.length}</span> media image(s) uploaded. 
-                {mediaImages.filter(img => img.isPrimary).length > 0 ? (
+                <span className="font-medium">{mediaImages.length}</span> media
+                image(s) uploaded.
+                {mediaImages.filter((img) => img.isPrimary).length > 0 ? (
                   <span className="ml-2 text-teal-600">
                     Primary image is set.
                   </span>
@@ -1196,14 +1260,16 @@ const CreatePropertyRentals = ({
                 {bedroomImages.length} image(s) uploaded
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
               {bedroomImages.map((img, index) => (
                 <BedroomImagePreview
                   key={img.id}
                   image={img}
                   index={index}
-                  onRemove={(id) => removeImage(id, setBedroomImages, 'bedroom')}
+                  onRemove={(id) =>
+                    removeImage(id, setBedroomImages, 'bedroom')
+                  }
                   onSetPrimary={setPrimaryImage}
                   isPrimary={img.isPrimary}
                   onNameChange={updateBedroomImageName}
@@ -1214,7 +1280,9 @@ const CreatePropertyRentals = ({
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
                 <UploadCloud className="w-8 h-8 mb-2" />
                 <p className="text-sm font-medium">Upload Bedrooms Images</p>
-                <p className="text-xs text-gray-400 mt-1">Click or drag & drop</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Click or drag & drop
+                </p>
                 <input
                   name="bedrooms_images"
                   type="file"
@@ -1225,14 +1293,15 @@ const CreatePropertyRentals = ({
                 />
               </label>
             </div>
-            
+
             {bedroomImages.length === 0 ? (
               <p className="text-sm text-gray-500 mt-2">
                 No bedroom images uploaded yet. You can add new images.
               </p>
             ) : (
               <div className="mt-2 text-sm text-gray-600">
-                <span className="font-medium">{bedroomImages.length}</span> bedroom image(s) uploaded.
+                <span className="font-medium">{bedroomImages.length}</span>{' '}
+                bedroom image(s) uploaded.
               </div>
             )}
           </div>
@@ -1248,7 +1317,9 @@ const CreatePropertyRentals = ({
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
                 <UploadCloud className="w-8 h-8 mb-2" />
                 <p className="text-sm font-medium">Upload Videos</p>
-                <p className="text-xs text-gray-400 mt-1">Click or drag & drop</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Click or drag & drop
+                </p>
                 <input
                   name="videos"
                   type="file"
@@ -1258,11 +1329,12 @@ const CreatePropertyRentals = ({
                   onChange={handleVideoUpload}
                 />
               </label>
-              
+
               {videos.length > 0 && (
                 <div className="flex flex-col justify-center">
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">{videos.length}</span> video file(s) selected:
+                    <span className="font-medium">{videos.length}</span> video
+                    file(s) selected:
                   </div>
                   <div className="mt-2 text-xs text-gray-500 space-y-1">
                     {videos.map((video, idx) => (
@@ -1271,7 +1343,9 @@ const CreatePropertyRentals = ({
                         <button
                           type="button"
                           onClick={() => {
-                            setVideos(prev => prev.filter((_, i) => i !== idx));
+                            setVideos((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            );
                             toast.success('Removed video file');
                           }}
                           className="text-red-500 hover:text-red-700"
@@ -1757,7 +1831,7 @@ const CreatePropertyRentals = ({
           >
             Add Booking Rate
           </button>
-          
+
           {bookingRateRows.length === 0 && (
             <p className="text-sm text-gray-500 italic mt-2">
               No booking rates added yet. Click "Add Booking Rate" to add one.
@@ -1858,7 +1932,7 @@ const CreatePropertyRentals = ({
               </Link>
             </>
           )}
-          
+
           {isEdit && onClose && (
             <button
               type="button"
