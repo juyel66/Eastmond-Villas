@@ -188,6 +188,8 @@ const ImageGallerySection = ({ villa }) => {
       description: img.description || "",
     })) || [];
 
+
+
   const signature_distinctions = Array.isArray(villa.signature_distinctions)
     ? villa.signature_distinctions
     : [];
@@ -642,6 +644,8 @@ const ImageGallerySection = ({ villa }) => {
         yPos += 8;
       });
 
+      
+
       // Add footer on all pages
       const totalPages = pdf.internal.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
@@ -688,7 +692,7 @@ const ImageGallerySection = ({ villa }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* LEFT */}
         <div className="lg:col-span-7">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">
+          <h2 className="text-3xl text-center font-bold text-gray-900 mb-8">
             Image Gallery - {media_images.length} photos
           </h2>
 
