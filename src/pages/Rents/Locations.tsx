@@ -124,10 +124,12 @@ const Locations: React.FC<LocationsProps> = ({
     <div>
       {/* Header */}
       <div className="text-center mb-8">
-        <p className="text-5xl font-semibold text-gray-800">Location</p>
+        <p className="lg:text-4xl md:text-5xl text-2xl font-semibold text-center text-[#111827] mb-2">Location</p>
         <p className="text-lg mt-4 text-gray-600">
-          Switch between Normal & Satellite view anytime
+          
+          Click on the map to add a new villa location
         </p>
+        {/* <p className="text-sm mt-4 text-gray-600">Switch between Normal & Satellite view anytime</p> */}
       </div>
 
       {/* Map Wrapper */}
