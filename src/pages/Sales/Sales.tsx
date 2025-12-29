@@ -228,7 +228,7 @@ const Sales: React.FC = () => {
       className="relative bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage:
-          "url('https://res.cloudinary.com/dqkczdjjs/image/upload/v1760812885/savba_k7kol1.png')",
+          "url('/images/bg_shape.svg')",
         marginBottom: '1000px',
       }}
     >
