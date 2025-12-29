@@ -48,20 +48,18 @@ const  Affiliates = () => {
         {/* Adjusted the above `div` to exactly match the image with only one line and "OUR" */}
         <div className="flex items-center justify-center mb-4">
           {/* Left line: longer */}
-          <div className="w-[530px] border-t border-white mr-2"></div>
+        
           
           {/* "OUR" text */}
-          <span className="text-white text-2xl uppercase font-semibold">
-            OUR
-          </span>
+        
           
          
         </div>
 
 
-        {/* The main heading */}
-        <h2 className="text-white text-4xl md:text-4xl lg:text-5xl font-extrabold tracking-wide uppercase leading-tight">
-          PARTNERS & AFFILIATES
+       
+        <h2 className="text-white text-4xl md:text-4xl lg:text-5xl font-extrabold tracking-wide  leading-tight">
+         Our Partners & Affiliates
         </h2>
       </div>
     </div>
