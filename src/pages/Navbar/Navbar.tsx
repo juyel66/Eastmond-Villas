@@ -56,7 +56,7 @@ const Navbar = () => {
         className={({ isActive }) =>
           `px-3 py-2 text-[15px] font-semibold ${
             isActive
-              ? "text-teal-600 border-b-2 border-teal-600"
+              ? "text-teal-600 border rounded-xl border-teal-600"
               : "text-gray-800"
           } hover:text-teal-600 transition-all`
         }
@@ -104,7 +104,7 @@ const Navbar = () => {
         className={({ isActive }) =>
           `px-3 py-2 text-[15px] font-semibold ${
             isActive
-              ? "text-teal-600 border-b-2 border-teal-600"
+              ? "text-teal-600 border rounded-xl border-teal-600"
               : "text-gray-800"
           } hover:text-teal-600 transition-all`
         }
@@ -118,7 +118,7 @@ const Navbar = () => {
         className={({ isActive }) =>
           `px-3 py-2 text-[15px] font-semibold ${
             isActive
-              ? "text-teal-600 border-b-2 border-teal-600"
+              ? "text-teal-600 border rounded-xl border-teal-600"
               : "text-gray-800"
           } hover:text-teal-600 transition-all`
         }
@@ -132,7 +132,7 @@ const Navbar = () => {
         className={({ isActive }) =>
           `px-3 py-2 text-[15px] font-semibold ${
             isActive
-              ? "text-teal-600 border-b-2 border-teal-600"
+              ? "text-teal-600 border rounded-xl border-teal-600"
               : "text-gray-800"
           } hover:text-teal-600 transition-all`
         }
@@ -146,7 +146,7 @@ const Navbar = () => {
         className={({ isActive }) =>
           `px-3 py-2 text-[15px] font-semibold ${
             isActive
-              ? "text-teal-600 border-b-2 border-teal-600"
+              ? "text-teal-600 border rounded-xl border-teal-600"
               : "text-gray-800"
           } hover:text-teal-600 transition-all`
         }
@@ -172,7 +172,7 @@ const Navbar = () => {
   );
 
   return (
-    <nav className="w-full shadow-md bg-white  top-0 left-0 z-50">
+    <nav className="w-full shadow-md rounded-b-xl bg-white  top-0 left-0 z-50">
       <div className="px-4 container mx-auto flex justify-between items-center h-20">
         {/* Logo for large devices */}
         <Link to="/" className="hidden xl:flex items-center gap-2">
