@@ -93,7 +93,7 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({
   const isFeatureListCard = features && features.length > 0;
 
   // The feature icon URL, defaulting to the one provided by the user if available
-  const itemIcon = featureIconUrl || 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1761166814/Icon_45_jcnhwd.png'; 
+  const itemIcon = featureIconUrl; 
 
   return (
     <div className="bg-white shadow-xl rounded-xl overflow-hidden my-0 flex flex-col h-full">
@@ -178,13 +178,13 @@ const LuxuryCardGrid = () => {
 
       <section className="bg-gray-900 mt-10 sm:py-24 lg:py-32 flex items-center justify-center">
         <div className="sm:px-6 lg:px-8 text-center">
-          <div className="mb-8 flex justify-center">
+          <div className="mb-8 flex justify-center p-2">
             <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center shadow-lg">
               <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760217464/Container_2_gnf8y8.png" alt="" />
             </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">
+          <h1 className="text-3xl sm:text-5xl lg:text-4xl font-extrabold text-white leading-tight mb-4">
             We Do Not Serve – We Enthrall
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 font-medium">
@@ -194,8 +194,8 @@ const LuxuryCardGrid = () => {
       </section>
 
       <section className="bg-white mb-[920px] py-20 sm:py-24 lg:py-32 flex items-center justify-center">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
+        <div className="mx-auto   text-center">
+          <h2 className="text-3xl sm:text-5xl lg:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
             Begin the Unwritten Journey
           </h2>
           <p className="text-lg sm:text-xl text-gray-600 font-medium mb-10">
