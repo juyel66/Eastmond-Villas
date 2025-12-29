@@ -4,6 +4,10 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
+import mapImage from "../../../assets/map.svg"
+import bedsImg from "../../../assets/beddds.svg"
+import bathImg from "../../../assets/bath.svg"
+import polImg from "../../../assets/pol.svg"
 
 import {
   FaFacebookF,
@@ -74,21 +78,21 @@ const LocationIcon = () => (
 const BedIcon = () => (
   <img
     className="w-5 h-5 mr-1"
-    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_3_rwdb0z.png"
+    src={bedsImg}
     alt="bed-icon"
   />
 );
 const BathIcon = () => (
   <img
     className="w-5 h-5 mr-1"
-    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_4_zsqcrj.png"
+    src={bathImg}
     alt="bath-icon"
   />
 );
 const PoolIcon = () => (
   <img
     className="w-5 h-5 mr-1"
-    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827483/Frame_5_cyajjb.png"
+    src={polImg}
     alt="pool-icon"
   />
 );
@@ -435,7 +439,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
       : v.address || v.city || 'Location not specified';
   const price = v.price_display || v.price || defaultVilla.price_display;
 
-  // ⭐ প্রথমে breakdown থেকে compute করার চেষ্টা করব
+
   const breakdownResult = computeAverageRatingFromBreakdown(v);
   let ratingRaw: number;
 
@@ -450,12 +454,11 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           : defaultVilla.rating;
   }
 
-  // ⭐ এক দশমিক ফরম্যাট: 4.6, 4.7, 2.4 etc.
   const rating = Number.isFinite(ratingRaw)
     ? parseFloat(ratingRaw.toFixed(1))
     : defaultVilla.rating;
 
-  // ⭐ reviewCount: breakdown থেকে পাওয়া total, না থাকলে fallback
+
   const reviewCount =
     breakdownResult.total !== null
       ? breakdownResult.total
@@ -673,7 +676,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl w-full">
+      <div className="bg-white rounded-xl shadow-xl border hover:border hover:border-[#009689] border-gray-200 overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl w-full">
         {/* Image */}
         <div className="relative h-60 w-full md:h-64">
           <img
@@ -694,7 +697,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
               type="button"
               onClick={handleToggleFavorite}
               disabled={favoriteLoading}
-              className={`p-2 bg-white rounded-full shadow-md transition duration-200 ${
+              className={`p-2 bg-white rounded-full cursor-pointer shadow-md transition duration-200 ${
                 isFavorite ? 'text-red-500' : 'text-black hover:text-red-500'
               }`}
             >
@@ -703,7 +706,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
             <button
               type="button"
               onClick={() => setIsShareOpen(true)}
-              className="p-2 bg-white rounded-full text-black hover:text-teal-500 hover:bg-white shadow-md transition duration-200"
+              className="p-2 bg-white rounded-full cursor-pointer text-black hover:text-teal-500 hover:bg-white shadow-md transition duration-200"
             >
               <ShareIcon />
             </button>
@@ -712,7 +715,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
         {/* Content */}
         <div className="p-4 md:p-6">
-          <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+          <h3 className="text-2xl md:text-[28px] font-bold text-gray-900 mb-2">
             {title}
           </h3>
 
@@ -720,14 +723,14 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           <div className="flex items-center text-sm md:text-base text-gray-600 mb-3">
             <img
               className="w-4 h-4 mr-1 md:w-5 md:h-5"
-              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761076568/Frame_11_cfkzkx.png"
+              src={mapImage}
               alt="location-icon"
             />
             <span className="truncate">{location}</span>
           </div>
 
           {/* Price */}
-          <p className="text-teal-600 font-extrabold text-lg md:text-2xl mb-4">
+          <p className="text-teal-600 font-semibold lg:text-xl md:text-2xl mb-4">
             From USD${price}/night
           </p>
 
@@ -750,7 +753,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
               amenities.slice(0, 4).map((amenity: string, idx: number) => (
                 <span
                   key={idx}
-                  className="px-3 py-1 text-xs md:text-sm font-medium text-teal-700 bg-teal-50 border border-teal-300 rounded-full"
+                  className="px-3 py-1 text-xs md:text-sm  text-teal-700 bg-teal-50 border border-teal-300 rounded-full"
                 >
                   {amenity}
                 </span>
@@ -765,7 +768,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           {/* View Details */}
           <Link
             to={detailsPath}
-            className="block text-center py-3 border-2 bg-teal-50 border-teal-500 font-extrabold text-teal-500 rounded-lg hover:bg-teal-100 transition duration-200"
+            className="block text-center py-3 border-2 bg-teal-50 border-teal-500 font-bold text-teal-500 rounded-lg hover:bg-teal-100 transition duration-200"
           >
             View Details
           </Link>
