@@ -32,10 +32,13 @@ const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, 
   };
 
   return (
-    <div id="signatureVilla" className="py-12 p-2">
-      <h2 className="lg:text-4xl text-3xl mt-5  font-extrabold text-gray-900 text-center mb-10">
-        Our <span className="text-[#009689] italic">Signature</span> Villas
-      </h2>
+    <div id="signatureVilla" className="py-12 p-2 ">
+      <div className="text-center mb-10">
+       <p className="lg:text-4xl text-3xl mt-5  font-extrabold text-gray-900 mb-3 "> Our <span className="text-[#009689] italic">Signature</span> Villas</p>
+       <p className="text-gray-500">A Collection Defined by Distinction, Crafted for the Discerning.</p>
+        
+      </div>
+      
 
       {loading && <div className="w-full flex justify-center items-center my-8">
   <div className="w-full max-w-md bg-white border border-gray-200 shadow-md rounded-2xl px-6 py-8 flex flex-col items-center justify-center">
