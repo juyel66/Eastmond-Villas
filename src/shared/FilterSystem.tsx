@@ -135,7 +135,7 @@ export default function FilterSystem({
 
   return (
     <div className="pt-6 px-4">
-      <div className="bg-white container p-8 rounded-2xl shadow-xl border border-gray-200 mx-auto mt-10">
+      <div className="bg-white/60 container p-8 rounded-2xl shadow-xl border border-[#135E76] mx-auto mt-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {/* Check-In */}
           <div>
@@ -149,7 +149,7 @@ export default function FilterSystem({
                 name="check-in"
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function FilterSystem({
                 name="check-out"
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function FilterSystem({
               placeholder="Search by name"
               value={villaName}
               onChange={(e) => setVillaName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
             />
           </div>
 
@@ -197,7 +197,7 @@ export default function FilterSystem({
               name="min-beds"
               value={minBeds}
               onChange={(e) => setMinBeds(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
             >
               <option>Any</option>
               <option>1</option>
@@ -216,7 +216,7 @@ export default function FilterSystem({
               name="min-baths"
               value={minBaths}
               onChange={(e) => setMinBaths(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
             >
               <option>Any</option>
               <option>1</option>
@@ -235,7 +235,7 @@ export default function FilterSystem({
               name="guests"
               value={guests}
               onChange={(e) => setGuests(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
             >
               <option>Any</option>
               <option>1</option>
@@ -257,7 +257,7 @@ export default function FilterSystem({
               value={minPrice}
               onChange={(e) => handlePriceChange(e, setMinPrice)}
               placeholder="e.g., 1,000"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
             />
           </div>
 
@@ -273,7 +273,7 @@ export default function FilterSystem({
               value={maxPrice}
               onChange={(e) => handlePriceChange(e, setMaxPrice)}
               placeholder="e.g., 10,000"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
             />
           </div>
 
@@ -282,7 +282,7 @@ export default function FilterSystem({
             <button
               type="button"
               onClick={() => runFilters()}
-              className="flex items-center justify-center w-full px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 h-[42px]"
+              className="flex items-center border-[#135E76] justify-center w-full px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 h-[42px]"
             >
               <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -296,7 +296,7 @@ export default function FilterSystem({
             <button
               type="button"
               onClick={handleReset}
-              className="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-200 h-[42px]"
+              className="flex items-center justify-center w-full px-4 py-2 border border-[#009689] rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-200 h-[42px]"
             >
               <img className={`mr-2 h-5 w-5 ${isSpinning ? "animate-spin" : ""}`} src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760830343/Vector_fpsm2o.png" alt="reset-icon" />
               Reset
