@@ -15,6 +15,11 @@ import {
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
+import bedsImg from "../../assets/beddds.svg"
+import bathImg from "../../assets/bath.svg"
+import polImg from "../../assets/pol.svg"
+import guestImg from "../../assets/user-fill.svg"
+
 const LOCAL_PREVIEW = '/mnt/data/ff015d0f-3872-4d4d-a90f-8ac7502627ac.png';
 
 // Use same base fallback as your slice
@@ -491,7 +496,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
   }, [effectiveVilla]);
 
   return (
-    <div className="relative w-full h-[700px]">
+    <div className="relative w-full h-[700px] ">
       <div
         className="absolute inset-0  bg-cover bg-center"
         style={{ backgroundImage: `url('${previewImage}')` }}
@@ -517,13 +522,13 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
           </div>
         </div>
 
-        <div className="bg-white absolute bottom-0 md:top-[60%] z-20 mt-10 text-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto transform translate-y-1/2">
+        <div className="bg-white absolute bottom-0 md:top-[60%]  z-20 mt-10 text-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto transform translate-y-1/2">
           <div className="flex justify-around items-center text-center border-b pb-4 mb-4 flex-wrap gap-4">
             {/* Guests: only show for rent-type properties */}
             {isRentType && (
               <div className="flex flex-col items-center">
                 <img
-                  src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760830630/user-fill_gkf8xf.png"
+                  src={guestImg}
                   alt=""
                      className='w-[18px] h-[18px]'
                 />
@@ -536,7 +541,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
             {/* Beds */}
             <div className="flex flex-col items-center">
               <img
-                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_3_rwdb0z.png"
+                src={bedsImg}
                 alt=""
                    className='w-[18px] h-[18px]'
               />
@@ -548,7 +553,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
             {/* Baths */}
             <div className="flex flex-col items-center">
               <img
-                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827484/Frame_4_zsqcrj.png"
+                src={bathImg}
                 alt=""
                 className='w-[18px] h-[18px]'
               />
@@ -560,7 +565,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
             {/* Pool */}
             <div className="flex flex-col items-center">
               <img
-                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760827483/Frame_5_cyajjb.png"
+                src={polImg}
                 alt=""
                    className='w-[19px] h-[19px]'
               />
