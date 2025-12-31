@@ -234,7 +234,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <Home /> },
-      { path: '/rents', element: <Rents /> },
+      { path: '/rentals', element: <Rents /> },
       { path: '/sales', element: <Sales /> },
       { path: '/list-with-us', element: <ListWithUs /> },
       { path: '/contact', element: <Contact /> },

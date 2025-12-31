@@ -44,7 +44,7 @@ const pluralize = (
   return n === 1 ? singular : (plural ?? singular + 's');
 };
 
-// ------------------------- BookingModal (now posts directly) -------------------------
+
 interface FormData {
   name: string;
   email: string;
