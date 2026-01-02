@@ -1073,7 +1073,7 @@ const CreatePropertyRentals = ({
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
+              Status *
             </label>
             <select
               {...register('status')}
@@ -1186,7 +1186,7 @@ const CreatePropertyRentals = ({
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Property Media Images <span className="text-red-500">*</span>
+                Property Media Images *
               </label>
               <div className="text-sm text-gray-500">
                 {mediaImages.length} image(s) uploaded

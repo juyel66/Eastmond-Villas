@@ -363,9 +363,10 @@ const CreatePropertySales = ({
         price: values.price ? String(values.price) : '0.00',
         price_display: values.price ? String(values.price) : '0.00',
         listing_type: 'sale',
-        status: isDraft
-          ? 'draft'
-          : (values.status || 'Draft').toLowerCase().replace(/\s+/g, '_'),
+        // status: isDraft
+        //   ? 'draft'
+        //   : (values.status || 'Draft').toLowerCase().replace(/\s+/g, '_'),
+        status: isDraft ? 'draft' : values.status || 'draft',
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 1,
@@ -661,7 +662,7 @@ const CreatePropertySales = ({
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
+              Status *
             </label>
             <select
               name="status"
@@ -671,7 +672,7 @@ const CreatePropertySales = ({
               // defaultValue={isEdit && editData ? editData.status : 'Draft'}
             >
               <option value="draft">Draft</option>
-              <option value="pending_peview">Pending Review</option>
+              <option value="pending_review">Pending Review</option>
               <option value="published">Published</option>
               <option value="archived">Archived</option>
             </select>
@@ -680,7 +681,7 @@ const CreatePropertySales = ({
             </div> */}
           </div>
 
-          <div className="col-span-12 md:col-span-3">
+          {/* <div className="col-span-12 hidden md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Add Guest
             </label>
@@ -691,7 +692,7 @@ const CreatePropertySales = ({
               {...register('add_guest')}
               className="w-full border rounded-lg p-3"
             />
-          </div>
+          </div> */}
 
           <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -967,7 +968,7 @@ const CreatePropertySales = ({
         )}
 
         {/* Calendar Link */}
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Calendar Link (optional)
           </label>
@@ -977,7 +978,7 @@ const CreatePropertySales = ({
             className="w-full border rounded-lg p-3 bg-gray-50"
             placeholder="https://calendly.com/..."
           />
-        </div>
+        </div> */}
 
         {/* Signature Distinctions */}
         <div>
