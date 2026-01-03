@@ -1071,29 +1071,31 @@ const CreatePropertyRentals = ({
             </select>
           </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status *
-            </label>
-            <select
-              {...register('status')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              // defaultValue={isEdit && editData ? editData.status : 'Draft'}
-            >
-              <option defaultChecked value="draft">
-                Draft
-              </option>
-              <option value="pending_review">Pending Review</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-            {/* <div className="mt-1 text-sm text-gray-500">
-              Current Status:{' '}
-              <span className="font-medium">
-                {isEdit && editData ? editData.status : 'Draft'}
-              </span>
-            </div> */}
-          </div>
+   <div className="col-span-12 md:col-span-4">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Status <span className="text-red-500">*</span>
+  </label>
+
+  <select
+    {...register("status", {
+      required: "Status is required",
+    })}
+    defaultValue="draft"
+    className="w-full border rounded-lg p-3 bg-gray-50"
+  >
+    <option value="draft">Draft</option>
+    <option value="pending_review">Pending Review</option>
+    <option value="published">Published</option>
+    <option value="archived">Archived</option>
+  </select>
+
+  {errors?.status && (
+    <p className="mt-1 text-sm text-red-500">
+      {errors.status.message}
+    </p>
+  )}
+</div>
+
 
           <div className="col-span-12 md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">

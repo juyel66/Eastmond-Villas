@@ -133,6 +133,7 @@ const AdminDashboard = () => {
   const [agents, setAgents] = useState([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const [agentsError, setAgentsError] = useState(null);
+   const [open, setOpen] = useState(false);
 
   // Fetch API data on mount
   useEffect(() => {
@@ -413,9 +414,41 @@ const AdminDashboard = () => {
     <div>
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-4 py-6">
-        <Link to="/dashboard/rentals/admin-create-property" className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm">
-          <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760922664/Icon_36_ptz5ii.png" alt="" /> Create Property
-        </Link>
+       <div className="relative inline-block">
+      {/* Main Button */}
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm"
+      >
+        <img
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760922664/Icon_36_ptz5ii.png"
+          alt=""
+        />
+        Create Property
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute left-3 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <Link
+            to="/dashboard/rentals/admin-create-property-rentals"
+            className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setOpen(false)}
+          >
+            Rentals
+          </Link>
+
+          <Link
+            to="/dashboard/sales/admin-create-property-sales"
+            className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setOpen(false)}
+          >
+            Sales
+          </Link>
+        </div>
+      )}
+    </div>
         <Link to="/dashboard/admin-agent" className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm">
           <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760922664/Icon_38_h9ps9e.png" alt="" /> Add Agent
         </Link>

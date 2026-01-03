@@ -256,7 +256,7 @@ const AdminPropertiesRentals: React.FC = () => {
           <p className="text-gray-500">Showing rental properties only.</p>
         </div>
         <Link
-          to="/dashboard/rentals/admin-create-property"
+          to="/dashboard/rentals/admin-create-property-rentals"
           className="bg-[#009689] text-white flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150"
         >
           <LucideTableProperties className="h-5 w-5" /> Create Property

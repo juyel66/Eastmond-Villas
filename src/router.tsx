@@ -274,7 +274,7 @@ export const router = createBrowserRouter([
           { path: 'admin-analytics', element: <Analytics /> },
           { path: 'admin-activity-logs', element: <ActivityLogs /> },
           {
-            path: 'rentals/admin-create-property',
+            path: 'rentals/admin-create-property-rentals',
             element: <CreatePropertyRentals />,
           },
           {
