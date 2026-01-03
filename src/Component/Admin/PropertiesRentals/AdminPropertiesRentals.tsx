@@ -51,7 +51,14 @@ function toArray(payload: any): any[] {
   return [];
 }
 
-const availableStatuses = ['All Status', 'published', 'pending', 'draft'];
+const availableStatuses = [
+  { label: "All Status", value: "All Status" },
+  { label: "Published", value: "published" },
+  { label: "Pending", value: "pending_review" },
+  { label: "Draft", value: "draft" },
+  { label: "Archived", value: "archived" },
+];
+
 
 /* ---------- helper to decide if property is a "rental" listing ---------- */
 function isRentalProperty(p: any): boolean {
@@ -278,17 +285,25 @@ const AdminPropertiesRentals: React.FC = () => {
           </div>
 
           <div className="relative w-full sm:w-48">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none block w-full p-3 text-sm border border-gray-300 rounded-lg bg-white shadow-sm pr-10 focus:ring-blue-500 cursor-pointer"
-            >
-              {availableStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.replace(/(\b\w)/g, (char) => char.toUpperCase())}
-                </option>
-              ))}
-            </select>
+
+
+        <select
+  value={statusFilter}
+  onChange={(e) => {
+    setStatusFilter(e.target.value);
+    console.log("Status filter changed to:", e.target.value);
+  }}
+  className="appearance-none block w-full p-3 text-sm border border-gray-300 rounded-lg bg-white shadow-sm pr-10 focus:ring-blue-500 cursor-pointer"
+>
+  {availableStatuses.map((status) => (
+    <option key={status.value} value={status.value}>
+      {status.label}
+    </option>
+  ))}
+</select>
+
+
+
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
