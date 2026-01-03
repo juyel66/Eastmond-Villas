@@ -1073,7 +1073,7 @@ const CreatePropertyRentals = ({
 
    <div className="col-span-12 md:col-span-4">
   <label className="block text-sm font-medium text-gray-700 mb-1">
-    Status <span className="text-red-500">*</span>
+    Status *
   </label>
 
   <select
