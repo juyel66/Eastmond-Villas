@@ -1256,7 +1256,7 @@ const CreatePropertyRentals = ({
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Bedroom Images
+                Bedroom Images *
               </label>
               <div className="text-sm text-gray-500">
                 {bedroomImages.length} image(s) uploaded
@@ -1313,7 +1313,7 @@ const CreatePropertyRentals = ({
         {!isEdit && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload Property Videos
+              Upload Property Videos *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
@@ -1366,7 +1366,7 @@ const CreatePropertyRentals = ({
         {/* Calendar Link */}
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Calendar Link (optional)
+            Calendar Link
           </label>
           <input
             name="calendar_link"
