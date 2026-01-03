@@ -168,7 +168,7 @@ export default function Agent() {
       Swal.fire({
         icon: 'error',
         title: 'Add failed',
-        text: String(err.message || err),
+        text: "This email address is already registered on our website. Please use a different email address.",
       });
     }
   };
@@ -409,6 +409,7 @@ export default function Agent() {
                   Phone
                 </label>
                 <input
+                  type="number"
                   value={addForm.phone}
                   onChange={(e) =>
                     setAddForm((p) => ({ ...p, phone: e.target.value }))
