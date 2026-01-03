@@ -777,7 +777,7 @@ const CreatePropertySales = ({
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Property Media Images <span className="text-red-500">*</span>
+                Property Media Images *
               </label>
             </div>
             
@@ -859,7 +859,7 @@ const CreatePropertySales = ({
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Bedroom Images
+                Bedroom Images *
               </label>
             </div>
             
@@ -934,6 +934,8 @@ const CreatePropertySales = ({
                   onChange={handleBedroomImageUpload}
                 />
               </label>
+
+          
             </div>
             
             {bedroomImages.length === 0 && (
@@ -948,7 +950,7 @@ const CreatePropertySales = ({
         {!isEdit && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload Property Videos
+              Upload Property Videos *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32">
