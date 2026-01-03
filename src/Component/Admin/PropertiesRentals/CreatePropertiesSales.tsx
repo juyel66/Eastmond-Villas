@@ -671,7 +671,7 @@ const CreatePropertySales = ({
     })}
     className="w-full border rounded-lg p-3 bg-gray-50"
   >
-    <option value="">Select status</option>
+    
     <option value="draft">Draft</option>
     <option value="pending_review">Pending Review</option>
     <option value="published">Published</option>
