@@ -747,6 +747,15 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
             </div>
           </div>
 
+
+          <div>
+            <h4 className="text-lg font-semibold mb-2">Amenities: 
+              added this one to check and see if it works and t
+            </h4>
+          </div>
+
+          
+
           {/* Amenities */}
           <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
             {amenities.length > 0 ? (
