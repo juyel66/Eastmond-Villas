@@ -9,6 +9,7 @@ import {
   Plus,
   X,
   UploadCloud,
+  Trash2, // এইটা add করেছি
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../../store"; // adjust path to your store types if available
@@ -19,6 +20,9 @@ import {
 import { unwrapResult } from "@reduxjs/toolkit";
 // Import API_BASE only for file URL transformation
 import { API_BASE } from "../../../features/Auth/authSlice";
+
+// SweetAlert2 add করেছি
+import Swal from "sweetalert2";
 
 /* ----------------------
   Helper: auth header (used only for legacy behavior; not used now but kept)
@@ -134,11 +138,17 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
 };
 
 /* ----------------------
-  Update Card
+  Update Card - শুধু এইটাতে পরিবর্তন করেছি
 ------------------------*/
-const UpdateCard = ({ update }: { update: any }) => {
+const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const attachmentCount = update.attachments?.length ?? 0;
+
+  // Delete handle function add করেছি
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Important: Prevent card toggle
+    onDelete(update.id);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all overflow-hidden">
@@ -165,6 +175,17 @@ const UpdateCard = ({ update }: { update: any }) => {
 
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
+          
+          {/* Delete button add করেছি এখানে */}
+          <button
+            onClick={handleDeleteClick}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+            aria-label={`Delete announcement: ${update.title}`}
+            type="button"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+          
           {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
         </div>
       </div>
@@ -370,7 +391,7 @@ const AnnouncementModal = ({
 };
 
 /* ----------------------
-  Main component (reads from Redux)
+  Main component (reads from Redux) - শুধু এইটাতে কিছু add করেছি
 ------------------------*/
 const AdminAnnouncements = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -378,6 +399,7 @@ const AdminAnnouncements = () => {
   const loading = useSelector((s: RootState) => s.propertyBooking.loading);
   const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false); // এইটা add করেছি
 
   useEffect(() => {
     // dispatch fetchAnnouncements on mount
@@ -402,6 +424,65 @@ const AdminAnnouncements = () => {
     })),
   }));
 
+  // Delete function add করেছি - সরাসরি API call করবে
+  const handleDeleteAnnouncement = async (id: number) => {
+    // SweetAlert confirmation dialog
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "Do you really want to delete this announcement?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      setDeleting(true);
+      try {
+        // Direct API call
+        const authToken = getAuthToken();
+        const apiUrl = `${API_BASE}/announcements/announcement/${id}/`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to delete announcement`);
+        }
+
+        // Success message
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'Announcement has been deleted successfully.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        
+        // Refresh the announcements list
+        dispatch(fetchAnnouncements());
+        
+      } catch (err: any) {
+        Swal.fire({
+          title: 'Error!',
+          text: err?.message ? String(err.message) : 'Failed to delete announcement',
+          icon: 'error',
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'OK'
+        });
+      } finally {
+        setDeleting(false);
+      }
+    }
+  };
+
   // Optional local add callback (not strictly necessary since Redux will update)
   const handleAddAnnouncementLocal = (createdMapped: any) => {
     // no-op: Redux will already have the created item in state via thunk reducer
@@ -422,6 +503,19 @@ const AdminAnnouncements = () => {
         </div>
 
         <main className="relative">
+          {/* Deleting overlay add করেছি */}
+          {deleting && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/20">
+              <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+                <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <div className="text-sm text-gray-700">Deleting announcement…</div>
+              </div>
+            </div>
+          )}
+
           {/* Centered loading overlay while (re)loading */}
           {loading && (
             <div className="absolute inset-0 z-30 flex items-center justify-center">
@@ -448,10 +542,10 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* Announcements list */}
+          {/* Announcements list - এখানে onDelete prop pass করেছি */}
           <div className="space-y-4">
             {mappedAnnouncements.map((update: any) => (
-              <UpdateCard key={update.id} update={update} />
+              <UpdateCard key={update.id} update={update} onDelete={handleDeleteAnnouncement} />
             ))}
           </div>
         </main>
