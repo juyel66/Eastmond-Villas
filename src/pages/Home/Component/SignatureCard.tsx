@@ -396,23 +396,25 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   };
 
   const v = villa || defaultVilla;
-  const vSlug = v.slug; // Use slug instead of id
+  const vId = v.id; // Use id for API calls
+  const vSlug = v.slug; // Use slug for routing
 
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentUser = useSelector(selectCurrentUser);
 
   const [isFavorite, setIsFavorite] = useState<boolean>(() => {
+    // Check initial state from API data
     const apiInitial = Boolean(
-      v.is_favorite ?? v.favorite ?? v.isFavorite ?? false
+      v.is_favorite ?? v.is_favorited ?? v.favorite ?? false
     );
 
     try {
       if (typeof window === 'undefined') return apiInitial;
       const email = (currentUser as any)?.email;
-      if (!email || !vSlug) return apiInitial;
+      if (!email || !vId) return apiInitial;
 
       const stored = readFavorites(email);
-      return stored.includes(String(vSlug)) || apiInitial;
+      return stored.includes(String(vId)) || apiInitial;
     } catch {
       return apiInitial;
     }
@@ -423,10 +425,10 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
   // sync when currentUser later loads
   useEffect(() => {
-    if (!currentUser?.email || !vSlug) return;
+    if (!currentUser?.email || !vId) return;
     const stored = readFavorites(currentUser.email);
-    if (stored.includes(String(vSlug))) setIsFavorite(true);
-  }, [currentUser, vSlug]);
+    if (stored.includes(String(vId))) setIsFavorite(true);
+  }, [currentUser, vId]);
 
   // Map fields from your API shape to UI-friendly fields
   const title = v.title || v.name || v.slug || defaultVilla.title;
@@ -522,16 +524,14 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   const pluralize = (count: number, singular: string) =>
     `${count} ${count === 1 ? singular : singular + 's'}`;
 
-  // Use slug for details path instead of id
- const propertyType =
-  v.property_type || v.type || v.listing_type; // যেটা API দেয়
+  // Use slug for details path
+  const propertyType = v.property_type || v.type || v.listing_type;
 
-const detailsPath = vSlug
-  ? propertyType === "sale"
-    ? `/sales/${encodeURIComponent(vSlug)}`
-    : `/properties/${encodeURIComponent(vSlug)}`
-  : "/property";
-
+  const detailsPath = vSlug
+    ? propertyType === "sale"
+      ? `/sales/${encodeURIComponent(vSlug)}`
+      : `/properties/${encodeURIComponent(vSlug)}`
+    : "/property";
 
   const origin =
     typeof window !== 'undefined'
@@ -539,13 +539,13 @@ const detailsPath = vSlug
       : 'https://example.com';
   const propertyUrl = `${origin}${detailsPath}`;
 
-  // Favorite toggle handler - Now using slug
+  // Favorite toggle handler - API requires "property" field
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!vSlug) {
-      console.warn('Missing villa slug, cannot toggle favorite');
+    if (!vId) {
+      console.warn('Missing villa id, cannot toggle favorite');
       return;
     }
 
@@ -586,8 +586,12 @@ const detailsPath = vSlug
 
     setFavoriteLoading(true);
     try {
-      // Update API endpoint to use slug instead of id
       const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
+      
+      // API expects "property" field, not "property_id"
+      const requestBody = { property: vId };
+      
+      console.log('Sending favorite request:', requestBody);
       
       const res = await fetch(FAVORITE_TOGGLE_URL, {
         method: 'POST',
@@ -596,7 +600,7 @@ const detailsPath = vSlug
           Accept: 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ property_slug: vSlug }), // Send slug instead of property id
+        body: JSON.stringify(requestBody),
       });
 
       const raw = await res.text();
@@ -623,6 +627,9 @@ const detailsPath = vSlug
           if (r.isConfirmed) {
             window.location.href = '/login';
           }
+        } else if (res.status === 400) {
+          console.log('Bad request details:', json);
+          toast.error(json.detail || 'Invalid request format');
         } else {
           await Swal.fire({
             icon: 'error',
@@ -633,45 +640,41 @@ const detailsPath = vSlug
         return;
       }
 
-      const nextState =
-        json && typeof json.is_favorite === 'boolean'
-          ? json.is_favorite
-          : !isFavorite;
+      // API থেকে expected response: { "is_favorited": true/false }
+      const nextState = json?.is_favorited ?? !isFavorite;
+
+      console.log('Favorite state updated:', { nextState, current: isFavorite, response: json });
 
       setIsFavorite(nextState);
 
+      // Update localStorage
       if (currentUser?.email) {
         const email = currentUser.email;
-        const slugStr = String(vSlug);
+        const idStr = String(vId);
         const existing = readFavorites(email);
 
         let nextList: string[];
         if (nextState) {
-          if (!existing.includes(slugStr)) {
-            nextList = [...existing, slugStr];
+          if (!existing.includes(idStr)) {
+            nextList = [...existing, idStr];
           } else {
             nextList = existing;
           }
         } else {
-          nextList = existing.filter((x) => x !== slugStr);
+          nextList = existing.filter((x) => x !== idStr);
         }
 
         writeFavorites(email, nextList);
       }
 
-      await Swal.fire({
-        icon: 'success',
-        title: nextState ? 'Added to favorites' : 'Removed from favorites',
-        showConfirmButton: false,
-        timer: 1200,
-      });
+      // Show success notification
+      toast.success(
+        nextState ? 'Added to favorites!' : 'Removed from favorites!',
+        { duration: 1200 }
+      );
     } catch (err) {
       console.error('Network error while toggling favorite:', err);
-      await Swal.fire({
-        icon: 'error',
-        title: 'Network error',
-        text: 'Could not update favorite. Please try again.',
-      });
+      toast.error('Could not update favorite. Please try again.');
     } finally {
       setFavoriteLoading(false);
     }

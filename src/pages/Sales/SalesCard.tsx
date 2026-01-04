@@ -1,4 +1,4 @@
-// RentsCard.tsx (or wherever this file lives)
+// SalesCard.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CiShare2 } from "react-icons/ci";
@@ -73,8 +73,6 @@ const writeFavorites = (email: string, list: string[]) => {
     // ignore
   }
 };
-
-
 
 const API_BASE =
   (import.meta.env.VITE_API_BASE as string) ||
@@ -227,11 +225,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
           <div className="flex-1">
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
             <div className="text-sm text-gray-500">
-  {propertyUrl.length > 26
-    ? propertyUrl.slice(0, 26) + "..."
-    : propertyUrl}
-</div>
-
+              {propertyUrl.length > 26
+                ? propertyUrl.slice(0, 26) + "..."
+                : propertyUrl}
+            </div>
           </div>
           <button
             onClick={copyLink}
@@ -274,10 +271,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     try {
       if (typeof window === "undefined") return apiInitial;
       const email = (currentUser as any)?.email;
-      if (!email || !property.slug) return apiInitial;
+      if (!email || !property.id) return apiInitial;
 
       const stored = readFavorites(email);
-      return stored.includes(String(property.slug)) || apiInitial;
+      return stored.includes(String(property.id)) || apiInitial;
     } catch {
       return apiInitial;
     }
@@ -287,10 +284,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
-    if (!currentUser?.email || !property.slug) return;
+    if (!currentUser?.email || !property.id) return;
     const stored = readFavorites(currentUser.email);
-    if (stored.includes(String(property.slug))) setIsFavorite(true);
-  }, [currentUser, property.slug]);
+    if (stored.includes(String(property.id))) setIsFavorite(true);
+  }, [currentUser, property.id]);
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
@@ -339,15 +336,19 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://example.com";
-  const propertyUrl = `${origin}/property/${property.slug}`;
+  const propertyUrl = `${origin}/sales/${property.slug}`;
 
+  // Favorite toggle handler - API requires "property" field with id
   const handleToggleFavorite = async (
     e: React.MouseEvent<HTMLDivElement>
   ) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!property.slug) return;
+    if (!property.id) {
+      console.warn('Missing property id, cannot toggle favorite');
+      return;
+    }
 
     if (!isAuthenticated) {
       const res = await Swal.fire({
@@ -386,6 +387,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
     setFavoriteLoading(true);
     try {
+      // API expects "property" field with property id
+      const requestBody = { property: property.id };
+      
+      console.log('Sending favorite request:', requestBody);
+      
       const res = await fetch(FAVORITE_TOGGLE_URL, {
         method: "POST",
         headers: {
@@ -393,7 +399,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ property: property.slug }),
+        body: JSON.stringify(requestBody),
       });
 
       const raw = await res.text();
@@ -420,26 +426,26 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           if (r.isConfirmed) {
             window.location.href = "/login";
           }
+        } else if (res.status === 400) {
+          console.log('Bad request details:', json);
+          toast.error(json.detail || 'Invalid request format');
         } else {
-          await Swal.fire({
-            icon: "error",
-            title: "Failed",
-            text: "Failed to update favorite. Please try again.",
-          });
+          toast.error('Failed to update favorite. Please try again.');
         }
         return;
       }
 
-      const nextState =
-        json && typeof json.is_favorite === "boolean"
-          ? json.is_favorite
-          : !isFavorite;
+      // API থেকে expected response: { "is_favorited": true/false }
+      const nextState = json?.is_favorited ?? !isFavorite;
+
+      console.log('Favorite state updated:', { nextState, current: isFavorite, response: json });
 
       setIsFavorite(nextState);
 
+      // Update localStorage with property id
       if (currentUser?.email) {
         const email = currentUser.email;
-        const idStr = String(property.slug);
+        const idStr = String(property.id);
         const existing = readFavorites(email);
 
         let nextList: string[];
@@ -456,21 +462,14 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         writeFavorites(email, nextList);
       }
 
-      await Swal.fire({
-        icon: "success",
-        title: nextState
-          ? "Added to favorites"
-          : "Removed from favorites",
-        showConfirmButton: false,
-        timer: 1200,
-      });
+      // Show success notification
+      toast.success(
+        nextState ? "Added to favorites!" : "Removed from favorites!",
+        { duration: 1200 }
+      );
     } catch (err) {
       console.error("Network error while toggling favorite:", err);
-      await Swal.fire({
-        icon: "error",
-        title: "Network error",
-        text: "Could not update favorite. Please try again.",
-      });
+      toast.error("Could not update favorite. Please try again.");
     } finally {
       setFavoriteLoading(false);
     }
@@ -500,6 +499,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               <div
                 className={`w-9 h-9 flex items-center justify-center bg-white rounded-full text-gray-700 hover:bg-gray-100 transition duration-150 cursor-pointer ${
                   favoriteLoading ? "opacity-70 cursor-not-allowed" : ""
+                } ${
+                  isFavorite ? "text-red-500" : "text-gray-700"
                 }`}
                 onClick={favoriteLoading ? undefined : handleToggleFavorite}
               >
@@ -520,7 +521,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 </svg>
               </div>
 
-              <div className="absolute p-2 hidden lg:flex  rounded-full bg-white top-50 -right-14">
+              <div className="absolute p-2 hidden lg:flex rounded-full bg-white top-50 -right-14">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
                   alt=""
@@ -546,11 +547,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               <h3 className="text-[16px] sm:text-2xl md:text-3xl font-extrabold text-gray-900">
                 {property.title}
               </h3>
-              <p className="text-sm  sm:text-base mt-2 text-gray-500 flex items-center font-medium">
+              <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
                 <img
                   src={mapImg}
                   alt="location"
-                  className="w-5  h-5 mr-1"
+                  className="w-5 h-5 mr-1"
                 />{" "}
                 {property.location}
               </p>

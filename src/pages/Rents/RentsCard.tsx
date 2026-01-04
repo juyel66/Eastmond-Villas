@@ -1,4 +1,4 @@
-// RentsCard.tsx (or wherever this file lives)
+// RentsCard.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CiShare2 } from "react-icons/ci";
@@ -273,10 +273,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     try {
       if (typeof window === "undefined") return apiInitial;
       const email = (currentUser as any)?.email;
-      if (!email || !property.slug) return apiInitial;
+      if (!email || !property.id) return apiInitial;
 
       const stored = readFavorites(email);
-      return stored.includes(String(property.slug)) || apiInitial;
+      return stored.includes(String(property.id)) || apiInitial;
     } catch {
       return apiInitial;
     }
@@ -286,10 +286,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
-    if (!currentUser?.email || !property.slug) return;
+    if (!currentUser?.email || !property.id) return;
     const stored = readFavorites(currentUser.email);
-    if (stored.includes(String(property.slug))) setIsFavorite(true);
-  }, [currentUser, property.slug]);
+    if (stored.includes(String(property.id))) setIsFavorite(true);
+  }, [currentUser, property.id]);
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
@@ -299,7 +299,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     {
       icon: (
         <img
-          src={bathImg}
+          src={bedsImg}
           alt="bed"
           className="w-5 h-5"
         />
@@ -311,7 +311,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     {
       icon: (
         <img
-          src={bedsImg}
+          src={bathImg}
           alt="bath"
           className="w-5 h-5"
         />
@@ -340,13 +340,17 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       : "https://example.com";
   const propertyUrl = `${origin}/property/${property.slug}`;
 
+  // Favorite toggle handler - API requires "property" field
   const handleToggleFavorite = async (
     e: React.MouseEvent<HTMLDivElement>
   ) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!property.slug) return;
+    if (!property.id) {
+      console.warn('Missing property id, cannot toggle favorite');
+      return;
+    }
 
     if (!isAuthenticated) {
       const res = await Swal.fire({
@@ -385,6 +389,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
     setFavoriteLoading(true);
     try {
+      // API expects "property" field, not "property_id" or "property_slug"
+      const requestBody = { property: property.id };
+      
+      console.log('Sending favorite request:', requestBody);
+      
       const res = await fetch(FAVORITE_TOGGLE_URL, {
         method: "POST",
         headers: {
@@ -392,7 +401,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ property_slug: property.slug }), // Send slug instead of property id
+        body: JSON.stringify(requestBody),
       });
 
       const raw = await res.text();
@@ -419,57 +428,50 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           if (r.isConfirmed) {
             window.location.href = "/login";
           }
+        } else if (res.status === 400) {
+          console.log('Bad request details:', json);
+          toast.error(json.detail || 'Invalid request format');
         } else {
-          await Swal.fire({
-            icon: "error",
-            title: "Failed",
-            text: "Failed to update favorite. Please try again.",
-          });
+          toast.error('Failed to update favorite. Please try again.');
         }
         return;
       }
 
-      const nextState =
-        json && typeof json.is_favorite === "boolean"
-          ? json.is_favorite
-          : !isFavorite;
+      // API থেকে expected response: { "is_favorited": true/false }
+      const nextState = json?.is_favorited ?? !isFavorite;
+
+      console.log('Favorite state updated:', { nextState, current: isFavorite, response: json });
 
       setIsFavorite(nextState);
 
+      // Update localStorage with property id
       if (currentUser?.email) {
         const email = currentUser.email;
-        const slugStr = String(property.slug);
+        const idStr = String(property.id);
         const existing = readFavorites(email);
 
         let nextList: string[];
         if (nextState) {
-          if (!existing.includes(slugStr)) {
-            nextList = [...existing, slugStr];
+          if (!existing.includes(idStr)) {
+            nextList = [...existing, idStr];
           } else {
             nextList = existing;
           }
         } else {
-          nextList = existing.filter((x) => x !== slugStr);
+          nextList = existing.filter((x) => x !== idStr);
         }
 
         writeFavorites(email, nextList);
       }
 
-      await Swal.fire({
-        icon: "success",
-        title: nextState
-          ? "Added to favorites"
-          : "Removed from favorites",
-        showConfirmButton: false,
-        timer: 1200,
-      });
+      // Show success notification
+      toast.success(
+        nextState ? "Added to favorites!" : "Removed from favorites!",
+        { duration: 1200 }
+      );
     } catch (err) {
       console.error("Network error while toggling favorite:", err);
-      await Swal.fire({
-        icon: "error",
-        title: "Network error",
-        text: "Could not update favorite. Please try again.",
-      });
+      toast.error("Could not update favorite. Please try again.");
     } finally {
       setFavoriteLoading(false);
     }
@@ -499,6 +501,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               <div
                 className={`w-9 h-9 flex items-center justify-center bg-white rounded-full text-gray-700 hover:bg-gray-100 transition duration-150 cursor-pointer ${
                   favoriteLoading ? "opacity-70 cursor-not-allowed" : ""
+                } ${
+                  isFavorite ? "text-red-500" : "text-gray-700"
                 }`}
                 onClick={favoriteLoading ? undefined : handleToggleFavorite}
               >
