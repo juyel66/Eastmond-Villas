@@ -265,28 +265,22 @@
 
 
 
-
 // src/features/Properties/Calendars.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
 /**
  * Calendars.tsx
- * - Fetches agent monthly bookings from:
- *   https://api.eastmondvillas.com/api/villas/agent/bookings/monthly/?month=<m>&year=<y>
- * - Displays properties and days: booked = yellow, available = green
- * - Booked day tooltip shows booking(s) covering that day (id, guest, check_in → check_out)
- *
- * NOTE (updated):
- * - This is now **view-only**: agent cannot click to book or change anything.
- * - You can use the Month/Year filter (2025–2030) to view any month.
+ * - View-only agent calendar
+ * - Shows ONLY rent properties
+ * - Horizontal scroll INSIDE each property row
  */
 
 type BookingItem = {
   booking_id: number;
   full_name: string;
-  check_in: string; // "YYYY-MM-DD"
-  check_out: string; // "YYYY-MM-DD"
+  check_in: string;
+  check_out: string;
   status?: string;
   total_price?: string;
 };
@@ -295,6 +289,7 @@ type BookingResponseItem = {
   property_id: number;
   property_title: string;
   city?: string;
+  listing_type?: "rent" | "sale";
   total_bookings_this_month?: number;
   bookings: BookingItem[];
 };
@@ -315,9 +310,8 @@ type Property = {
 };
 
 const API_BASE = "https://api.eastmondvillas.com";
-const MONTHLY_PATH = "/api/villas/agent/bookings/monthly/"; // will append ?month=&year=
+const MONTHLY_PATH = "/api/villas/agent/bookings/monthly/";
 
-// 🔒 Allowed year range
 const MIN_YEAR = 2025;
 const MAX_YEAR = 2030;
 
@@ -328,15 +322,17 @@ function monthNames() {
   ];
 }
 
-/**
- * Helper: given booking (check_in, check_out) return list of day numbers in target month/year.
- * check_out is EXCLUSIVE (booking covers up to day before check_out).
- */
-function daysForBooking(checkInIso: string, checkOutIso: string, month: number, year: number) {
+function daysForBooking(
+  checkInIso: string,
+  checkOutIso: string,
+  month: number,
+  year: number
+) {
   const days: number[] = [];
   const start = new Date(checkInIso + "T00:00:00");
-  const end = new Date(checkOutIso + "T00:00:00"); // exclusive
+  const end = new Date(checkOutIso + "T00:00:00");
   const d = new Date(start);
+
   while (d < end) {
     if (d.getFullYear() === year && d.getMonth() + 1 === month) {
       days.push(d.getDate());
@@ -347,165 +343,109 @@ function daysForBooking(checkInIso: string, checkOutIso: string, month: number, 
 }
 
 export default function Calendars() {
-  // defaults: clamp current year into 2025–2030 so no error
   const now = new Date();
   const initialYear = Math.min(MAX_YEAR, Math.max(MIN_YEAR, now.getFullYear()));
-  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(initialYear);
 
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(initialYear);
   const [properties, setProperties] = useState<Property[]>([]);
-  // bookingsMap: key -> `${propertyId}-${year}-${month}` => Set of day numbers
-  const [bookingsMap, setBookingsMap] = useState<Map<string, Set<number>>>(() => new Map());
-  // bookingsDetails: key -> `${propertyId}-${year}-${month}` => Map<day, BookingItem[]>
-  const [bookingsDetails, setBookingsDetails] = useState<Map<string, Map<number, BookingItem[]>>>(() => new Map());
-
+  const [bookingsMap, setBookingsMap] = useState<Map<string, Set<number>>>(new Map());
+  const [bookingsDetails, setBookingsDetails] =
+    useState<Map<string, Map<number, BookingItem[]>>>(new Map());
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // kept internal, not shown as red box
 
-  // Year options: strictly 2025–2030
+  const daysInMonth = useMemo(
+    () => new Date(selectedYear, selectedMonth, 0).getDate(),
+    [selectedMonth, selectedYear]
+  );
+
+  const daysArray = useMemo(
+    () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    [daysInMonth]
+  );
+
+  // Year options for dropdown
   const years = useMemo(() => {
     const arr: number[] = [];
     for (let y = MIN_YEAR; y <= MAX_YEAR; y++) arr.push(y);
     return arr;
   }, []);
 
-  const daysInMonth = useMemo(
-    () => new Date(selectedYear, selectedMonth, 0).getDate(),
-    [selectedMonth, selectedYear]
-  );
-  const daysArray = useMemo(
-    () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
-    [daysInMonth]
-  );
-
-  function mapKey(propertyId: number, year = selectedYear, month = selectedMonth) {
-    return `${propertyId}-${year}-${month}`;
+  function mapKey(propertyId: number) {
+    return `${propertyId}-${selectedYear}-${selectedMonth}`;
   }
 
   function authHeaders(): Record<string, string> {
-    try {
-      const token =
-        localStorage.getItem("auth_access") ||
-        localStorage.getItem("access_token") ||
-        localStorage.getItem("token");
-      if (token) return { Authorization: `Bearer ${token}` };
-    } catch (e) {}
-    return {};
+    const token =
+      localStorage.getItem("auth_access") ||
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
-  /**
-   * Fetch monthly bookings (view-only).
-   * - Treat 204 / 404 as empty result (no properties for that month) — don't surface a page error.
-   * - For other non-OK responses or network errors, show a friendly Swal (toast) and keep page usable.
-   */
   async function fetchMonthly(month: number, year: number) {
-    // Clamp year here also, just in case
-    if (year < MIN_YEAR || year > MAX_YEAR) {
-      console.warn("Requested year outside allowed range:", year);
-      return;
-    }
+    if (year < MIN_YEAR || year > MAX_YEAR) return;
 
     setLoading(true);
-    setError(null);
-
-    const url = `${API_BASE}${MONTHLY_PATH}?month=${month}&year=${year}`;
-    console.log("Fetching monthly bookings:", url);
     try {
-      const resp = await fetch(url, { headers: { ...authHeaders() } });
-
-      // treat empty responses as "no data" rather than page error
-      if (resp.status === 204 || resp.status === 404) {
-        setProperties([]);
-        setBookingsMap(new Map());
-        setBookingsDetails(new Map());
-        setLoading(false);
-        return;
-      }
+      const resp = await fetch(
+        `${API_BASE}${MONTHLY_PATH}?month=${month}&year=${year}`,
+        { headers: authHeaders() }
+      );
 
       if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        console.warn("Monthly bookings non-ok:", resp.status, text);
-        Swal.fire({
-          icon: "warning",
-          title: "Could not load bookings",
-          toast: true,
-          position: "top-center",
-          timer: 4000,
-          showConfirmButton: false,
-        });
+        if (resp.status !== 204 && resp.status !== 404) {
+          Swal.fire({
+            icon: "warning",
+            title: "Could not load bookings",
+            toast: true,
+            position: "top-center",
+            timer: 4000,
+            showConfirmButton: false,
+          });
+        }
         setProperties([]);
         setBookingsMap(new Map());
         setBookingsDetails(new Map());
-        setLoading(false);
         return;
       }
 
       const data = (await resp.json()) as BookingResponse;
-      console.log("Monthly bookings response:", data);
+      const rentProperties = data.data.filter(
+        (item) => item.listing_type === "rent"
+      );
 
-      // build properties array
-      const props: Property[] = Array.isArray(data.data)
-        ? data.data.map((it) => ({
-            id: it.property_id,
-            name: it.property_title,
-            city: it.city,
-            total_bookings_this_month: it.total_bookings_this_month,
-          }))
-        : [];
+      setProperties(
+        rentProperties.map((it) => ({
+          id: it.property_id,
+          name: it.property_title,
+          city: it.city,
+          total_bookings_this_month: it.total_bookings_this_month,
+        }))
+      );
 
-      setProperties(props);
-
-      // build bookingsMap and bookingsDetails
       const nextMap = new Map<string, Set<number>>();
       const nextDetails = new Map<string, Map<number, BookingItem[]>>();
 
-      props.forEach((p) => {
-        const k = mapKey(p.id, data.year ?? year, data.month ?? month);
-        nextMap.set(k, new Set());
-        nextDetails.set(k, new Map());
-      });
+      rentProperties.forEach((item) => {
+        const key = mapKey(item.property_id);
+        nextMap.set(key, new Set());
+        nextDetails.set(key, new Map());
 
-      (data.data || []).forEach((item) => {
-        const key = mapKey(
-          item.property_id,
-          data.year ?? year,
-          data.month ?? month
-        );
-        const setDays = new Set<number>(
-          nextMap.get(key) ? Array.from(nextMap.get(key)!) : []
-        );
-        const detailMap =
-          nextDetails.get(key) ?? new Map<number, BookingItem[]>();
-
-        (item.bookings || []).forEach((b) => {
-          try {
-            const days = daysForBooking(
-              b.check_in,
-              b.check_out,
-              data.month ?? month,
-              data.year ?? year
-            );
-            days.forEach((d) => {
-              setDays.add(d);
-              const arr = detailMap.get(d) ?? [];
-              arr.push(b);
-              detailMap.set(d, arr);
-            });
-          } catch (err) {
-            console.warn("parse booking error", err, b);
-          }
+        item.bookings.forEach((b) => {
+          daysForBooking(b.check_in, b.check_out, month, year).forEach((d) => {
+            nextMap.get(key)!.add(d);
+            const arr = nextDetails.get(key)!.get(d) ?? [];
+            arr.push(b);
+            nextDetails.get(key)!.set(d, arr);
+          });
         });
-
-        nextMap.set(key, setDays);
-        nextDetails.set(key, detailMap);
       });
 
       setBookingsMap(nextMap);
       setBookingsDetails(nextDetails);
     } catch (err: any) {
       console.error("fetchMonthly error:", err);
-      setError(err?.message ?? "Failed to fetch bookings");
-      // friendly toast, keep page usable
       Swal.fire({
         icon: "error",
         title: "Network error",
@@ -525,12 +465,10 @@ export default function Calendars() {
 
   useEffect(() => {
     fetchMonthly(selectedMonth, selectedYear);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear]);
 
   function isBooked(propertyId: number, day: number) {
-    const s = bookingsMap.get(mapKey(propertyId));
-    return s ? s.has(day) : false;
+    return bookingsMap.get(mapKey(propertyId))?.has(day) ?? false;
   }
 
   function bookingDetailsFor(propertyId: number, day: number): BookingItem[] {
@@ -541,11 +479,10 @@ export default function Calendars() {
   function bookedDaysText(propertyId: number) {
     const s = bookingsMap.get(mapKey(propertyId));
     if (!s || s.size === 0) return "No bookings";
-    const arr = Array.from(s).sort((a, b) => a - b);
-    return `Booked: ${arr.join(", ")}`;
+    return `Booked: ${Array.from(s).sort((a, b) => a - b).join(", ")}`;
   }
 
-  // When year changes via select, keep it safely inside 2025–2030
+  // Handle year change with validation
   const handleYearChange = (value: string) => {
     const y = Number(value);
     if (!y || y < MIN_YEAR || y > MAX_YEAR) return;
@@ -553,14 +490,14 @@ export default function Calendars() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className=" ">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">
             Agent Calendars
           </h2>
           <p className="text-sm text-gray-500">
-            Booked = yellow, Available = green (view-only)
+            Booked = red, Available = green (view-only)
           </p>
         </div>
 
@@ -593,7 +530,7 @@ export default function Calendars() {
 
           <button
             onClick={() => fetchMonthly(selectedMonth, selectedYear)}
-            className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm"
+            className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm hover:bg-gray-50"
           >
             Refresh
           </button>
@@ -601,19 +538,17 @@ export default function Calendars() {
       </div>
 
       {loading && (
-        <div className="text-sm text-gray-500 mb-3">
-          Loading bookings…
-        </div>
+        <div className="text-sm text-gray-500 mb-3">Loading bookings…</div>
       )}
 
       <div
-        className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-auto"
+        className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-y-auto calendar-scroll"
         style={{ maxHeight: "72vh" }}
       >
         <div className="p-4 space-y-3">
           {properties.length === 0 && !loading ? (
-            <div className="text-sm text-gray-500 text-center">
-              No properties found for the selected month/year.
+            <div className="text-sm text-gray-500 text-center py-8">
+              No rent properties found for the selected month/year.
             </div>
           ) : null}
 
@@ -622,6 +557,7 @@ export default function Calendars() {
               key={prop.id}
               className="flex items-start gap-4 py-2 px-2 rounded-md hover:bg-gray-50"
             >
+              {/* Property Info - Fixed width */}
               <div className="w-56 min-w-[12rem] pr-2">
                 <div className="text-sm text-gray-700 font-medium">
                   {prop.name}
@@ -639,12 +575,13 @@ export default function Calendars() {
                 </div>
               </div>
 
+              {/* Calendar Days - Scrollable area */}
               <div className="flex-1">
                 <div
-                  className="overflow-x-auto no-scrollbar"
+                  className="overflow-x-auto horizontal-scroll"
                   style={{ WebkitOverflowScrolling: "touch" }}
                 >
-                  <div className="flex items-center gap-2 py-1">
+                  <div className="flex items-center gap-2 py-1" style={{ minWidth: "min-content" }}>
                     {daysArray.map((d) => {
                       const booked = isBooked(prop.id, d);
                       const details = bookingDetailsFor(prop.id, d);
@@ -659,11 +596,10 @@ export default function Calendars() {
                         : `Available: ${d}/${selectedMonth}/${selectedYear}`;
 
                       return (
-                        <button
+                        <div
                           key={`${prop.id}-${d}`}
-                          // VIEW-ONLY: no onClick, no booking, no change
                           title={tooltip}
-                          className={`flex-shrink-0 flex items-center justify-center select-none  transition-all cursor-default`}
+                          className={`flex-shrink-0 flex items-center justify-center select-none transition-all cursor-default`}
                           style={{
                             minWidth: 44,
                             minHeight: 44,
@@ -675,13 +611,13 @@ export default function Calendars() {
                             className={`w-full h-full flex items-center justify-center rounded-lg border text-sm font-semibold ${
                               booked
                                 ? "bg-red-50 text-red-600 border-red-200"
-                                : "bg-green-50 text-green-700 border-green-20"
+                                : "bg-green-50 text-green-700 border-green-200"
                             }`}
                             style={{ padding: 6 }}
                           >
                             {d}
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -693,13 +629,60 @@ export default function Calendars() {
       </div>
 
       <p className="text-xs text-gray-400 mt-3">
-        Booked days are yellow; available days are green. Calendar is
-        read-only for agents.
+        Booked days are red; available days are green. Calendar is read-only for agents.
       </p>
 
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { height: 8px; display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Main container vertical scrollbar */
+        .calendar-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .calendar-scroll::-webkit-scrollbar-track {
+          background: #f9fafb;
+          border-radius: 4px;
+        }
+        .calendar-scroll::-webkit-scrollbar-thumb {
+          background-color: #d1d5db;
+          border-radius: 4px;
+          border: 2px solid #f9fafb;
+        }
+        .calendar-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #9ca3af;
+        }
+        .calendar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db #f9fafb;
+        }
+
+        /* Horizontal scrollbar inside each property row */
+        .horizontal-scroll::-webkit-scrollbar {
+          height: 10px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-track {
+          background: #f3f4f6;
+          border-radius: 5px;
+          margin: 0 4px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb {
+          background-color: #9ca3af;
+          border-radius: 5px;
+          border: 2px solid #f3f4f6;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #6b7280;
+        }
+        .horizontal-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #9ca3af #f3f4f6;
+        }
+
+        /* Hide scrollbar when not scrolling (optional) */
+        .horizontal-scroll {
+          -ms-overflow-style: none;
+        }
+        .horizontal-scroll:hover::-webkit-scrollbar {
+          display: block;
+        }
       `}</style>
     </div>
   );

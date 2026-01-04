@@ -16,6 +16,7 @@ interface VillaType {
   amenities: string[];
   rateType: string;
   imageUrl: string;
+  slug: string; // Add slug field
 }
 
 interface PaginationProps {
@@ -191,6 +192,7 @@ const Rents: React.FC = () => {
                 ? 'per night'
                 : 'sale',
             imageUrl: firstImage,
+            slug: it.slug || it.id.toString(), // Add slug field
           } as VillaType;
         });
 
@@ -268,52 +270,41 @@ const Rents: React.FC = () => {
 
       <div className="space-y-8 container mx-auto">
         {loading && (
+          <div className="py-10 flex justify-center">
+            <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
+              {/* Shimmer wave */}
+              <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* LEFT IMAGE */}
+                <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
 
+                {/* RIGHT CONTENT */}
+                <div className="flex flex-col justify-between">
+                  <div>
+                    {/* Title */}
+                    <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
 
+                    {/* Location */}
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
 
-<div className="py-10 flex justify-center">
-  <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
-    {/* Shimmer wave */}
-    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
+                    {/* Price */}
+                    <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* LEFT IMAGE */}
-      <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
+                    {/* Stats */}
+                    <div className="flex gap-6 mb-8">
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    </div>
+                  </div>
 
-      {/* RIGHT CONTENT */}
-      <div className="flex flex-col justify-between">
-        <div>
-          {/* Title */}
-          <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
-
-          {/* Location */}
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
-
-          {/* Price */}
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
-
-          {/* Stats */}
-          <div className="flex gap-6 mb-8">
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  {/* Button */}
+                  <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Button */}
-        <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
-
         )}
 
         {error && (
@@ -327,17 +318,16 @@ const Rents: React.FC = () => {
 
         {!loading && !error && currentVillas.length === 0 && (
           <div className="py-12 flex justify-center">
-                 <div className="flex items-center justify-center py-16">
-  <div className="bg-white shadow-lg rounded-2xl p-8 text-center w-full max-w-sm border border-gray-100">
-   
-    <h2 className="text-lg font-semibold text-gray-800 mb-1">
-      No Properties Found
-    </h2>
-    <p className="text-sm text-gray-600 leading-relaxed">
-      It looks like there are no listings available at the moment.
-    </p>
-  </div>
-</div>
+            <div className="flex items-center justify-center py-16">
+              <div className="bg-white shadow-lg rounded-2xl p-8 text-center w-full max-w-sm border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-800 mb-1">
+                  No Properties Found
+                </h2>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  It looks like there are no listings available at the moment.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -345,7 +335,7 @@ const Rents: React.FC = () => {
           !error &&
           currentVillas.map((villa) => (
             <div
-              key={villa.id}
+              key={villa.slug} // Use slug as key instead of id
               className=""
             >
               <RentsCard property={villa} />
@@ -361,8 +351,6 @@ const Rents: React.FC = () => {
         totalPages={totalPages}
         onPageChange={(p) => setCurrentPage(p)}
       />
-
-      
     </div>
   );
 };

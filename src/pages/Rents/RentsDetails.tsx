@@ -40,13 +40,13 @@ const LOCAL_FALLBACK_IMAGE =
   '/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png';
 
 const RentsDetails = () => {
-  const { id } = useParams(); // expects route /RentsDetails/:id
+  const { slug } = useParams(); // expects route /RentsDetails/:id
   const [villa, setVilla] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!id) {
+    if (!slug) {
       setError('No property id provided in route.');
       setLoading(false);
       return;
@@ -59,7 +59,7 @@ const RentsDetails = () => {
       setError(null);
       try {
         const res = await fetch(
-          `${API_BASE}/villas/properties/${encodeURIComponent(id)}/`,
+          `${API_BASE}/villas/property/${encodeURIComponent(slug)}/`,
           {
             method: 'GET',
             signal: controller.signal,
@@ -115,7 +115,7 @@ const RentsDetails = () => {
     fetchProperty();
 
     return () => controller.abort();
-  }, [id]);
+  }, [slug]);
 
   if (loading) {
     return (

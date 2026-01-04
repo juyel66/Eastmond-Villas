@@ -32,6 +32,7 @@ import {
 /* -------------------- Types -------------------- */
 interface Property {
   id: number;
+  slug: string;
   price: number;
   beds: number;
   baths: number;
@@ -73,7 +74,7 @@ const writeFavorites = (email: string, list: string[]) => {
   }
 };
 
-/* -------------------- API base -------------------- */
+
 
 const API_BASE =
   (import.meta.env.VITE_API_BASE as string) ||
@@ -273,10 +274,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     try {
       if (typeof window === "undefined") return apiInitial;
       const email = (currentUser as any)?.email;
-      if (!email || !property.id) return apiInitial;
+      if (!email || !property.slug) return apiInitial;
 
       const stored = readFavorites(email);
-      return stored.includes(String(property.id)) || apiInitial;
+      return stored.includes(String(property.slug)) || apiInitial;
     } catch {
       return apiInitial;
     }
@@ -286,10 +287,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
-    if (!currentUser?.email || !property.id) return;
+    if (!currentUser?.email || !property.slug) return;
     const stored = readFavorites(currentUser.email);
-    if (stored.includes(String(property.id))) setIsFavorite(true);
-  }, [currentUser, property.id]);
+    if (stored.includes(String(property.slug))) setIsFavorite(true);
+  }, [currentUser, property.slug]);
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
@@ -338,7 +339,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://example.com";
-  const propertyUrl = `${origin}/property/${property.id}`;
+  const propertyUrl = `${origin}/property/${property.slug}`;
 
   const handleToggleFavorite = async (
     e: React.MouseEvent<HTMLDivElement>
@@ -346,7 +347,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!property.id) return;
+    if (!property.slug) return;
 
     if (!isAuthenticated) {
       const res = await Swal.fire({
@@ -392,7 +393,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ property: property.id }),
+        body: JSON.stringify({ property: property.slug }),
       });
 
       const raw = await res.text();
@@ -438,7 +439,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
       if (currentUser?.email) {
         const email = currentUser.email;
-        const idStr = String(property.id);
+        const idStr = String(property.slug);
         const existing = readFavorites(email);
 
         let nextList: string[];
@@ -571,7 +572,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
             {/* CTA Button */}
             <Link
-              to={`/property/${property.id}`}
+              to={`/sales/${property.slug}`}
               className="mt-6 w-full py-3 sm:py-4 text-center bg-teal-50 text-emerald-700 font-bold text-base sm:text-lg md:text-xl border-2 border-[#009689] rounded-xl hover:bg-gray-200 transition duration-150"
             >
               View Details

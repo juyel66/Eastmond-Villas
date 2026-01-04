@@ -4,6 +4,7 @@ import SalesCard from './SalesCard';
 
 interface VillaType {
   id: number;
+  slug: string;
   title: string;
   location: string;
   price: number;
@@ -179,7 +180,7 @@ const Sales: React.FC = () => {
                 ? 'per night'
                 : 'sale',
             imageUrl: firstImage,
-            listing_type: it.listing_type ?? '',
+            slug: it.slug || it.id.toString(),
           } as VillaType;
         });
 
@@ -327,7 +328,7 @@ const Sales: React.FC = () => {
         {!loading &&
           !error &&
           currentVillas.map((villa) => (
-            <div key={villa.id} className="pl-5 pr-5">
+            <div key={villa.slug} className="pl-5 pr-5">
               <SalesCard property={villa} />
             </div>
           ))}

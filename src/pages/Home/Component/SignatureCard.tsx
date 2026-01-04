@@ -132,7 +132,6 @@ const LOCAL_FALLBACK_IMAGE =
 const API_BASE =
   (import.meta.env.VITE_API_BASE as string) ||
   'https://api.eastmondvillas.com/api';
-const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
 
 // ⭐ Helper: breakdown থেকে average rating হিসাব
 const computeAverageRatingFromBreakdown = (villa: any) => {
@@ -396,10 +395,8 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
     is_favorite: false,
   };
 
-  // console.log("All villa data is:", villa);
-
   const v = villa || defaultVilla;
-  const vId = v.id;
+  const vSlug = v.slug; // Use slug instead of id
 
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentUser = useSelector(selectCurrentUser);
@@ -412,10 +409,10 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
     try {
       if (typeof window === 'undefined') return apiInitial;
       const email = (currentUser as any)?.email;
-      if (!email || !vId) return apiInitial;
+      if (!email || !vSlug) return apiInitial;
 
       const stored = readFavorites(email);
-      return stored.includes(String(vId)) || apiInitial;
+      return stored.includes(String(vSlug)) || apiInitial;
     } catch {
       return apiInitial;
     }
@@ -426,19 +423,18 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
   // sync when currentUser later loads
   useEffect(() => {
-    if (!currentUser?.email || !vId) return;
+    if (!currentUser?.email || !vSlug) return;
     const stored = readFavorites(currentUser.email);
-    if (stored.includes(String(vId))) setIsFavorite(true);
-  }, [currentUser, vId]);
+    if (stored.includes(String(vSlug))) setIsFavorite(true);
+  }, [currentUser, vSlug]);
 
   // Map fields from your API shape to UI-friendly fields
-  const title = v.title || v.slug || defaultVilla.title;
+  const title = v.title || v.name || v.slug || defaultVilla.title;
   const location =
     v.address && v.city
       ? `${v.address}, ${v.city}`
       : v.address || v.city || 'Location not specified';
   const price = v.price_display || v.price || defaultVilla.price_display;
-
 
   const breakdownResult = computeAverageRatingFromBreakdown(v);
   let ratingRaw: number;
@@ -457,7 +453,6 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   const rating = Number.isFinite(ratingRaw)
     ? parseFloat(ratingRaw.toFixed(1))
     : defaultVilla.rating;
-
 
   const reviewCount =
     breakdownResult.total !== null
@@ -527,11 +522,16 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   const pluralize = (count: number, singular: string) =>
     `${count} ${count === 1 ? singular : singular + 's'}`;
 
-  const detailsPath = vId
-    ? `/property/${encodeURIComponent(vId)}`
-    : v.slug
-      ? `/property/${encodeURIComponent(v.slug)}`
-      : `/property`;
+  // Use slug for details path instead of id
+ const propertyType =
+  v.property_type || v.type || v.listing_type; // যেটা API দেয়
+
+const detailsPath = vSlug
+  ? propertyType === "sale"
+    ? `/sales/${encodeURIComponent(vSlug)}`
+    : `/properties/${encodeURIComponent(vSlug)}`
+  : "/property";
+
 
   const origin =
     typeof window !== 'undefined'
@@ -539,13 +539,13 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
       : 'https://example.com';
   const propertyUrl = `${origin}${detailsPath}`;
 
-  // Favorite toggle handler
+  // Favorite toggle handler - Now using slug
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!vId) {
-      console.warn('Missing villa id, cannot toggle favorite');
+    if (!vSlug) {
+      console.warn('Missing villa slug, cannot toggle favorite');
       return;
     }
 
@@ -586,6 +586,9 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
     setFavoriteLoading(true);
     try {
+      // Update API endpoint to use slug instead of id
+      const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
+      
       const res = await fetch(FAVORITE_TOGGLE_URL, {
         method: 'POST',
         headers: {
@@ -593,7 +596,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           Accept: 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ property: vId }),
+        body: JSON.stringify({ property_slug: vSlug }), // Send slug instead of property id
       });
 
       const raw = await res.text();
@@ -639,18 +642,18 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
 
       if (currentUser?.email) {
         const email = currentUser.email;
-        const idStr = String(vId);
+        const slugStr = String(vSlug);
         const existing = readFavorites(email);
 
         let nextList: string[];
         if (nextState) {
-          if (!existing.includes(idStr)) {
-            nextList = [...existing, idStr];
+          if (!existing.includes(slugStr)) {
+            nextList = [...existing, slugStr];
           } else {
             nextList = existing;
           }
         } else {
-          nextList = existing.filter((x) => x !== idStr);
+          nextList = existing.filter((x) => x !== slugStr);
         }
 
         writeFavorites(email, nextList);
@@ -746,15 +749,6 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
               <PoolIcon /> {pluralize(poolCount, 'Pool')}
             </div>
           </div>
-
-
-          <div>
-            <h4 className="text-lg font-semibold mb-2">Amenities: 
-              added this one to check and see if it works and t
-            </h4>
-          </div>
-
-          
 
           {/* Amenities */}
           <div className="flex flex-wrap gap-2 mb-4 md:mb-6">

@@ -32,6 +32,7 @@ import {
 /* -------------------- Types -------------------- */
 interface Property {
   id: number;
+  slug: string;
   price: number;
   beds: number;
   baths: number;
@@ -226,11 +227,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
           <div className="flex-1">
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
             <div className="text-sm text-gray-500">
-  {propertyUrl.length > 26
-    ? propertyUrl.slice(0, 26) + "..."
-    : propertyUrl}
-</div>
-
+              {propertyUrl.length > 26
+                ? propertyUrl.slice(0, 26) + "..."
+                : propertyUrl}
+            </div>
           </div>
           <button
             onClick={copyLink}
@@ -273,10 +273,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     try {
       if (typeof window === "undefined") return apiInitial;
       const email = (currentUser as any)?.email;
-      if (!email || !property.id) return apiInitial;
+      if (!email || !property.slug) return apiInitial;
 
       const stored = readFavorites(email);
-      return stored.includes(String(property.id)) || apiInitial;
+      return stored.includes(String(property.slug)) || apiInitial;
     } catch {
       return apiInitial;
     }
@@ -286,10 +286,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
-    if (!currentUser?.email || !property.id) return;
+    if (!currentUser?.email || !property.slug) return;
     const stored = readFavorites(currentUser.email);
-    if (stored.includes(String(property.id))) setIsFavorite(true);
-  }, [currentUser, property.id]);
+    if (stored.includes(String(property.slug))) setIsFavorite(true);
+  }, [currentUser, property.slug]);
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
@@ -338,7 +338,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://example.com";
-  const propertyUrl = `${origin}/property/${property.id}`;
+  const propertyUrl = `${origin}/property/${property.slug}`;
 
   const handleToggleFavorite = async (
     e: React.MouseEvent<HTMLDivElement>
@@ -346,7 +346,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!property.id) return;
+    if (!property.slug) return;
 
     if (!isAuthenticated) {
       const res = await Swal.fire({
@@ -392,7 +392,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ property: property.id }),
+        body: JSON.stringify({ property_slug: property.slug }), // Send slug instead of property id
       });
 
       const raw = await res.text();
@@ -438,18 +438,18 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
       if (currentUser?.email) {
         const email = currentUser.email;
-        const idStr = String(property.id);
+        const slugStr = String(property.slug);
         const existing = readFavorites(email);
 
         let nextList: string[];
         if (nextState) {
-          if (!existing.includes(idStr)) {
-            nextList = [...existing, idStr];
+          if (!existing.includes(slugStr)) {
+            nextList = [...existing, slugStr];
           } else {
             nextList = existing;
           }
         } else {
-          nextList = existing.filter((x) => x !== idStr);
+          nextList = existing.filter((x) => x !== slugStr);
         }
 
         writeFavorites(email, nextList);
@@ -519,7 +519,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 </svg>
               </div>
 
-              <div className="absolute p-2 hidden lg:flex  rounded-full bg-white top-50 -right-14">
+              <div className="absolute p-2 hidden lg:flex rounded-full bg-white top-50 -right-14">
                 <img
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png"
                   alt=""
@@ -545,11 +545,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               <h3 className="text-[16px] sm:text-2xl md:text-3xl font-extrabold text-gray-900">
                 {property.title}
               </h3>
-              <p className="text-sm  sm:text-base mt-2 text-gray-500 flex items-center font-medium">
+              <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
                 <img
                   src={mapImg}
                   alt="location"
-                  className="w-5  h-5 mr-1"
+                  className="w-5 h-5 mr-1"
                 />{" "}
                 {property.location}
               </p>
@@ -569,9 +569,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               </div>
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Button - Now using slug */}
             <Link
-              to={`/property/${property.id}`}
+              to={`/properties/${property.slug}`}
               className="mt-6 w-full py-3 sm:py-4 text-center bg-teal-50 text-emerald-700 font-bold text-base sm:text-lg md:text-xl border-2 border-[#009689] rounded-xl hover:bg-gray-200 transition duration-150"
             >
               View Details

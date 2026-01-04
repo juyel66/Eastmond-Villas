@@ -158,6 +158,10 @@
 //   },
 // ]);
 
+
+
+
+
 // src/router.jsx  (or wherever your router file lives; replace the content)
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import './index.css';
@@ -242,8 +246,8 @@ export const router = createBrowserRouter([
       { path: '/management', element: <Management /> },
       { path: '/concierge', element: <Concierge /> },
       { path: '/about', element: <About /> },
-      { path: '/property/:id', element: <RentsDetails /> },
-      { path: '/salesdetails', element: <SalesDetails /> },
+      { path: '/properties/:slug', element: <RentsDetails /> },
+      { path: '/sales/:slug', element: <SalesDetails /> },
     ],
   },
 
