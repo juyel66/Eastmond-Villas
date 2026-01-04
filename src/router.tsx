@@ -222,6 +222,7 @@ import NotificationsPage from './Component/Notifications/NotificationsPage';
 import ProtectedRoute from './Component/Auth/ProtectedRoute';
 import AllReview from './pages/AllReview/AllReviews';
 import AgentFaqs from './Component/Agent/FaQs/AgentFaqs';
+import NewsLetter from './Component/Admin/NewsLetter/NewsLetter';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
@@ -286,6 +287,7 @@ export const router = createBrowserRouter([
           { path: 'admin-resources', element: <AdminResources /> },
           { path: 'admin-booking-management', element: <BookingManagement /> },
           { path: 'admin-user-management', element: <UserManagement /> },
+          { path: 'admin-newsletter', element: <NewsLetter /> },
           { path: 'admin-faqs', element: <FAQs /> },
           { path: 'admin-profile', element: <Profile /> },
           { path: 'admin-allContact', element: <AllContact /> },
@@ -305,6 +307,10 @@ export const router = createBrowserRouter([
           { path: 'agent-resources', element: <Resources /> },
           { path: 'agent-faqs', element: <AgentFaqs /> },
           { path: 'agent-profile', element: <Profile /> },
+          {
+            path: 'agent-property-rentals-details/:id',
+            element: <PropertiesRentalsDetails />,
+          },
           {
             path: 'agent-property-rentals-details/:id',
             element: <PropertiesRentalsDetails />,

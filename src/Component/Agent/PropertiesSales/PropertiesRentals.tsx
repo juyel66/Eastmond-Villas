@@ -270,7 +270,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           }}
         >
           <Link
-            to={`/dashboard/agent-property-sales-details/${id}`}
+            to={`/dashboard/agent-property-rentals-details/${id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
           >
             <img
@@ -298,7 +298,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             Copy Description
           </button>
 
-          <button
+          {/* <button
             onClick={() =>
               copyToClipboard(property.calendar_link ?? '', 'Calendar Link')
             }
@@ -310,7 +310,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               className="h-4 w-4"
             />
             Copy Calendar Link
-          </button>
+          </button> */}
 
           <button
             onClick={() => downloadImage(property.imageUrl)}

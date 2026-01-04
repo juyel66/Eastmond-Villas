@@ -22,6 +22,7 @@ const ADMIN = [
   { title: "Analytics", url: "/dashboard/admin-analytics", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760835778/Icon_10_pwt0qy.png" },
   { title: "Activity Logs", url: "/dashboard/admin-activity-logs", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760835766/Icon_11_w8rapr.png" },
   { title: "User Management", url: "/dashboard/admin-user-management", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1762893337/Icon_2_yt5edq.png" },
+  { title: "Newsletter", url: "/dashboard/admin-newsletter", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1767485460/Icon_25_gfninu.png" },
 
   { title: "Booking Management", url: "/dashboard/admin-booking-management", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1762893411/Icon_3_qzhh6y.png" },
   { title: "All Contact", url: "/dashboard/admin-allContact", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1764619370/Vector_3_xhvsh3.png" },

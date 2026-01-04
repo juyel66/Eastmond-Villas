@@ -1076,18 +1076,26 @@ const CreatePropertyRentals = ({
     Status *
   </label>
 
+<div className="relative">
   <select
     {...register("status", {
       required: "Status is required",
     })}
     defaultValue="draft"
-    className="w-full border rounded-lg p-3 bg-gray-50"
+    className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
   >
     <option value="draft">Draft</option>
     <option value="pending_review">Pending Review</option>
     <option value="published">Published</option>
     <option value="archived">Archived</option>
   </select>
+
+  {/* Custom Dropdown Arrow */}
+  <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+    ▼
+  </span>
+</div>
+
 
   {errors?.status && (
     <p className="mt-1 text-sm text-red-500">

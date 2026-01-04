@@ -425,11 +425,7 @@ const PropertiesSalesDetails: FC = () => {
               label="Copy Description"
               onClick={handleCopyDescription}
             />
-            <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_31_evyeki.png"
-              label="Copy Calendar Link"
-              onClick={handleCopyCalendarLink}
-            />
+         
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
               label="Download Images"
@@ -636,21 +632,7 @@ const PropertiesSalesDetails: FC = () => {
         </div>
 
         {/* Viewing Calendar / Schedule a Viewing */}
-        <h2 className="text-xl font-bold text-gray-800 mb-3">
-          Viewing Calendar
-        </h2>
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-          <p className="text-gray-500 text-sm font-medium mb-1">
-            Schedule a Viewing
-          </p>
-        
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          
-            <span className="text-xs text-gray-500 break-all">
-              {property.viewing_link || 'No link available'}
-            </span>
-          </div>
-        </div>
+    
       </div>
     </div>
   );
