@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import mapImg from "../../assets/map.svg"
 import callImg from "../../assets/calll.svg"
 import msgSvg from "../../assets/msg.svg"
+import { Link } from "react-router";
 
 const Footer = () => {
   const logoSrc =
@@ -147,8 +148,9 @@ const Footer = () => {
             <ul className="space-y-2 md:space-y-3">
               <li><a href="/" className="hover:text-teal-400 transition-colors duration-200">Home</a></li>
               <li><a href="/about" className="hover:text-teal-400 transition-colors duration-200">About Us</a></li>
-              <li><a href="/list-with-us" className="hover:text-teal-400 transition-colors duration-200">List With Us</a></li>
+              {/* <li><a href="/list-with-us" className="hover:text-teal-400 transition-colors duration-200">List With Us</a></li> */}
               <li><a href="/contact" className="hover:text-teal-400 transition-colors duration-200 ">Contact</a></li>
+              <li><Link to="/privacy-policy" className="hover:text-teal-400 transition-colors duration-200 ">Privacy Policy</Link></li>
               <li>
            
                 <a

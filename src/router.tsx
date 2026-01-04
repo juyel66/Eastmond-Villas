@@ -227,6 +227,7 @@ import ProtectedRoute from './Component/Auth/ProtectedRoute';
 import AllReview from './pages/AllReview/AllReviews';
 import AgentFaqs from './Component/Agent/FaQs/AgentFaqs';
 import NewsLetter from './Component/Admin/NewsLetter/NewsLetter';
+import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
@@ -248,6 +249,7 @@ export const router = createBrowserRouter([
       { path: '/about', element: <About /> },
       { path: '/properties/:slug', element: <RentsDetails /> },
       { path: '/sales/:slug', element: <SalesDetails /> },
+      { path: '/privacy-policy', element: <PrivacyPolicy /> },
     ],
   },
 
