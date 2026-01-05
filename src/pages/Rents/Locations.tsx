@@ -75,7 +75,7 @@ const CustomMarker: React.FC<{
   );
 };
 
-/* ================= MAIN ================= */
+
 const Locations: React.FC<LocationsProps> = ({
   lat,
   lng,
