@@ -408,15 +408,15 @@ const AdminPropertiesRentals: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-start gap-3">
-                        <Button
+                        <Link to={`/dashboard/admin-update-property-rentals/${item.id}`}
                           onClick={() => handleEdit(item.id)}
-                          className="p-2 border text-green-500 bg-white hover:bg-gray-100 flex items-center justify-center"
+                          className="p-2  text-green-500 bg-white hover:bg-gray-100 flex items-center justify-center"
                         >
                           <img
                             src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761000758/Edit_hejj0l.png"
                             alt="Edit"
                           />
-                        </Button>
+                        </Link>
                         <Button
                           onClick={() => handleDelete(item.id)}
                           className="p-2 border text-red-500 bg-white hover:bg-gray-100 flex items-center justify-center"
@@ -486,31 +486,7 @@ const AdminPropertiesRentals: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit modal */}
-      {isModalOpen && editItem && (
-        <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl overflow-y-auto max-h-[95vh] relative">
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                setEditItem(null);
-              }}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
-            >
-              ✕
-            </button>
-            <CreatePropertyRentals
-              isEdit={true}
-              editData={editItem}
-              onClose={() => {
-                setIsModalOpen(false);
-                setEditItem(null);
-                dispatch(fetchProperties()); // refresh list after edit
-              }}
-            />
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };

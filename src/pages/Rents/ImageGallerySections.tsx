@@ -1087,6 +1087,9 @@ const StaffItem = ({ name, details }) => (
   </li>
 );
 
+
+
+
 // Simple helper to load images with crossOrigin and fallback
 const loadImageWithFallback = (src) =>
   new Promise((resolve) => {
@@ -1483,6 +1486,8 @@ const ImageGallerySection = ({ villa }) => {
         });
         return;
       }
+
+      
 
       console.log("Download recorded successfully for property:", villaId);
 
@@ -2005,7 +2010,7 @@ const ImageGallerySection = ({ villa }) => {
               </button>
             )}
 
-            <VideoExperience videos={videos} villa={villa} />
+            <VideoExperience videos={videos} villa={villa}  />
 
             <Description
               descriptionData={description}

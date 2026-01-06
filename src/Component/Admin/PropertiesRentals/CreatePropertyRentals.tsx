@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
+  import.meta.env.VITE_API_VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
 // Image Preview Component
 const ImagePreview = ({
@@ -128,15 +128,14 @@ const BedroomImagePreview = ({
         data-bedroom-name-index={index}
         value={image.name || ''}
         onChange={(e) => onNameChange(image.id, e.target.value)}
-        placeholder="Bedroom name (required)"
+        placeholder="Bedroom name"
         className="w-full border rounded-lg p-2 text-sm bg-gray-50 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
-        required
       />
 
       <input
         value={image.description || ''}
         onChange={(e) => onDescriptionChange(image.id, e.target.value)}
-        placeholder="Bedroom description (optional)"
+        placeholder="Bedroom description"
         className="w-full border rounded-lg p-2 text-sm bg-gray-50 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
       />
     </div>
@@ -162,7 +161,7 @@ const CreatePropertyRentals = ({
   const [location, setLocation] = useState({
     lat: 25.79,
     lng: -80.13,
-    address: '123 Ocean Drive, Miami',
+    address: '',
   });
 
   const [mediaImages, setMediaImages] = useState([]);
@@ -234,6 +233,7 @@ const CreatePropertyRentals = ({
         security_deposit: editData.security_deposit || '',
         damage_deposit: editData.damage_deposit || '',
         commission_rate: editData.commission_rate || '',
+        youtube_link: editData.youtube_link || '',
       };
       reset(formData);
 
@@ -415,6 +415,7 @@ const CreatePropertyRentals = ({
         security_deposit: '',
         damage_deposit: '',
         commission_rate: '',
+        youtube_link: '',
       });
 
       setSignatureList(['']);
@@ -643,89 +644,26 @@ const CreatePropertyRentals = ({
       order: startOrder + idx,
     }));
 
-  const focusField = (nameOrSelector) => {
-    try {
-      let el = null;
-      if (typeof nameOrSelector === 'string') {
-        el =
-          document.querySelector(`[name="${nameOrSelector}"]`) ||
-          document.querySelector(nameOrSelector);
-      } else {
-        el = nameOrSelector;
-      }
-      if (el) {
-        el.focus({ preventScroll: true });
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return true;
-      }
-    } catch (e) {
-      // ignore
-    }
-    return false;
-  };
-
-  const validateBeforeSubmit = (values) => {
-    const required = ['title', 'price', 'address'];
-    const labels = {
-      title: 'Title',
-      price: 'Price',
-      address: 'Address',
-    };
-
-    for (const field of required) {
-      if (!values[field] && values[field] !== 0) {
-        setError(field, {
-          type: 'required',
-          message: `${labels[field]} is required`,
-        });
-        toast.error(`${labels[field]} is required`);
-        focusField(field);
-        return false;
-      }
-    }
-
-    const totalFiles = (mediaImages.length || 0) + (bedroomImages.length || 0);
-    if (!isEdit && totalFiles === 0) {
-      setMediaError('At least one property image is required.');
-      toast.error('At least one property image is required.');
-      const fileEl = document.querySelector('input[type="file"]');
-      if (fileEl)
-        fileEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return false;
-    }
-
-    if (bedroomImages.length > 0) {
-      const missingMeta = bedroomImages.find((b) => !b.name || !b.name.trim());
-      if (missingMeta) {
-        toast.error(
-          'Please fill the Bedroom Name for each bedroom image before submitting.'
-        );
-        try {
-          const idx = bedroomImages.findIndex((b) => !b.name || !b.name.trim());
-          const el = document.querySelector(
-            `[data-bedroom-name-index="${idx}"]`
-          );
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus({ preventScroll: true });
-          }
-        } catch (e) {}
-        return false;
-      }
-    }
-
+  // এই function টি সম্পুর্ণভাবে সরিয়ে দিন - কোন validation নেই
+  const validateBeforeSubmit = () => {
+    clearErrors();
+    setMediaError('');
+    // কোন validation নেই - সব field optional
     return true;
   };
 
   const onSubmit = async (values, isDraft = false) => {
+    // শুধু errors clear করুন, কোন validation নেই
     clearErrors();
     setMediaError('');
-    if (!validateBeforeSubmit(values)) return;
+    
+    // Validate function call করুন (এখন কোন validation নেই)
+    if (!validateBeforeSubmit()) return;
 
     setSubmitting(true);
     try {
       const processed = {
-        title: values.title,
+        title: values.title || '',
         description: values.description || '',
         price: values.price ? String(values.price) : '0.00',
         price_display: values.price ? String(values.price) : '0.00',
@@ -736,7 +674,7 @@ const CreatePropertyRentals = ({
           : (values.status || 'Draft').toLowerCase().replace(/\s+/g, '_'),
         address: values.address || location.address,
         city: values.city || '',
-        add_guest: Number(values.add_guest) || 1,
+        add_guest: Number(values.add_guest) || 0,
         bedrooms: Number(values.bedrooms) || 0,
         bathrooms: Number(values.bathrooms) || 0,
         pool: Number(values.pool) || 0,
@@ -765,6 +703,7 @@ const CreatePropertyRentals = ({
         concierge_services: conciergeRows
           .map((s) => s.trim())
           .filter((s) => s.length > 0),
+        youtube_link: values.youtube_link || '',
       };
 
       console.log('--- Processed payload to send ---');
@@ -814,6 +753,7 @@ const CreatePropertyRentals = ({
       append('damage_deposit', processed.damage_deposit);
       append('commission_rate', processed.commission_rate);
       append('concierge_services', processed.concierge_services);
+      append('youtube_link', processed.youtube_link);
 
       const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
       mediaMeta.forEach((meta) =>
@@ -886,14 +826,7 @@ const CreatePropertyRentals = ({
           body && (body.error || JSON.stringify(body))
             ? body.error || JSON.stringify(body)
             : `HTTP ${res.status}`;
-        if (message.includes('At least one media')) {
-          setMediaError(
-            'At least one property image is required by the server.'
-          );
-          toast.error('Server requires at least one property image.');
-        } else {
-          Swal.fire({ title: 'Error!', text: message, icon: 'error' });
-        }
+        Swal.fire({ title: 'Error!', text: message, icon: 'error' });
         setSubmitting(false);
         return;
       }
@@ -971,12 +904,7 @@ const CreatePropertyRentals = ({
           </p>
         </div>
         <div className="flex mt-2 items-center gap-4">
-          <button
-            type="button"
-            className="border border-gray-300 text-black flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition shadow-sm"
-          >
-            <User className="lg:h-5 lg:w-5" /> Preview Agent Portal
-          </button>
+       
         </div>
       </div>
 
@@ -1009,21 +937,14 @@ const CreatePropertyRentals = ({
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Title *
+              Property Title
             </label>
             <input
               name="title"
               {...register('title')}
-              className={`w-full border rounded-lg p-3 ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Enter property title"
             />
-            {errors.title && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.title.message}
-              </p>
-            )}
           </div>
 
           <div className="col-span-12">
@@ -1041,69 +962,46 @@ const CreatePropertyRentals = ({
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price *
+              Price
             </label>
             <input
               name="price"
               type="number"
               {...register('price')}
-              className={`w-full border rounded-lg p-3 ${
-                errors.price ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Enter price"
             />
-            {errors.price && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.price.message}
-              </p>
-            )}
           </div>
 
           <div className="col-span-12 md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Property Type
             </label>
-            <select
-              disabled
-              className="w-full border rounded-lg p-3 bg-gray-100 text-gray-600"
-            >
-              <option>Rentals</option>
-            </select>
+            <input type="text" disabled value="rentals" className='w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500' />
           </div>
 
-   <div className="col-span-12 md:col-span-4">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Status *
-  </label>
+          <div className="col-span-12 md:col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <div className="relative">
+              <select
+                {...register("status")}
+                defaultValue="draft"
+                className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+              >
+                <option value="draft">Draft</option>
+                <option value="pending_review">Pending Review</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
 
-<div className="relative">
-  <select
-    {...register("status", {
-      required: "Status is required",
-    })}
-    defaultValue="draft"
-    className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
-  >
-    <option value="draft">Draft</option>
-    <option value="pending_review">Pending Review</option>
-    <option value="published">Published</option>
-    <option value="archived">Archived</option>
-  </select>
-
-  {/* Custom Dropdown Arrow */}
-  <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
-    ▼
-  </span>
-</div>
-
-
-  {errors?.status && (
-    <p className="mt-1 text-sm text-red-500">
-      {errors.status.message}
-    </p>
-  )}
-</div>
-
+              {/* Custom Dropdown Arrow */}
+              <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+                ▼
+              </span>
+            </div>
+          </div>
 
           <div className="col-span-12 md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1114,7 +1012,7 @@ const CreatePropertyRentals = ({
               type="number"
               placeholder="Number of guests"
               {...register('add_guest')}
-              className="w-full border rounded-lg p-3"
+              className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
 
@@ -1127,7 +1025,7 @@ const CreatePropertyRentals = ({
               type="number"
               step="0.1"
               {...register('bedrooms')}
-              className="w-full border rounded-lg p-3"
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Number of bedrooms"
             />
           </div>
@@ -1141,7 +1039,7 @@ const CreatePropertyRentals = ({
               type="number"
               step="0.1"
               {...register('bathrooms')}
-              className="w-full border rounded-lg p-3"
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Number of bathrooms"
             />
           </div>
@@ -1154,28 +1052,21 @@ const CreatePropertyRentals = ({
               name="pool"
               type="number"
               {...register('pool')}
-              className="w-full border rounded-lg p-3"
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Number of pools"
             />
           </div>
 
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address *
+              Address
             </label>
             <input
               name="address"
               {...register('address')}
-              className={`w-full border rounded-lg p-3 ${
-                errors.address ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Enter property address"
             />
-            {errors.address && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.address.message}
-              </p>
-            )}
           </div>
 
           <div className="col-span-12 md:col-span-6">
@@ -1185,191 +1076,198 @@ const CreatePropertyRentals = ({
             <input
               name="city"
               {...register('city')}
-              className="w-full border rounded-lg p-3"
+              className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Enter city"
             />
           </div>
         </div>
 
-        {/* Media Images Section - Only show in Create mode */}
-        {!isEdit && (
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Property Media Images *
-              </label>
-              <div className="text-sm text-gray-500">
-                {mediaImages.length} image(s) uploaded
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              {mediaImages.map((img, index) => (
-                <ImagePreview
-                  key={img.id}
-                  image={img}
-                  index={index}
-                  onRemove={(id) => removeImage(id, setMediaImages, 'media')}
-                  onSetPrimary={setPrimaryImage}
-                  isPrimary={img.isPrimary}
-                  type="media"
-                />
-              ))}
-
-              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
-                <UploadCloud className="w-8 h-8 mb-2" />
-                <p className="text-sm font-medium">Upload Media Images</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Click or drag & drop
-                </p>
-                <input
-                  name="media_files"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleMediaImageUpload}
-                />
-              </label>
-            </div>
-
-            {mediaError && (
-              <p className="text-sm text-red-600 mt-2">{mediaError}</p>
-            )}
-
-            {mediaImages.length === 0 ? (
-              <p className="text-sm text-gray-500 mt-2">
-                No media images uploaded yet. At least one image is required.
-              </p>
-            ) : (
-              <div className="mt-2 text-sm text-gray-600">
-                <span className="font-medium">{mediaImages.length}</span> media
-                image(s) uploaded.
-                {mediaImages.filter((img) => img.isPrimary).length > 0 ? (
-                  <span className="ml-2 text-teal-600">
-                    Primary image is set.
-                  </span>
-                ) : (
-                  <span className="ml-2 text-amber-600">
-                    Please set a primary image.
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Bedrooms Images Section - HIDDEN in Edit mode */}
-        {!isEdit && (
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Bedroom Images *
-              </label>
-              <div className="text-sm text-gray-500">
-                {bedroomImages.length} image(s) uploaded
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              {bedroomImages.map((img, index) => (
-                <BedroomImagePreview
-                  key={img.id}
-                  image={img}
-                  index={index}
-                  onRemove={(id) =>
-                    removeImage(id, setBedroomImages, 'bedroom')
-                  }
-                  onSetPrimary={setPrimaryImage}
-                  isPrimary={img.isPrimary}
-                  onNameChange={updateBedroomImageName}
-                  onDescriptionChange={updateBedroomImageDescription}
-                />
-              ))}
-
-              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
-                <UploadCloud className="w-8 h-8 mb-2" />
-                <p className="text-sm font-medium">Upload Bedrooms Images</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Click or drag & drop
-                </p>
-                <input
-                  name="bedrooms_images"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleBedroomImageUpload}
-                />
-              </label>
-            </div>
-
-            {bedroomImages.length === 0 ? (
-              <p className="text-sm text-gray-500 mt-2">
-                No bedroom images uploaded yet. You can add new images.
-              </p>
-            ) : (
-              <div className="mt-2 text-sm text-gray-600">
-                <span className="font-medium">{bedroomImages.length}</span>{' '}
-                bedroom image(s) uploaded.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Videos Upload Section - HIDDEN in Edit mode */}
-        {!isEdit && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload Property Videos *
+        {/* Media Images Section */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Property Media Images
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
-                <UploadCloud className="w-8 h-8 mb-2" />
-                <p className="text-sm font-medium">Upload Videos</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Click or drag & drop
-                </p>
-                <input
-                  name="videos"
-                  type="file"
-                  accept="video/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleVideoUpload}
-                />
-              </label>
+            <div className="text-sm text-gray-500">
+              {mediaImages.length} image(s) uploaded
+            </div>
+          </div>
 
-              {videos.length > 0 && (
-                <div className="flex flex-col justify-center">
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">{videos.length}</span> video
-                    file(s) selected:
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500 space-y-1">
-                    {videos.map((video, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="truncate">{video.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setVideos((prev) =>
-                              prev.filter((_, i) => i !== idx)
-                            );
-                            toast.success('Removed video file');
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {mediaImages.map((img, index) => (
+              <ImagePreview
+                key={img.id}
+                image={img}
+                index={index}
+                onRemove={(id) => removeImage(id, setMediaImages, 'media')}
+                onSetPrimary={setPrimaryImage}
+                isPrimary={img.isPrimary}
+                type="media"
+              />
+            ))}
+
+            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
+              <UploadCloud className="w-8 h-8 mb-2" />
+              <p className="text-sm font-medium">Upload Media Images</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Click or drag & drop
+              </p>
+              <input
+                name="media_files"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleMediaImageUpload}
+              />
+            </label>
+          </div>
+
+          {mediaError && (
+            <p className="text-sm text-red-600 mt-2">{mediaError}</p>
+          )}
+
+          {mediaImages.length === 0 ? (
+            <p className="text-sm text-gray-500 mt-2">
+              No media images uploaded yet.
+            </p>
+          ) : (
+            <div className="mt-2 text-sm text-gray-600">
+              <span className="font-medium">{mediaImages.length}</span> media
+              image(s) uploaded.
+              {mediaImages.filter((img) => img.isPrimary).length > 0 ? (
+                <span className="ml-2 text-teal-600">
+                  Primary image is set.
+                </span>
+              ) : (
+                <span className="ml-2 text-amber-600">
+                  Please set a primary image.
+                </span>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Bedrooms Images Section */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Bedroom Images
+            </label>
+            <div className="text-sm text-gray-500">
+              {bedroomImages.length} image(s) uploaded
+            </div>
           </div>
-        )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {bedroomImages.map((img, index) => (
+              <BedroomImagePreview
+                key={img.id}
+                image={img}
+                index={index}
+                onRemove={(id) =>
+                  removeImage(id, setBedroomImages, 'bedroom')
+                }
+                onSetPrimary={setPrimaryImage}
+                isPrimary={img.isPrimary}
+                onNameChange={updateBedroomImageName}
+                onDescriptionChange={updateBedroomImageDescription}
+              />
+            ))}
+
+            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
+              <UploadCloud className="w-8 h-8 mb-2" />
+              <p className="text-sm font-medium">Upload Bedrooms Images</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Click or drag & drop
+              </p>
+              <input
+                name="bedrooms_images"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleBedroomImageUpload}
+              />
+            </label>
+          </div>
+
+          {bedroomImages.length === 0 ? (
+            <p className="text-sm text-gray-500 mt-2">
+              No bedroom images uploaded yet.
+            </p>
+          ) : (
+            <div className="mt-2 text-sm text-gray-600">
+              <span className="font-medium">{bedroomImages.length}</span>{' '}
+              bedroom image(s) uploaded.
+            </div>
+          )}
+        </div>
+
+        {/* Videos Upload Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Upload Property Videos
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
+              <UploadCloud className="w-8 h-8 mb-2" />
+              <p className="text-sm font-medium">Upload Videos</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Click or drag & drop
+              </p>
+              <input
+                name="videos"
+                type="file"
+                accept="video/*"
+                multiple
+                className="hidden"
+                onChange={handleVideoUpload}
+              />
+            </label>
+
+            {videos.length > 0 && (
+              <div className="flex flex-col justify-center">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">{videos.length}</span> video
+                  file(s) selected:
+                </div>
+                <div className="mt-2 text-xs text-gray-500 space-y-1">
+                  {videos.map((video, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="truncate">{video.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideos((prev) =>
+                            prev.filter((_, i) => i !== idx)
+                          );
+                          toast.success('Removed video file');
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* YouTube Link Field - Added below Videos section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            YouTube Link
+          </label>
+          <input
+            name="youtube_link"
+            {...register('youtube_link')}
+            className="w-full border rounded-lg p-3 bg-gray-50"
+            placeholder="https://www.youtube.com/watch?v=..."
+          />
+        </div>
 
         {/* Calendar Link */}
         <div className="mt-4">
@@ -1620,9 +1518,6 @@ const CreatePropertyRentals = ({
               placeholder="e.g. 15:00 (3:00 PM)"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Format: HH:MM (24-hour). Leave empty if not applicable.
-            </p>
           </div>
 
           <div className="col-span-12 sm:col-span-6">
@@ -1636,9 +1531,6 @@ const CreatePropertyRentals = ({
               placeholder="e.g. 11:00 (11:00 AM)"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Format: HH:MM (24-hour). Leave empty if not applicable.
-            </p>
           </div>
 
           <div className="col-span-12 sm:col-span-4">
@@ -1752,7 +1644,7 @@ const CreatePropertyRentals = ({
                   value={r.name}
                   onChange={(e) => updateStaffRow(idx, 'name', e.target.value)}
                   placeholder="Staff Name"
-                  className="flex-1 border rounded-lg p-2"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
                 />
                 <input
                   value={r.details}
@@ -1760,7 +1652,7 @@ const CreatePropertyRentals = ({
                     updateStaffRow(idx, 'details', e.target.value)
                   }
                   placeholder="Details (role, phone, email)"
-                  className="flex-1 border rounded-lg p-2"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
                 />
                 <div className="flex flex-col gap-2">
                   <button
@@ -1804,7 +1696,7 @@ const CreatePropertyRentals = ({
                 onChange={(e) =>
                   handleBookingRateChange(idx, 'rentalPeriod', e.target.value)
                 }
-                className="col-span-4 border rounded-lg p-2 text-sm"
+                className="col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
                 placeholder="Rental Period (e.g. Jan 20 - Jan 30)"
               />
               <input
@@ -1812,7 +1704,7 @@ const CreatePropertyRentals = ({
                 onChange={(e) =>
                   handleBookingRateChange(idx, 'minimumStay', e.target.value)
                 }
-                className="col-span-4 border rounded-lg p-2 text-sm"
+                className="col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
                 placeholder="Minimum Stay (e.g. 10 Nights)"
               />
               <input
@@ -1820,7 +1712,7 @@ const CreatePropertyRentals = ({
                 onChange={(e) =>
                   handleBookingRateChange(idx, 'ratePerNight', e.target.value)
                 }
-                className="col-span-3 border rounded-lg p-2 text-sm"
+                className="col-span-3 border rounded-lg p-2 text-sm bg-gray-50"
                 placeholder="Rate Per Night (e.g. 5600)"
                 type="number"
               />

@@ -228,6 +228,8 @@ import AllReview from './pages/AllReview/AllReviews';
 import AgentFaqs from './Component/Agent/FaQs/AgentFaqs';
 import NewsLetter from './Component/Admin/NewsLetter/NewsLetter';
 import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy';
+import UpdateRentals from './Component/Admin/UpdateRentals/UpdateRentals';
+import UpdateSales from './Component/Admin/UpdateSales/UpdateSales';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
@@ -299,6 +301,8 @@ export const router = createBrowserRouter([
           { path: 'admin-allContact', element: <AllContact /> },
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'admin-allReview', element: <AllReview /> },
+          { path: 'admin-update-property-rentals/:id', element: <UpdateRentals /> },
+          { path: 'admin-update-property-sales/:id', element: <UpdateSales /> },
         ],
       },
 

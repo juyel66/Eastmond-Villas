@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, UploadCloud, X, Save, ChevronLeft, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import LocationCreateProperty from './LocationCreateProperty';
+import LocationCreateProperty from './../PropertiesRentals/LocationCreateProperty';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
@@ -17,6 +17,8 @@ const ImagePreview = ({
   onSetPrimary,
   isPrimary,
   type = 'media',
+  isExisting = false,
+  existingId = null,
 }) => {
   return (
     <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
@@ -34,9 +36,9 @@ const ImagePreview = ({
         />
       </div>
 
-      {/* Remove button */}
+      {/* Remove button - for both new and existing images */}
       <button
-        onClick={() => onRemove(image.id)}
+        onClick={() => onRemove(image.id, existingId)}
         type="button"
         className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 text-white transition-colors"
         title="Remove image"
@@ -62,6 +64,13 @@ const ImagePreview = ({
           Set Primary
         </button>
       )}
+
+      {/* Existing image badge */}
+      {isExisting && (
+        <span className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+          Existing
+        </span>
+      )}
     </div>
   );
 };
@@ -75,6 +84,8 @@ const BedroomImagePreview = ({
   isPrimary,
   onNameChange,
   onDescriptionChange,
+  isExisting = false,
+  existingId = null,
 }) => {
   return (
     <div className="space-y-2">
@@ -93,9 +104,9 @@ const BedroomImagePreview = ({
           />
         </div>
 
-        {/* Remove button */}
+        {/* Remove button - for both new and existing images */}
         <button
-          onClick={() => onRemove(image.id)}
+          onClick={() => onRemove(image.id, existingId)}
           type="button"
           className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 rounded-full p-1.5 text-white transition-colors"
           title="Remove image"
@@ -121,6 +132,13 @@ const BedroomImagePreview = ({
             Set Primary
           </button>
         )}
+
+        {/* Existing image badge */}
+        {isExisting && (
+          <span className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+            Existing
+          </span>
+        )}
       </div>
 
       <input
@@ -141,11 +159,11 @@ const BedroomImagePreview = ({
   );
 };
 
-const CreatePropertySales = ({
-  isEdit = false,
-  editData = null,
-  onClose = null,
-}) => {
+const UpdateSales = ({ editData = null, onClose = null }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const propertyId = id || editData?.id;
+  
   const {
     register,
     handleSubmit,
@@ -157,20 +175,27 @@ const CreatePropertySales = ({
   } = useForm({ mode: 'onTouched' });
 
   const [location, setLocation] = useState({
-    lat: 25.79,
-    lng: -80.13,
+    lat: null,
+    lng: null,
     address: '',
   });
 
   const [mediaImages, setMediaImages] = useState([]);
   const [bedroomImages, setBedroomImages] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [existingVideos, setExistingVideos] = useState([]);
+  
+  // Store IDs to delete
+  const [mediaImagesToDelete, setMediaImagesToDelete] = useState([]);
+  const [bedroomImagesToDelete, setBedroomImagesToDelete] = useState([]);
+  const [videosToDelete, setVideosToDelete] = useState([]);
 
   const [signatureList, setSignatureList] = useState(['']);
   const [interiorAmenities, setInteriorAmenities] = useState(['']);
   const [outdoorAmenities, setOutdoorAmenities] = useState(['']);
 
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [mediaError, setMediaError] = useState('');
 
   const interiorRefs = useRef([]);
@@ -181,7 +206,6 @@ const CreatePropertySales = ({
   const getAbsoluteUrl = (url) => {
     if (!url) return '';
 
-    // If it's already an absolute URL
     if (
       url.startsWith('http://') ||
       url.startsWith('https://') ||
@@ -190,177 +214,225 @@ const CreatePropertySales = ({
       return url;
     }
 
-    // If it's a relative URL, prepend API base URL
     if (url.startsWith('/')) {
       return `${API_BASE.replace('/api', '')}${url}`;
     }
 
-    // If it's just a path, prepend API base
     return `${API_BASE.replace('/api', '')}/${url}`;
   };
 
+  // Fetch property data on component mount
   useEffect(() => {
-    if (isEdit && editData) {
-      // Populate form with editData
-      const formData = {
-        title: editData.title || '',
-        description: editData.description || '',
-        price: editData.price || editData.price_display || '',
-        property_type: editData.property_type || 'sales',
-        status: editData.status || 'Draft',
-        add_guest: editData.add_guest || '',
-        bedrooms: editData.bedrooms || '',
-        bathrooms: editData.bathrooms || '',
-        pool: editData.pool || '',
-        address: editData.address || '',
-        city: editData.city || '',
-        calendar_link: editData.calendar_link || '',
-        seo_title: editData.seo_title || '',
-        seo_description: editData.seo_description || '',
-        youtube_link: editData.youtube_link || '',
-      };
-      reset(formData);
+    const fetchPropertyData = async () => {
+      if (!propertyId) {
+        toast.error('Property ID not found');
+        setLoading(false);
+        return;
+      }
 
-      // Populate location
-      if (editData.latitude && editData.longitude) {
-        setLocation({
-          lat: editData.latitude,
-          lng: editData.longitude,
-          address: editData.address || '123 Ocean Drive, Miami',
+      try {
+        setLoading(true);
+        console.log(`Fetching property data for ID: ${propertyId}`);
+        
+        const access = localStorage.getItem('auth_access');
+        const headers = {
+          'Authorization': `Bearer ${access}`,
+          'Content-Type': 'application/json',
+        };
+
+        const res = await fetch(
+          `${API_BASE}/villas/properties/${propertyId}/`,
+          { headers }
+        );
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch property: ${res.status}`);
+        }
+
+        const propertyData = await res.json();
+        console.log('Property data received:', propertyData);
+        populateFormWithData(propertyData);
+      } catch (err) {
+        console.error('Error fetching property:', err);
+        toast.error(`Failed to load property data: ${err.message}`);
+        setTimeout(() => {
+          navigate('/dashboard/admin-properties-sales');
+        }, 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPropertyData();
+  }, [propertyId, navigate]);
+
+  // If editData is passed as prop (from modal), use it
+  useEffect(() => {
+    if (editData) {
+      populateFormWithData(editData);
+    }
+  }, [editData]);
+
+  const populateFormWithData = (propertyData) => {
+    console.log('Populating form with data:', propertyData);
+    
+    // Populate form fields including youtube_link
+    const formData = {
+      title: propertyData.title || '',
+      description: propertyData.description || '',
+      price: propertyData.price || propertyData.price_display || '',
+      property_type: propertyData.property_type || 'sales',
+      status: propertyData.status || 'draft',
+      add_guest: propertyData.add_guest || '',
+      bedrooms: propertyData.bedrooms || '',
+      bathrooms: propertyData.bathrooms || '',
+      pool: propertyData.pool || '',
+      address: propertyData.address || '',
+      city: propertyData.city || '',
+      seo_title: propertyData.seo_title || '',
+      seo_description: propertyData.seo_description || '',
+      youtube_link: propertyData.youtube_link || '',
+    };
+    reset(formData);
+
+    // Populate location
+    if (propertyData.latitude && propertyData.longitude) {
+      setLocation({
+        lat: parseFloat(propertyData.latitude),
+        lng: parseFloat(propertyData.longitude),
+        address: propertyData.address || '',
+      });
+    }
+
+    // Populate arrays - always ensure at least one empty field
+    const processArrayField = (fieldData) => {
+      if (!fieldData) {
+        return [''];
+      }
+      
+      if (Array.isArray(fieldData)) {
+        // If array has items, return them, otherwise return empty field
+        return fieldData.length > 0 ? fieldData : [''];
+      }
+      
+      if (typeof fieldData === 'object') {
+        // If it's an empty object, return empty field
+        if (Object.keys(fieldData).length === 0) {
+          return [''];
+        }
+        // If it's an object with values, convert to array
+        return Object.values(fieldData).filter(Boolean);
+      }
+      
+      // Default fallback
+      return [''];
+    };
+
+    setSignatureList(processArrayField(propertyData.signature_distinctions));
+    setInteriorAmenities(processArrayField(propertyData.interior_amenities));
+    setOutdoorAmenities(processArrayField(propertyData.outdoor_amenities));
+
+    // Handle media images
+    const processMediaImages = () => {
+      let mediaImgs = [];
+
+      if (propertyData.media_images && Array.isArray(propertyData.media_images)) {
+        mediaImgs = propertyData.media_images.map((img, i) => {
+          const imageUrl =
+            typeof img === 'string' ? img : img.image || img.url || img.file_url;
+          const isPrimary =
+            typeof img === 'object'
+              ? img.is_primary || img.isPrimary || i === 0
+              : i === 0;
+
+          return {
+            id: `existing-media-${i}`,
+            url: getAbsoluteUrl(imageUrl),
+            file: null,
+            isPrimary: isPrimary,
+            originalData: img,
+            isExisting: true,
+            existingId: img.id || null,
+          };
         });
       }
 
-      // Populate arrays
-      setSignatureList(
-        editData.signature_distinctions?.length > 0
-          ? editData.signature_distinctions
-          : ['']
-      );
-      setInteriorAmenities(
-        editData.interior_amenities?.length > 0
-          ? editData.interior_amenities
-          : ['']
-      );
-      setOutdoorAmenities(
-        editData.outdoor_amenities?.length > 0
-          ? editData.outdoor_amenities
-          : ['']
-      );
-
-      // Handle media images
-      const processMediaImages = () => {
-        let mediaImgs = [];
-
-        if (editData.media_images && Array.isArray(editData.media_images)) {
-          mediaImgs = editData.media_images.map((img, i) => {
-            const imageUrl =
-              typeof img === 'string' ? img : img.url || img.image || img;
-            const isPrimary =
-              typeof img === 'object'
-                ? img.is_primary || img.isPrimary || false
-                : false;
-
-            return {
-              id: `media-${Date.now()}-${i}`,
-              url: getAbsoluteUrl(imageUrl),
-              file: null,
-              isPrimary: isPrimary,
-              originalData: img,
-            };
-          });
-        }
-
-        if (mediaImgs.length === 0 && editData.image) {
-          mediaImgs.push({
-            id: `media-${Date.now()}-0`,
-            url: getAbsoluteUrl(editData.image),
-            file: null,
-            isPrimary: true,
-            originalData: { url: editData.image, is_primary: true },
-          });
-        }
-
-        setMediaImages(mediaImgs);
-      };
-
-      // Handle bedroom images
-      const processBedroomImages = () => {
-        let bedroomImgs = [];
-
-        if (
-          editData.bedrooms_images &&
-          Array.isArray(editData.bedrooms_images)
-        ) {
-          bedroomImgs = editData.bedrooms_images.map((img, i) => {
-            const imageUrl =
-              typeof img === 'string' ? img : img.url || img.image || img;
-            const isPrimary =
-              typeof img === 'object'
-                ? img.is_primary || img.isPrimary || false
-                : false;
-            const name =
-              typeof img === 'object'
-                ? img.name || img.title || `Bedroom ${i + 1}`
-                : `Bedroom ${i + 1}`;
-            const description =
-              typeof img === 'object'
-                ? img.description || img.caption || ''
-                : '';
-
-            return {
-              id: `bedroom-${Date.now()}-${i}`,
-              url: getAbsoluteUrl(imageUrl),
-              file: null,
-              isPrimary: isPrimary,
-              name: name,
-              description: description,
-              originalData: img,
-            };
-          });
-        }
-
-        setBedroomImages(bedroomImgs);
-      };
-
-      processMediaImages();
-      processBedroomImages();
-
-      // Handle videos
-      if (
-        editData.videos &&
-        Array.isArray(editData.videos) &&
-        editData.videos.length > 0
-      ) {
-        console.log(`${editData.videos.length} existing videos found`);
+      if (mediaImgs.length === 0 && propertyData.image) {
+        mediaImgs.push({
+          id: `existing-media-main`,
+          url: getAbsoluteUrl(propertyData.image),
+          file: null,
+          isPrimary: true,
+          originalData: { url: propertyData.image, is_primary: true },
+          isExisting: true,
+          existingId: null,
+        });
       }
-    } else {
-      // For create mode
-      reset({
-        title: '',
-        description: '',
-        price: '',
-        property_type: 'sales',
-        status: 'Draft',
-        add_guest: '',
-        bedrooms: '',
-        bathrooms: '',
-        pool: '',
-        address: '',
-        city: '',
-        calendar_link: '',
-        seo_title: '',
-        seo_description: '',
-        youtube_link: '',
-      });
 
-      setSignatureList(['']);
-      setInteriorAmenities(['']);
-      setOutdoorAmenities(['']);
-      setMediaImages([]);
-      setBedroomImages([]);
-      setVideos([]);
-    }
-  }, [isEdit, editData, reset]);
+      return mediaImgs;
+    };
+
+    // Handle bedroom images
+    const processBedroomImages = () => {
+      let bedroomImgs = [];
+
+      if (
+        propertyData.bedrooms_images &&
+        Array.isArray(propertyData.bedrooms_images)
+      ) {
+        bedroomImgs = propertyData.bedrooms_images.map((img, i) => {
+          const imageUrl =
+            typeof img === 'string' ? img : img.image || img.url || img.file_url;
+          const isPrimary =
+            typeof img === 'object'
+              ? img.is_primary || img.isPrimary || i === 0
+              : i === 0;
+          const name =
+            typeof img === 'object'
+              ? img.name || img.title || `Bedroom ${i + 1}`
+              : `Bedroom ${i + 1}`;
+          const description =
+            typeof img === 'object'
+              ? img.description || img.caption || ''
+              : '';
+
+          return {
+            id: `existing-bedroom-${i}`,
+            url: getAbsoluteUrl(imageUrl),
+            file: null,
+            isPrimary: isPrimary,
+            name: name,
+            description: description,
+            originalData: img,
+            isExisting: true,
+            existingId: img.id || null,
+          };
+        });
+      }
+
+      return bedroomImgs;
+    };
+
+    // Handle existing videos
+    const processVideos = () => {
+      if (propertyData.videos && Array.isArray(propertyData.videos)) {
+        const videoUrls = propertyData.videos.map(video => {
+          if (typeof video === 'string') return { url: video, id: null };
+          return { 
+            url: video.video || video.url || video.video_url || '', 
+            id: video.id || null 
+          };
+        }).filter(v => v.url);
+        
+        return videoUrls;
+      }
+      return [];
+    };
+
+    setMediaImages(processMediaImages());
+    setBedroomImages(processBedroomImages());
+    setExistingVideos(processVideos());
+  };
 
   const setPrimaryImage = (id, imageType = 'media') => {
     if (imageType === 'media') {
@@ -386,34 +458,16 @@ const CreatePropertySales = ({
         id: `new-media-${Date.now()}-${i}`,
         url: url,
         file,
-        isPrimary: mediaImages.length === 0 && i === 0,
+        isPrimary: mediaImages.length === 0, // Set as primary if first image
+        isExisting: false,
+        existingId: null,
       };
     });
 
-    setMediaImages((prev) => {
-      const updated = [...prev, ...newImgs];
-      // Ensure only one primary
-      const primaryCount = updated.filter((img) => img.isPrimary).length;
-      if (primaryCount > 1) {
-        // Keep the first one as primary
-        let foundFirst = false;
-        return updated.map((img) => {
-          if (img.isPrimary) {
-            if (!foundFirst) {
-              foundFirst = true;
-              return img;
-            }
-            return { ...img, isPrimary: false };
-          }
-          return img;
-        });
-      }
-      return updated;
-    });
-
+    setMediaImages((prev) => [...prev, ...newImgs]);
     e.target.value = null;
     setMediaError('');
-    toast.success(`Added ${files.length} media image(s)`);
+    toast.success(`Added ${files.length} new media image(s)`);
   };
 
   const handleBedroomImageUpload = (e) => {
@@ -426,26 +480,28 @@ const CreatePropertySales = ({
         id: `new-bedroom-${Date.now()}-${i}`,
         url: url,
         file,
-        isPrimary: false,
+        isPrimary: bedroomImages.length === 0,
         name: `Bedroom ${bedroomImages.length + i + 1}`,
         description: '',
+        isExisting: false,
+        existingId: null,
       };
     });
 
     setBedroomImages((prev) => [...prev, ...newImgs]);
     e.target.value = null;
-    toast.success(`Added ${files.length} bedroom image(s)`);
+    toast.success(`Added ${files.length} new bedroom image(s)`);
   };
 
   const handleVideoUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    setVideos(files);
+    setVideos(prev => [...prev, ...files]);
     e.target.value = null;
-    toast.success(`Added ${files.length} video file(s)`);
+    toast.success(`Added ${files.length} new video file(s)`);
   };
 
-  const removeImage = (id, setState, type = 'media') => {
+  const removeImage = (id, existingId, setState, type = 'media') => {
     setState((prev) => {
       const filtered = prev.filter((i) => i.id !== id);
 
@@ -458,7 +514,30 @@ const CreatePropertySales = ({
       return filtered;
     });
 
-    toast.success(`Removed ${type} image`);
+    // If it's an existing image, add to delete list
+    if (existingId) {
+      if (type === 'media') {
+        setMediaImagesToDelete(prev => [...prev, existingId]);
+        toast.success('Media image marked for deletion');
+      } else if (type === 'bedroom') {
+        setBedroomImagesToDelete(prev => [...prev, existingId]);
+        toast.success('Bedroom image marked for deletion');
+      }
+    } else {
+      toast.success(`Removed ${type} image`);
+    }
+  };
+
+  const removeExistingVideo = (index, videoId) => {
+    setExistingVideos(prev => prev.filter((_, i) => i !== index));
+    
+    // If it's an existing video with ID, add to delete list
+    if (videoId) {
+      setVideosToDelete(prev => [...prev, videoId]);
+      toast.success('Video marked for deletion');
+    } else {
+      toast.success('Removed video');
+    }
   };
 
   const updateArray = (setter, arr, idx, value) => {
@@ -480,6 +559,7 @@ const CreatePropertySales = ({
 
   const removeArrayItem = (setter, arr, idx) => {
     if (arr.length === 1) {
+      // If only one item remains, clear it but keep the field
       setter(['']);
       return;
     }
@@ -494,15 +574,14 @@ const CreatePropertySales = ({
       order: startOrder + idx,
     }));
 
-  // এই function টি সম্পুর্ণভাবে সরিয়ে দিন - কোন validation নেই
+  // কোন validation নেই - সব field optional
   const validateBeforeSubmit = () => {
     clearErrors();
     setMediaError('');
-    // কোন validation নেই - সব field optional
     return true;
   };
 
-  const onSubmit = async (values, isDraft = false) => {
+  const onSubmit = async (values) => {
     // শুধু errors clear করুন, কোন validation নেই
     clearErrors();
     setMediaError('');
@@ -519,9 +598,7 @@ const CreatePropertySales = ({
         price_display: values.price ? String(values.price) : '0.00',
         property_type: values.property_type || 'sales',
         listing_type: 'sale',
-        status: isDraft
-          ? 'draft'
-          : (values.status || 'Draft').toLowerCase().replace(/\s+/g, '_'),
+        status: (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 0,
@@ -531,7 +608,6 @@ const CreatePropertySales = ({
         signature_distinctions: signatureList.filter(Boolean),
         interior_amenities: interiorAmenities.filter(Boolean),
         outdoor_amenities: outdoorAmenities.filter(Boolean),
-        calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
         seo_description: values.seo_description || '',
         latitude: location.lat ?? null,
@@ -539,7 +615,7 @@ const CreatePropertySales = ({
         youtube_link: values.youtube_link || '',
       };
 
-      console.log('--- Processed payload to send ---');
+      console.log('--- Update payload for Sales ID:', propertyId, '---');
       console.log(JSON.stringify(processed, null, 2));
 
       const fd = new FormData();
@@ -556,49 +632,55 @@ const CreatePropertySales = ({
         }
       };
 
-      append('title', processed.title);
-      append('description', processed.description);
-      append('price', processed.price);
-      append('price_display', processed.price_display);
-      append('property_type', processed.property_type);
-      append('listing_type', processed.listing_type);
-      append('status', processed.status);
-      append('address', processed.address);
-      append('city', processed.city);
-      append('add_guest', processed.add_guest);
-      append('bedrooms', processed.bedrooms);
-      append('bathrooms', processed.bathrooms);
-      append('pool', processed.pool);
-      append('signature_distinctions', processed.signature_distinctions);
-      append('interior_amenities', processed.interior_amenities);
-      append('outdoor_amenities', processed.outdoor_amenities);
-      append('calendar_link', processed.calendar_link);
-      append('seo_title', processed.seo_title);
-      append('seo_description', processed.seo_description);
-      append('latitude', processed.latitude);
-      append('longitude', processed.longitude);
-      append('youtube_link', processed.youtube_link);
+      // Append all processed data including youtube_link
+      Object.entries(processed).forEach(([key, value]) => {
+        append(key, value);
+      });
 
-      const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
-      mediaMeta.forEach((meta) =>
-        fd.append('media_metadata', JSON.stringify(meta))
-      );
+      // Append delete arrays if they exist
+      if (mediaImagesToDelete.length > 0) {
+        fd.append('delete_media_image_ids', JSON.stringify(mediaImagesToDelete));
+      }
+      
+      if (bedroomImagesToDelete.length > 0) {
+        fd.append('delete_bedroom_image_ids', JSON.stringify(bedroomImagesToDelete));
+      }
+      
+      if (videosToDelete.length > 0) {
+        fd.append('delete_video_ids', JSON.stringify(videosToDelete));
+      }
 
+      // Build bedroom metadata for existing and new images
       const bedroomsMeta = bedroomImages.map((img, idx) => ({
         index: idx,
         name: img.name || `Bedroom ${idx + 1}`,
         description: img.description || '',
+        id: img.existingId || null,
       }));
-      append('bedrooms_meta', bedroomsMeta);
+      
+      // Separate update and create metadata
+      const updateBedroomMeta = bedroomsMeta.filter(meta => meta.id);
+      const newBedroomMeta = bedroomsMeta.filter(meta => !meta.id);
+      
+      if (updateBedroomMeta.length > 0) {
+        fd.append('update_bedroom_meta', JSON.stringify(updateBedroomMeta));
+      }
+      
+      if (newBedroomMeta.length > 0) {
+        fd.append('bedrooms_meta', JSON.stringify(newBedroomMeta));
+      }
 
-      // Only append new files, not existing URLs
-      mediaImages.forEach((img) => {
+      // Append only new files (not existing ones)
+      const newMediaImages = mediaImages.filter(img => !img.isExisting);
+      const newBedroomImages = bedroomImages.filter(img => !img.isExisting);
+
+      newMediaImages.forEach((img) => {
         if (img.file) {
           fd.append('media_images', img.file);
         }
       });
 
-      bedroomImages.forEach((img) => {
+      newBedroomImages.forEach((img) => {
         if (img.file) {
           fd.append('bedrooms_images', img.file);
         }
@@ -608,7 +690,14 @@ const CreatePropertySales = ({
         fd.append('videos', file);
       });
 
-      console.log('--- FormData entries ---');
+      // Append existing video URLs
+      existingVideos.forEach((video) => {
+        if (video.url) {
+          fd.append('existing_videos', video.url);
+        }
+      });
+
+      console.log('--- FormData entries for update ---');
       for (const [k, v] of fd.entries()) {
         if (v instanceof File) {
           console.log(k, 'File:', v.name);
@@ -622,62 +711,56 @@ const CreatePropertySales = ({
         }
       }
 
-      const access = (() => {
-        try {
-          return localStorage.getItem('auth_access');
-        } catch {
-          return null;
-        }
-      })();
+      const access = localStorage.getItem('auth_access');
       const headers = {};
       if (access) headers['Authorization'] = `Bearer ${access}`;
 
+      // Use PATCH method for update
       const res = await fetch(
-        isEdit
-          ? `${API_BASE}/villas/properties/${editData.id}/`
-          : `${API_BASE}/villas/properties/`,
+        `${API_BASE}/villas/properties/${propertyId}/`,
         {
-          method: isEdit ? 'PUT' : 'POST',
+          method: 'PATCH',
           headers,
           body: fd,
         }
       );
+      
       const body = await res.json().catch(() => null);
 
       if (!res.ok) {
-        console.error('Create failed:', res.status, body);
+        console.error('Update failed:', res.status, body);
         const message =
-          body && (body.error || JSON.stringify(body))
-            ? body.error || JSON.stringify(body)
+          body && (body.error || body.detail || JSON.stringify(body))
+            ? body.error || body.detail || JSON.stringify(body)
             : `HTTP ${res.status}`;
-        Swal.fire({ title: 'Error!', text: message, icon: 'error' });
+        Swal.fire({ 
+          title: 'Update Error!', 
+          text: message, 
+          icon: 'error' 
+        });
         setSubmitting(false);
         return;
       }
 
-      console.log('Created property response:', body);
+      console.log('Update successful:', body);
+      
       Swal.fire({
-        title: isEdit ? 'Updated!' : 'Created!',
-        text: isEdit
-          ? 'Property updated successfully.'
-          : 'Property created successfully.',
+        title: 'Updated Successfully!',
+        text: `Sales Property ID: ${propertyId} has been updated.`,
         icon: 'success',
+        confirmButtonText: 'OK'
+      }).then(() => {
+        setSubmitting(false);
+        if (onClose) {
+          onClose();
+        } else {
+          // Redirect back to properties list
+          navigate('/dashboard/admin-properties-sales');
+        }
       });
-
-      if (!isEdit) {
-        reset();
-        setMediaImages([]);
-        setBedroomImages([]);
-        setVideos([]);
-        setSignatureList(['']);
-        setInteriorAmenities(['']);
-        setOutdoorAmenities(['']);
-      }
-      setSubmitting(false);
-      if (onClose) onClose();
     } catch (err) {
-      console.error('Submission error', err);
-      toast.error('Submission error — check console.');
+      console.error('Update error', err);
+      toast.error(`Update error: ${err.message}`);
       setSubmitting(false);
     }
   };
@@ -694,59 +777,65 @@ const CreatePropertySales = ({
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading property data for ID: {propertyId}...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen w-full">
-      {!isEdit && (
-        <div className="w-15">
-          <Link
-            to="/dashboard/admin-properties-sales"
-            className="flex items-center text-gray-500 hover:text-gray-800 transition-colors mb-4"
-          >
-            <ChevronLeft className="w-5 h-5 mr-1" />
-            <span className="text-sm font-medium">Back</span>
-          </Link>
-        </div>
-      )}
+      <div className="w-15">
+        <Link
+          to="/dashboard/admin-properties-sales"
+          className="flex items-center text-gray-500 hover:text-gray-800 transition-colors mb-4"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" />
+          <span className="text-sm font-medium">Back to Sales Properties</span>
+        </Link>
+      </div>
 
       <div className="lg:flex space-x-10 justify-between items-center mb-6 mt-2 w-full">
         <div>
           <h1 className="text-3xl font-semibold text-gray-800">
-            {isEdit ? 'Edit Property (Sales)' : 'Create New Property (Sales)'}
+            Update Property for Sales
           </h1>
           <p className="text-gray-500 mt-2">
-            {isEdit
-              ? 'Update the details of the property listing.'
-              : 'Fill out the details to create a comprehensive property listing.'}
+            Update the details of sales property ID: {propertyId}
           </p>
         </div>
         <div className="flex mt-2 items-center gap-4">
-       
+    
         </div>
       </div>
 
-      {!isEdit && (
-        <>
-          <div className="text-2xl mt-2 font-semibold mb-2">Add Location</div>
-          <div className="mb-5">
-            <LocationCreateProperty
-              lat={location.lat}
-              lng={location.lng}
-              text={location.address}
-              onLocationAdd={(villaData) =>
-                setLocation({
-                  lat: villaData.lat,
-                  lng: villaData.lng,
-                  address: villaData.name,
-                  description: villaData.description,
-                })
-              }
-            />
-          </div>
-        </>
-      )}
+      {/* Location Section */}
+      <div>
+        <div className="text-2xl mt-2 font-semibold mb-2">Update Location</div>
+        <div className="mb-5">
+          <LocationCreateProperty
+            lat={location.lat}
+            lng={location.lng}
+            text={location.address}
+            onLocationAdd={(villaData) =>
+              setLocation({
+                lat: villaData.lat,
+                lng: villaData.lng,
+                address: villaData.name,
+                description: villaData.description,
+              })
+            }
+          />
+        </div>
+      </div>
 
       <form
-        onSubmit={handleSubmit((values) => onSubmit(values, false))}
+        onSubmit={handleSubmit(onSubmit)}
         className="max-w-full mx-auto space-y-6"
       >
         {/* Basic Info */}
@@ -793,7 +882,12 @@ const CreatePropertySales = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Property Type
             </label>
-            <input type="text" disabled value="sales" className='w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500' />
+            <input 
+              type="text" 
+              disabled 
+              value="sales" 
+              className='w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500' 
+            />
           </div>
 
           <div className="col-span-12 md:col-span-4">
@@ -803,7 +897,6 @@ const CreatePropertySales = ({
             <div className="relative">
               <select
                 {...register("status")}
-                defaultValue="draft"
                 className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
               >
                 <option value="draft">Draft</option>
@@ -811,15 +904,11 @@ const CreatePropertySales = ({
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
               </select>
-
-              {/* Custom Dropdown Arrow */}
               <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
                 ▼
               </span>
             </div>
           </div>
-
-      
 
           <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -894,7 +983,15 @@ const CreatePropertySales = ({
               Property Media Images
             </label>
             <div className="text-sm text-gray-500">
-              {mediaImages.length} image(s) uploaded
+              {mediaImages.length} image(s) total
+              <span className="ml-2 text-blue-500">
+                ({mediaImages.filter(img => img.isExisting).length} existing)
+              </span>
+              {mediaImagesToDelete.length > 0 && (
+                <span className="ml-2 text-red-500">
+                  ({mediaImagesToDelete.length} marked for deletion)
+                </span>
+              )}
             </div>
           </div>
 
@@ -904,16 +1001,18 @@ const CreatePropertySales = ({
                 key={img.id}
                 image={img}
                 index={index}
-                onRemove={(id) => removeImage(id, setMediaImages, 'media')}
+                onRemove={(id, existingId) => removeImage(id, existingId, setMediaImages, 'media')}
                 onSetPrimary={setPrimaryImage}
                 isPrimary={img.isPrimary}
                 type="media"
+                isExisting={img.isExisting}
+                existingId={img.existingId}
               />
             ))}
 
             <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
               <UploadCloud className="w-8 h-8 mb-2" />
-              <p className="text-sm font-medium">Upload Media Images</p>
+              <p className="text-sm font-medium">Add More Images</p>
               <p className="text-xs text-gray-400 mt-1">
                 Click or drag & drop
               </p>
@@ -939,7 +1038,7 @@ const CreatePropertySales = ({
           ) : (
             <div className="mt-2 text-sm text-gray-600">
               <span className="font-medium">{mediaImages.length}</span> media
-              image(s) uploaded.
+              image(s) total.
               {mediaImages.filter((img) => img.isPrimary).length > 0 ? (
                 <span className="ml-2 text-teal-600">
                   Primary image is set.
@@ -960,7 +1059,15 @@ const CreatePropertySales = ({
               Bedroom Images
             </label>
             <div className="text-sm text-gray-500">
-              {bedroomImages.length} image(s) uploaded
+              {bedroomImages.length} image(s) total
+              <span className="ml-2 text-blue-500">
+                ({bedroomImages.filter(img => img.isExisting).length} existing)
+              </span>
+              {bedroomImagesToDelete.length > 0 && (
+                <span className="ml-2 text-red-500">
+                  ({bedroomImagesToDelete.length} marked for deletion)
+                </span>
+              )}
             </div>
           </div>
 
@@ -970,19 +1077,21 @@ const CreatePropertySales = ({
                 key={img.id}
                 image={img}
                 index={index}
-                onRemove={(id) =>
-                  removeImage(id, setBedroomImages, 'bedroom')
+                onRemove={(id, existingId) =>
+                  removeImage(id, existingId, setBedroomImages, 'bedroom')
                 }
                 onSetPrimary={setPrimaryImage}
                 isPrimary={img.isPrimary}
                 onNameChange={updateBedroomImageName}
                 onDescriptionChange={updateBedroomImageDescription}
+                isExisting={img.isExisting}
+                existingId={img.existingId}
               />
             ))}
 
             <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
               <UploadCloud className="w-8 h-8 mb-2" />
-              <p className="text-sm font-medium">Upload Bedrooms Images</p>
+              <p className="text-sm font-medium">Add More Bedroom Images</p>
               <p className="text-xs text-gray-400 mt-1">
                 Click or drag & drop
               </p>
@@ -996,28 +1105,51 @@ const CreatePropertySales = ({
               />
             </label>
           </div>
-
-          {bedroomImages.length === 0 ? (
-            <p className="text-sm text-gray-500 mt-2">
-              No bedroom images uploaded yet.
-            </p>
-          ) : (
-            <div className="mt-2 text-sm text-gray-600">
-              <span className="font-medium">{bedroomImages.length}</span>{' '}
-              bedroom image(s) uploaded.
-            </div>
-          )}
         </div>
 
-        {/* Videos Upload Section */}
+        {/* Videos Section */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Upload Property Videos
+            Property Videos
           </label>
+          
+          {/* Existing Videos */}
+          {existingVideos.length > 0 && (
+            <div className="mb-4 p-3 rounded-lg">
+              <h4 className="text-sm font-medium text-blue-800 mb-3">
+                Existing Videos:
+              </h4>
+
+              <div className="flex flex-wrap gap-3">
+                {existingVideos.map((video, idx) => (
+                  <div
+                    key={idx}
+                    className="relative w-56 h-56 bg-white border rounded-lg flex items-center justify-center"
+                  >
+                    <video
+                      src={video.url}
+                      controls
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => removeExistingVideo(idx, video.id)}
+                      className="absolute -top-2 -right-2 bg-white border rounded-full p-1 text-red-500 hover:text-red-700 shadow"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New Videos Upload */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer text-gray-500 hover:border-teal-500 hover:text-teal-600 transition h-32 bg-gray-50 hover:bg-gray-100">
               <UploadCloud className="w-8 h-8 mb-2" />
-              <p className="text-sm font-medium">Upload Videos</p>
+              <p className="text-sm font-medium">Add New Videos</p>
               <p className="text-xs text-gray-400 mt-1">
                 Click or drag & drop
               </p>
@@ -1034,8 +1166,7 @@ const CreatePropertySales = ({
             {videos.length > 0 && (
               <div className="flex flex-col justify-center">
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">{videos.length}</span> video
-                  file(s) selected:
+                  <span className="font-medium">{videos.length}</span> new video file(s) selected:
                 </div>
                 <div className="mt-2 text-xs text-gray-500 space-y-1">
                   {videos.map((video, idx) => (
@@ -1074,8 +1205,6 @@ const CreatePropertySales = ({
           />
         </div>
 
-   
-
         {/* Signature Distinctions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1113,24 +1242,24 @@ const CreatePropertySales = ({
                   >
                     Add
                   </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      removeArrayItem(setSignatureList, signatureList, i)
-                    }
-                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                  >
-                    Remove
-                  </button>
+                  {signatureList.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        removeArrayItem(setSignatureList, signatureList, i)
+                      }
+                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
-            {signatureList.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
-                No signature distinctions added yet. Click "Add" to add one.
-              </p>
-            )}
           </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Add signature distinctions for this property. At least one field will always be available.
+          </p>
         </div>
 
         {/* Indoor / Outdoor Amenities */}
@@ -1171,28 +1300,28 @@ const CreatePropertySales = ({
                     >
                       Add
                     </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeArrayItem(
-                          setInteriorAmenities,
-                          interiorAmenities,
-                          i
-                        )
-                      }
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                    >
-                      Remove
-                    </button>
+                    {interiorAmenities.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeArrayItem(
+                            setInteriorAmenities,
+                            interiorAmenities,
+                            i
+                          )
+                        }
+                        className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
-              {interiorAmenities.length === 0 && (
-                <p className="text-sm text-gray-500 italic">
-                  No indoor amenities added yet. Click "Add" to add one.
-                </p>
-              )}
             </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Add indoor amenities. At least one field will always be available.
+            </p>
           </div>
 
           <div className="col-span-12 md:col-span-6">
@@ -1231,28 +1360,28 @@ const CreatePropertySales = ({
                     >
                       Add
                     </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeArrayItem(
-                          setOutdoorAmenities,
-                          outdoorAmenities,
-                          i
-                        )
-                      }
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                    >
-                      Remove
-                    </button>
+                    {outdoorAmenities.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeArrayItem(
+                            setOutdoorAmenities,
+                            outdoorAmenities,
+                            i
+                          )
+                        }
+                        className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
-              {outdoorAmenities.length === 0 && (
-                <p className="text-sm text-gray-500 italic">
-                  No outdoor amenities added yet. Click "Add" to add one.
-                </p>
-              )}
             </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Add outdoor amenities. At least one field will always be available.
+            </p>
           </div>
         </div>
 
@@ -1284,7 +1413,7 @@ const CreatePropertySales = ({
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Update Button */}
         <div className="flex flex-col gap-3 mt-6 w-full mb-10">
           <button
             type="submit"
@@ -1313,7 +1442,7 @@ const CreatePropertySales = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {isEdit ? 'Updating...' : 'Creating...'}
+                Updating Sales Property ID: {propertyId}...
               </>
             ) : (
               <>
@@ -1321,48 +1450,23 @@ const CreatePropertySales = ({
                   className="mr-2 w-5 h-5 cursor-pointer"
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760999922/Icon_41_fxo3ap.png"
                   alt="icon"
+
                 />{' '}
-                {isEdit ? 'Update Property' : 'Create Property'}
+                Update Sales Property 
               </>
             )}
           </button>
 
-          {!isEdit && (
-            <>
-              <button
-                type="button"
-                className="flex items-center cursor-pointer justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
-                onClick={async () => {
-                  const values = getValues();
-                  await onSubmit(values, true);
-                }}
-                disabled={submitting}
-              >
-                <Save className="w-5 h-5 mr-2" /> Save as Draft
-              </button>
-
-              <Link
-                to="/dashboard/admin-properties-sales"
-                className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
-              >
-                Cancel
-              </Link>
-            </>
-          )}
-
-          {isEdit && onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm"
-            >
-              Cancel
-            </button>
-          )}
+          <Link
+            to="/dashboard/admin-properties-sales"
+            className="flex items-center justify-center w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition shadow-sm text-center"
+          >
+            Back to Sales Properties List
+          </Link>
         </div>
       </form>
     </div>
   );
 };
 
-export default CreatePropertySales;
+export default UpdateSales;

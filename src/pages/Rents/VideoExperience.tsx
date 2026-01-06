@@ -1,18 +1,79 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import youtubeImg from "../../assets/youtube.svg";
 
-const VideoExperience = ({ videos = [], villa }) => {
+type VideoItem = {
+  url: string;
+};
+
+type Villa = {
+  title?: string;
+  cover_image?: string;
+  youtube_link?: string;
+};
+
+interface VideoExperienceProps {
+  videos?: VideoItem[];
+  villa?: Villa;
+}
+
+/* =========================
+   HELPERS
+========================= */
+
+// Convert YouTube watch / short link → embed link
+const toYoutubeEmbed = (url: string): string => {
+  if (!url) return "";
+
+  // already embed
+  if (url.includes("youtube.com/embed")) return url;
+
+  // watch?v=
+  const watchMatch = url.match(/v=([^&]+)/);
+  if (watchMatch) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  }
+
+  // youtu.be/
+  const shortMatch = url.match(/youtu\.be\/([^?]+)/);
+  if (shortMatch) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  }
+
+  return url;
+};
+
+const isYoutube = (url: string) =>
+  /youtube\.com|youtu\.be/.test(url);
+
+const VideoExperience: React.FC<VideoExperienceProps> = ({
+  videos = [],
+  villa,
+}) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Pick first video
-  const mainVideo = videos?.[0]?.url || null;
+  /* =========================
+     VIDEO PRIORITY
+  ========================= */
 
-  // Default video fallback
-  const videoSrc = mainVideo
-    ? mainVideo
-    : "https://www.youtube.com/embed/1dxrO79dbCg";
+  const rawVideo =
+    videos?.[0]?.url ||
+    villa?.youtube_link ||
+    "https://www.youtube.com/watch?v=1dxrO79dbCg";
 
-  // Default thumbnail image
+  const video = useMemo(() => {
+    if (isYoutube(rawVideo)) {
+      return {
+        type: "youtube" as const,
+        src: toYoutubeEmbed(rawVideo),
+      };
+    }
+
+    return {
+      type: "mp4" as const,
+      src: rawVideo,
+    };
+  }, [rawVideo]);
+
   const thumbnail =
     villa?.cover_image ||
     "https://images.unsplash.com/photo-1505691938895-1758d7feb511";
@@ -23,37 +84,42 @@ const VideoExperience = ({ videos = [], villa }) => {
         The Video Experience
       </h2>
 
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
         {!isPlaying ? (
           <>
-            {/* Thumbnail Image */}
             <img
               src={thumbnail}
               alt={villa?.title || "Villa Video Thumbnail"}
-              className="w-full h-full object-cover "
+              className="w-full h-full object-cover"
             />
 
-            {/* Overlay */}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <button
                 onClick={() => setIsPlaying(true)}
-                className="w-24 h-24 rounded-full cursor-pointer  text-black text-7xl flex items-center justify-center hover:scale-105 transition"
+                className="w-24 h-24 rounded-full flex items-center justify-center hover:scale-105 transition"
               >
-
-                <img src={youtubeImg} alt="" />
-           
+                <img
+                  src={youtubeImg}
+                  alt="Play"
+                  className="w-full h-full"
+                />
               </button>
             </div>
           </>
-        ) : (
+        ) : video.type === "youtube" ? (
           <iframe
-            src={`${videoSrc}?autoplay=1`}
+            src={`${video.src}?autoplay=1`}
             title={villa?.title || "Villa Video Experience"}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
+            allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
             className="absolute inset-0 w-full h-full"
+          />
+        ) : (
+          <video
+            src={video.src}
+            controls
+            autoPlay
+            className="absolute inset-0 w-full h-full object-cover"
           />
         )}
       </div>

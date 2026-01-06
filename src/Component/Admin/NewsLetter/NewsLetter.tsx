@@ -21,7 +21,7 @@ const newsletterData = [
     location: "New York",
     price: "$2,850,000",
     type: "Rentals",
-    status: "pending",
+    status: "published",
   },
   {
     id: 3,
