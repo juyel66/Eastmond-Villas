@@ -5,12 +5,10 @@ import { Info } from "lucide-react";
 
 // Currency formatter (NOW WITH DECIMALS)
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return `USD$${new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(amount)}`;
 };
 
 interface Rate {
