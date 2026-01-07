@@ -1039,11 +1039,6 @@
 
 
 
-
-
-
-
-
 // ImageGallerySections.tsx
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
@@ -1087,8 +1082,24 @@ const StaffItem = ({ name, details }) => (
   </li>
 );
 
-
-
+// Helper function to format numbers with commas
+const formatNumberWithCommas = (value) => {
+  if (!value) return "";
+  
+  // Convert to string and remove any existing commas
+  const strValue = String(value).replace(/,/g, '');
+  
+  // Check if it's a number with decimal
+  if (strValue.includes('.')) {
+    const parts = strValue.split('.');
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const decimalPart = parts[1] || '';
+    return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+  }
+  
+  // For whole numbers
+  return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
 
 // Simple helper to load images with crossOrigin and fallback
 const loadImageWithFallback = (src) =>
@@ -1215,48 +1226,41 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
 const ImageGallerySection = ({ villa }) => {
   if (!villa)
     return (
+      <div className="py-10 flex justify-center">
+        <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
+          {/* Shimmer wave */}
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* LEFT IMAGE */}
+            <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
 
+            {/* RIGHT CONTENT */}
+            <div className="flex flex-col justify-between">
+              <div>
+                {/* Title */}
+                <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
 
-     <div className="py-10 flex justify-center">
-  <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
-    {/* Shimmer wave */}
-    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
+                {/* Location */}
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* LEFT IMAGE */}
-      <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
+                {/* Price */}
+                <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
 
-      {/* RIGHT CONTENT */}
-      <div className="flex flex-col justify-between">
-        <div>
-          {/* Title */}
-          <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
+                {/* Stats */}
+                <div className="flex gap-6 mb-8">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                </div>
+              </div>
 
-          {/* Location */}
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
-
-          {/* Price */}
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
-
-          {/* Stats */}
-          <div className="flex gap-6 mb-8">
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
+              {/* Button */}
+              <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
+            </div>
           </div>
         </div>
-
-        {/* Button */}
-        <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
       </div>
-    </div>
-  </div>
-</div>
-
-
-
-      
     );
 
   console.log("🔎 Single Villa Data (Image Gallery Component):", villa);
@@ -1486,8 +1490,6 @@ const ImageGallerySection = ({ villa }) => {
         });
         return;
       }
-
-      
 
       console.log("Download recorded successfully for property:", villaId);
 
@@ -1777,7 +1779,10 @@ const ImageGallerySection = ({ villa }) => {
         addText("Security Deposit", 16, true, "left", [0, 0, 0]);
         yPos += 8;
         pdf.setFontSize(12);
-        pdf.text(`US$ ${security_deposit}`, margin, yPos);
+        
+        // Format security deposit with commas
+        const formattedSecurityDeposit = formatNumberWithCommas(security_deposit);
+        pdf.text(`USD$ ${formattedSecurityDeposit}`, margin, yPos);
         yPos += 12;
       }
 
@@ -1800,7 +1805,7 @@ const ImageGallerySection = ({ villa }) => {
           // Format rate_per_night properly
           let formattedRate = "N/A";
           if (rate.rate_per_night && rate.rate_per_night !== "N/A") {
-            // Convert to number if possible
+            // Convert to number if possible and format with commas
             const rateNum = parseFloat(rate.rate_per_night);
             if (!isNaN(rateNum)) {
               formattedRate = `$${rateNum.toLocaleString('en-US', {
@@ -1808,7 +1813,7 @@ const ImageGallerySection = ({ villa }) => {
                 maximumFractionDigits: 2
               })}`;
             } else {
-              formattedRate = rate.rate_per_night;
+              formattedRate = `$${formatNumberWithCommas(rate.rate_per_night)}`;
             }
           }
           
@@ -1965,6 +1970,9 @@ const ImageGallerySection = ({ villa }) => {
 
   const villaId = villa.id;
 
+  // Format security deposit value with commas
+  const formattedSecurityDeposit = formatNumberWithCommas(security_deposit);
+
   // -------- UI Rendering --------
   return (
     <section className="container mx-auto mb-[920px] px-4 py-16 relative">
@@ -2010,7 +2018,7 @@ const ImageGallerySection = ({ villa }) => {
               </button>
             )}
 
-            <VideoExperience videos={videos} villa={villa}  />
+            <VideoExperience videos={videos} villa={villa} />
 
             <Description
               descriptionData={description}
@@ -2124,7 +2132,7 @@ const ImageGallerySection = ({ villa }) => {
               </h3>
 
               <p className="text-2xl font-semibold">
-                US$ {security_deposit || "US$ 10,000.00"}
+                USD$ {formattedSecurityDeposit || "10,000.00"}
               </p>
             </>
           )}
