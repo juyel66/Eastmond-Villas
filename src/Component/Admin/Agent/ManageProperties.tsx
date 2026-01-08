@@ -8,21 +8,17 @@ import Swal from "sweetalert2";
  * ManageProperties.tsx
  * - Reads agent id from prop OR URL query (?agent=4 or ?agentId=4)
  * - Uses effectiveAgentId + viewAgentId for preselecting, optimistic updates and saves
- * - PATCH logic: try JSON first; if server returns 415, retry with FormData
- * - For a given agent (e.g. ?agent=30), admin screen shows:
- *     • All properties (sales/rentals per tab)
- *     • Assigned ones are selectable only for this agent, others blocked
- *     • Unassigned (AVAILABLE) properties visible to everyone
- * - Supports role-based view:
- *     • Admin: can view ALL properties in each tab
- *     • Agent: sees only their own assignments + available properties
+ * - New API integration for property assignments
+ * - Now ALL properties can be assigned to ALL agents regardless of current assignment
  */
 
 // ---------- CONFIG ----------
 const API_BASE = "https://api.eastmondvillas.com";
 const PROPERTIES_PATH = "/api/villas/properties/"; // used with ?page=1
-const PROPERTY_PATCH = (id: number | string) =>
-  `${API_BASE.replace(/\/+$/, "")}/api/villas/properties/${id}/`;
+const PROPERTY_ASSIGNMENTS_API = (agentId: number | string) => 
+  `${API_BASE.replace(/\/+$/, "")}/api/villas/property-assignments/?agent_id=${agentId}`;
+const ASSIGN_PROPERTY_TO_AGENT_API = 
+  `${API_BASE.replace(/\/+$/, "")}/api/villas/assign-property-to-agent/`;
 
 // ---------- SMALL TYPES ----------
 type NormalizedProperty = {
@@ -35,6 +31,7 @@ type NormalizedProperty = {
   raw: any;
   assigned_agent: number | string | null | undefined;
   assigned_agent_name?: string | null;
+  is_assigned?: boolean; // New field from assignments API
 };
 
 type ManagePropertiesProps = {
@@ -58,7 +55,7 @@ const PropertyStatusBadge = ({ status }: { status?: string }) => {
     case "pending review":
       classes = "bg-yellow-100 text-yellow-700";
       break;
-    case "draft":
+    case "Published":
       classes = "bg-gray-100 text-gray-700";
       break;
     default:
@@ -82,15 +79,8 @@ const PropertyListItem = ({
   isSelected: boolean;
   onToggle: (id: number) => void;
 }) => {
-  // normalize assigned flag for label
-  const raw = property.assigned_agent;
-  const isAssigned = !(
-    raw === null ||
-    typeof raw === "undefined" ||
-    raw === "" ||
-    raw === 0 ||
-    raw === "0"
-  );
+  // Get assigned status from new API field
+  const isAssigned = property.is_assigned || false;
 
   const assignmentLabel = isAssigned ? "Assigned" : "Available";
   const assignmentClasses = isAssigned
@@ -248,7 +238,7 @@ export default function ManageProperties({
       id: p.id,
       name: p.title ?? p.name ?? `Untitled #${p.id}`,
       location: p.address ?? p.city ?? "",
-      status: p.status ?? "draft",
+      status: p.status ?? "Published",
       type: (p.listing_type ?? p.type ?? "")
         .toString()
         .toLowerCase()
@@ -259,55 +249,43 @@ export default function ManageProperties({
         (p.media_images && p.media_images[0] && p.media_images[0].image) ||
         p.main_image_url ||
         p.imageUrl ||
+        (p.images && p.images[0] && p.images[0].image) || // New from assignments API
         "https://placehold.co/120x80/cccccc/333333?text=N/A",
       raw: p,
       assigned_agent: assignedAgentId,
       assigned_agent_name: assignedAgentName,
+      is_assigned: p.is_assigned ?? false, // New field
     };
     return normalized;
   }
 
-  async function fetchAllPropertiesPages() {
+  async function fetchAllProperties() {
+    if (!viewAgentId) return;
+    
     setLoading(true);
     setError(null);
     try {
-      let url: string | null = `${API_BASE}${PROPERTIES_PATH}?page=1`;
-      const acc: any[] = [];
-      while (url) {
-        const res = await fetch(url, { headers: { ...authHeaders() } });
-        if (!res.ok)
-          throw new Error(`Failed to fetch properties (${res.status})`);
-        const json = await res.json();
+      // Fetch properties with agent assignments
+      const res = await fetch(PROPERTY_ASSIGNMENTS_API(viewAgentId), { 
+        headers: { ...authHeaders() } 
+      });
+      
+      if (!res.ok)
+        throw new Error(`Failed to fetch properties (${res.status})`);
+      
+      const json = await res.json();
+      const list = Array.isArray(json.results) ? json.results : json.data ?? [];
 
-        const list = Array.isArray(json.results)
-          ? json.results
-          : json.data ?? [];
-        acc.push(...list);
-        if (json.next)
-          url = json.next.startsWith("http")
-            ? json.next
-            : `${API_BASE}${json.next}`;
-        else url = null;
-      }
-
-      const normalized = acc.map(normalizeProperty);
+      const normalized = list.map(normalizeProperty);
       setProperties(normalized);
 
-      if (viewAgentId != null) {
-        const preselected = normalized
-          .filter(
-            (p) =>
-              p.assigned_agent != null &&
-              Number(p.assigned_agent) === Number(viewAgentId)
-          )
-          .map((p) => p.id);
+      // Preselect properties that are already assigned to this agent
+      const preselected = normalized
+        .filter((p) => p.is_assigned)
+        .map((p) => p.id);
 
-        setSelectedPropertyIds(preselected);
-        setInitialAssignedIds(preselected);
-      } else {
-        setSelectedPropertyIds([]);
-        setInitialAssignedIds([]);
-      }
+      setSelectedPropertyIds(preselected);
+      setInitialAssignedIds(preselected);
     } catch (err: any) {
       setError(err?.message || "Failed to load properties");
       setProperties([]);
@@ -319,155 +297,38 @@ export default function ManageProperties({
   }
 
   useEffect(() => {
-    fetchAllPropertiesPages();
+    fetchAllProperties();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewAgentId]);
 
-  // toggle selection — optimistic assigned_agent update when we know viewAgentId
+  // toggle selection — optimistic update
   const handleToggleProperty = (propertyId: number) => {
-    const target = properties.find((p) => p.id === propertyId);
-    if (!target) {
-      return;
-    }
-
-    // HARD GUARD: if this property is already assigned to another agent,
-    // do NOT allow assigning it here to a different agent.
-    if (viewAgentId != null) {
-      const raw = target.assigned_agent;
-      let assigned: number | null;
-      if (
-        raw === null ||
-        typeof raw === "undefined" ||
-        raw === "" ||
-        raw === 0 ||
-        raw === "0"
-      ) {
-        assigned = null; // treat as AVAILABLE
-      } else {
-        assigned = Number(raw);
-      }
-
-      const currentAgent = Number(viewAgentId);
-
-      if (assigned !== null && assigned !== currentAgent) {
-        const assignedAgentNameFromRaw: string =
-          target.assigned_agent_name ??
-          target.raw?.assigned_agent_name ??
-          target.raw?.assigned_agent?.name ??
-          target.raw?.assigned_agent?.full_name ??
-          target.raw?.assigned_agent?.username ??
-          `Agent #${assigned}`;
-
-        Swal.fire({
-          icon: "warning",
-          title: "Already assigned to another agent",
-          text: `This property is already assigned to ${assignedAgentNameFromRaw}.`,
-          position: "center",
-          showConfirmButton: true,
-        });
-        return;
-      }
-    }
-
+    // NEW LOGIC: Always allow toggling, no restrictions
     setSelectedPropertyIds((prev) => {
       const isSelected = prev.includes(propertyId);
       const next = isSelected
         ? prev.filter((id) => id !== propertyId)
         : [...prev, propertyId];
 
-      if (viewAgentId != null) {
-        setProperties((old) =>
-          old.map((o) =>
-            o.id === propertyId
-              ? {
-                  ...o,
-                  assigned_agent: !isSelected ? Number(viewAgentId) : null,
-                  // name is not changed here; backend will respond with fresh data on refetch
-                }
-              : o
-          )
-        );
-      }
+      // Optimistic update
+      setProperties((old) =>
+        old.map((o) =>
+          o.id === propertyId
+            ? {
+                ...o,
+                is_assigned: !isSelected,
+                // If assigning to this agent, update the assigned_agent info
+                assigned_agent: !isSelected ? Number(viewAgentId) : null,
+              }
+            : o
+        )
+      );
 
       return next;
     });
   };
 
-  // PATCH helper (robust)
-  async function patchAssignedAgent(
-    propertyId: number,
-    assignedValue: number | null
-  ) {
-    const tryJson = async () => {
-      const payload = {
-        assigned_agent: assignedValue === null ? null : Number(assignedValue),
-      };
-      const headers = { ...authHeaders(), "Content-Type": "application/json" };
-      const res = await fetch(PROPERTY_PATCH(propertyId), {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify(payload),
-      });
-      return { res, payloadMode: "json" as const, payload };
-    };
-
-    const tryForm = async () => {
-      const fd = new FormData();
-      fd.append(
-        "assigned_agent",
-        assignedValue === null ? "" : String(Number(assignedValue))
-      );
-      const headers = { ...authHeaders() };
-      const res = await fetch(PROPERTY_PATCH(propertyId), {
-        method: "PATCH",
-        headers,
-        body: fd,
-      });
-      return {
-        res,
-        payloadMode: "form" as const,
-        payloadFormValue: fd.get("assigned_agent"),
-      };
-    };
-
-    // 1) try JSON
-    let attempt = await tryJson();
-    let res = attempt.res;
-
-    // 2) If JSON rejected due to unsupported media type, retry with form-data
-    if (res.status === 415) {
-      attempt = await tryForm();
-      res = attempt.res;
-    }
-
-    const result: any = {
-      propertyId,
-      ok: res.ok,
-      status: res.status,
-      payloadMode: attempt.payloadMode,
-    };
-    try {
-      const text = await res.text();
-      try {
-        result.bodyJson = JSON.parse(text);
-        result.bodyText = JSON.stringify(result.bodyJson);
-      } catch {
-        result.bodyText = text;
-      }
-    } catch {
-      result.bodyText = "";
-    }
-
-    if (!res.ok) {
-      const err = new Error(`Patch ${propertyId} failed (${res.status})`);
-      (err as any).detail = result;
-      throw err;
-    }
-
-    return result;
-  }
-
-  // Save changes (batch)
+  // Save assignments using new bulk API
   async function handleSaveAssignments() {
     if (viewAgentId == null) {
       alert(
@@ -482,54 +343,37 @@ export default function ManageProperties({
 
     setSaving(true);
     try {
-      const before = new Set(initialAssignedIds);
-      const after = new Set(selectedPropertyIds);
-      const toAssign = Array.from(after).filter((id) => !before.has(id));
-      const toUnassign = Array.from(before).filter((id) => !after.has(id));
+      const payload = {
+        agent: Number(viewAgentId),
+        properties: selectedPropertyIds,
+      };
 
-      const requests: Promise<any>[] = [];
-      for (const id of toAssign)
-        requests.push(patchAssignedAgent(id, Number(viewAgentId)));
-      for (const id of toUnassign)
-        requests.push(patchAssignedAgent(id, null));
-
-      if (requests.length === 0) {
-        alert("No changes to save.");
-        setSaving(false);
-        return;
-      }
-
-      const settled = await Promise.allSettled(requests);
-      const successes: any[] = [];
-      const failures: any[] = [];
-      settled.forEach((s) => {
-        if (s.status === "fulfilled") successes.push(s.value);
-        else {
-          const reason = (s as PromiseRejectedResult).reason;
-          if (reason && reason.detail) failures.push(reason.detail);
-          else failures.push({ message: String(reason) });
-        }
+      const response = await fetch(ASSIGN_PROPERTY_TO_AGENT_API, {
+        method: "POST",
+        headers: {
+          ...authHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
-      if (failures.length === 0) {
-        Swal.fire({
-          icon: "success",
-          title: "Updated successfully",
-          text: ``,
-          position: "center",
-          showConfirmButton: true,
-        });
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Property assignment completed with errors",
-          text: `${successes.length} succeeded, ${failures.length} failed. Check console for full details.`,
-          position: "center",
-          showConfirmButton: true,
-        });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to save assignments: ${response.status} - ${errorText}`);
       }
 
-      await fetchAllPropertiesPages();
+      const result = await response.json();
+
+      Swal.fire({
+        icon: "success",
+        title: "Updated successfully",
+        text: `Assigned ${selectedPropertyIds.length} properties to agent`,
+        position: "center",
+        showConfirmButton: true,
+      });
+
+      // Refresh the data
+      await fetchAllProperties();
     } catch (err: any) {
       Swal.fire({
         icon: "error",
@@ -538,6 +382,10 @@ export default function ManageProperties({
         position: "center",
         showConfirmButton: true,
       });
+      
+      // Revert to initial state on error
+      setSelectedPropertyIds([...initialAssignedIds]);
+      fetchAllProperties();
     } finally {
       setSaving(false);
     }
@@ -545,7 +393,7 @@ export default function ManageProperties({
 
   const handleCancel = () => {
     setSelectedPropertyIds([...initialAssignedIds]);
-    fetchAllPropertiesPages();
+    fetchAllProperties();
   };
 
   // 🔢 SUMMARY STATS: totals & available counts + total assigned
@@ -555,14 +403,7 @@ export default function ManageProperties({
     let totalAssigned = 0;
 
     properties.forEach((p) => {
-      const rawAssign = p.assigned_agent;
-      const isAvailable =
-        rawAssign === null ||
-        typeof rawAssign === "undefined" ||
-        rawAssign === "" ||
-        rawAssign === 0 ||
-        rawAssign === "0";
-
+      const isAvailable = !p.is_assigned;
       const type = (p.type ?? "").toLowerCase();
 
       if (isAvailable) {
@@ -591,28 +432,13 @@ export default function ManageProperties({
       if (activeTab === "sales" && type !== "sales") return false;
       if (activeTab === "rentals" && type !== "rentals") return false;
 
-      // Normalize assigned_agent (treat 0, "0", "", null, undefined as AVAILABLE)
-      const raw = p.assigned_agent;
-      let assigned: number | null;
-      if (
-        raw === null ||
-        typeof raw === "undefined" ||
-        raw === "" ||
-        raw === 0 ||
-        raw === "0"
-      ) {
-        assigned = null; // AVAILABLE
-      } else {
-        assigned = Number(raw);
-      }
-
       const hasViewAgent = viewAgentId != null;
       const currentAgent = hasViewAgent ? Number(viewAgentId) : null;
 
       // Agent: only own + available
       if (currentUserRole === "agent" && hasViewAgent && currentAgent !== null) {
-        if (assigned === null) return true; // available
-        if (assigned === currentAgent) return true; // belongs to this agent
+        if (!p.is_assigned) return true; // available
+        if (p.assigned_agent === currentAgent) return true; // belongs to this agent
         return false; // belongs to another agent → hide
       }
 

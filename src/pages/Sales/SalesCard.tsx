@@ -5,10 +5,10 @@ import { CiShare2 } from "react-icons/ci";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
-import bathImg from "../../assets/bath.svg"
-import polImg from "../../assets/pol.svg"
-import mapImg from "../../assets/map.svg"
-import bedsImg from "../../assets/beddds.svg"
+import bathImg from "../../assets/bath.svg";
+import polImg from "../../assets/pol.svg";
+import mapImg from "../../assets/map.svg";
+import bedsImg from "../../assets/beddds.svg";
 
 import {
   FaFacebookF,
@@ -293,6 +293,15 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     minimumFractionDigits: 0,
   }).format(property.price);
 
+  // Determine price display based on rateType
+  const getPriceDisplay = () => {
+    if (property.rateType?.toLowerCase() === "rent") {
+      return `From USD$${formattedPrice}/night`;
+    }
+    // For "sale" or any other type
+    return `From USD$${formattedPrice}`;
+  };
+
   const amenities = [
     {
       icon: (
@@ -557,7 +566,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               </p>
 
               <p className="text-[16px] sm:text-xl md:text-2xl text-emerald-700 font-bold mt-4">
-                From <span>USD${formattedPrice}</span>/night
+                {getPriceDisplay()}
               </p>
 
               {/* Amenities */}

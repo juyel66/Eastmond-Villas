@@ -8,9 +8,9 @@ import { selectCurrentUser } from '@/features/Auth/authSlice';
 /**
  * PropertiesSales.tsx
  * - Same UI/design as your Rentals page
- * - Fetches sale properties from: ${API_BASE}/villas/properties/?listing_type=sale
- * - Shows ONLY properties assigned to the current user (by ID)
- * - Logs raw & mapped data to console for debugging
+ * - Fetches sale properties from: ${API_BASE}/api/villas/agent/properties/?listing_type=sale
+ * - Shows ONLY properties assigned to the current agent
+ * - View Details links to: /dashboard/agent-property-sales-details/:id
  */
 
 // --- TYPE DEFINITIONS ---
@@ -22,7 +22,7 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   pool: number;
-  status: 'published' | 'draft' | 'pending';
+  status: 'published' | 'draft' | 'pending_review' | 'pending';
   imageUrl: string;
   description?: string | null;
   calendar_link?: string | null;
@@ -143,12 +143,12 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     let bgColor = 'bg-gray-100 text-gray-700';
     if (status === 'published') bgColor = 'bg-green-100 text-green-700';
     else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
-    else if (status === 'pending') bgColor = 'bg-blue-100 text-blue-700';
+    else if (status === 'pending_review' || status === 'pending') bgColor = 'bg-blue-100 text-blue-700';
     return (
       <span
         className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
       >
-        {status}
+        {status.replace('_', ' ')}
       </span>
     );
   };
@@ -245,7 +245,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             <div>
               <p className="text-gray-500 text-xs uppercase">Price</p>
               <p className="font-semibold text-gray-800">
-                {formatPrice(price)}
+               USD{formatPrice(price)}
               </p>
             </div>
             <div>
@@ -299,7 +299,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             Copy Description
           </button>
 
-          <button
+          {/* <button
             onClick={() =>
               copyToClipboard(property.calendar_link ?? '', 'Calendar Link')
             }
@@ -311,7 +311,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               className="h-4 w-4"
             />
             Copy Calendar Link
-          </button>
+          </button> */}
 
           <button
             onClick={() => downloadImage(property.imageUrl)}
@@ -342,48 +342,6 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastFetchAt, setLastFetchAt] = useState<number | null>(null);
 
-  // Logged-in user from Redux
-  const currentUser = useSelector(selectCurrentUser) as
-    | { id?: number | string | null; email?: string | null }
-    | null;
-
-  // Current user numeric ID
-  const currentUserId = useMemo(() => {
-    if (currentUser?.id !== undefined && currentUser?.id !== null) {
-      const n = Number(currentUser.id);
-      if (!isNaN(n)) return n;
-    }
-    return null;
-  }, [currentUser]);
-
-  // Fallback from localStorage
-  const lsAgentId = useMemo(() => {
-    try {
-      const fromLS =
-        localStorage.getItem('agent_id') ??
-        localStorage.getItem('assigned_agent') ??
-        localStorage.getItem('agentId') ??
-        localStorage.getItem('user_id');
-      if (fromLS) {
-        const n = Number(fromLS);
-        if (!isNaN(n)) return n;
-      }
-    } catch {
-      // ignore
-    }
-    return null;
-  }, []);
-
-  // Final agent ID used for filtering
-  const effectiveAgentId = useMemo(() => {
-    if (typeof propAgentId === 'number' && !isNaN(propAgentId)) {
-      return propAgentId;
-    }
-    if (currentUserId !== null) return currentUserId;
-    if (lsAgentId !== null) return lsAgentId;
-    return null;
-  }, [propAgentId, currentUserId, lsAgentId]);
-
   const loadProperties = async (opts?: {
     ignoreResults?: { current: boolean };
   }) => {
@@ -391,12 +349,29 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
     setLoadError(null);
 
     try {
-      const url = `${API_BASE.replace(
-        /\/+$/,
-        ''
-      )}/villas/properties/?listing_type=sale`;
+      // ✅ FETCHING SALE PROPERTIES FROM AGENT SPECIFIC API
+      const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=sale`;
+      
+      console.log('[Sales] Fetching from URL:', url);
+      
+      // Add authorization headers
+      const headers: HeadersInit = {
+        'Accept': 'application/json',
+      };
+      
+      try {
+        const token = localStorage.getItem('auth_access') || 
+                     localStorage.getItem('access_token') || 
+                     localStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      } catch (e) {
+        console.warn('Token error:', e);
+      }
+      
       const res = await fetch(url, {
-        headers: { Accept: 'application/json' },
+        headers,
       });
 
       if (!res.ok) {
@@ -406,67 +381,63 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
 
       const data = await res.json();
 
-      // 🔍 LOG RAW RESPONSE
-      console.log('[Sales] Raw response from /villas/properties:', data);
+      // Extract properties from results array
+      const list = Array.isArray(data?.results) ? data.results : [];
 
-      const list = Array.isArray(data)
-        ? data
-        : data?.results ?? data?.items ?? [];
+      console.log('[Sales] API Response count:', list.length);
 
-      // 🔍 LOG PARSED LIST
-      console.log('[Sales] Parsed sale properties list:', list);
-
+      // Map API response to our Property interface
       const mapped: Property[] = list.map((p: any) => {
-        let img = p.main_image_url ?? p.imageUrl ?? null;
-        if (
-          img == null &&
-          Array.isArray(p.media_images) &&
-          p.media_images.length > 0
-        ) {
-          img = p.media_images[0]?.image ?? null;
+        // Get first media image
+        let img = PLACEHOLDER_IMAGE;
+        if (p.media_images && Array.isArray(p.media_images) && p.media_images.length > 0) {
+          img = p.media_images[0]?.image || PLACEHOLDER_IMAGE;
         }
-        if (img && img.startsWith('/')) {
-          img = `${API_BASE.replace(/\/api\/?$/, '')}${img}`;
-        }
-        const priceVal =
-          Number(p.price ?? p.price_display ?? p.total_price ?? 0) || 0;
-        const address =
-          p.address ??
-          (p.location
-            ? typeof p.location === 'string'
-              ? p.location
-              : ''
-            : '') ??
-          p.city ??
-          '';
+        
+        // Parse price - handle string like "751.00"
+        const priceVal = parseFloat(p.price || p.price_display || "0") || 0;
+        
+        // Parse bedrooms and bathrooms - handle string like "76.0"
+        const bedroomsVal = parseFloat(p.bedrooms || "0") || 0;
+        const bathroomsVal = parseFloat(p.bathrooms || "0") || 0;
+        
+        // Pool as number
+        const poolVal = parseInt(p.pool || "0", 10) || 0;
+        
+        // Address
+        const address = p.address || p.city || 'No address provided';
+        
+        // Status normalization
+        let statusVal: Property['status'] = 'draft';
+        const rawStatus = (p.status || '').toLowerCase();
+        if (rawStatus === 'published') statusVal = 'published';
+        else if (rawStatus === 'pending_review') statusVal = 'pending_review';
+        else if (rawStatus === 'pending') statusVal = 'pending';
+        else statusVal = 'draft';
+        
+        // Listing type
+        const listingTypeRaw = String(p.listing_type || '').toLowerCase();
+        let listingType: Property['listing_type'] = 'other';
+        if (listingTypeRaw === 'sale') listingType = 'sale';
+        else if (listingTypeRaw === 'rent') listingType = 'rent';
 
         return {
-          id: Number(p.id ?? p.pk ?? Math.floor(Math.random() * 1e9)),
-          title: p.title ?? p.name ?? p.slug ?? 'Untitled',
-          address: address || '—',
+          id: Number(p.id || 0),
+          title: p.title || 'Untitled Property',
+          address: address,
           price: priceVal,
-          bedrooms: Number(p.bedrooms ?? p.num_bedrooms ?? 0),
-          bathrooms: Number(p.bathrooms ?? p.num_bathrooms ?? 0),
-          pool: Number(p.pool ?? 0),
-          status:
-            (String(p.status ?? p.state ?? 'draft').toLowerCase() as
-              | 'published'
-              | 'draft'
-              | 'pending') ?? 'draft',
-          imageUrl: img || PLACEHOLDER_IMAGE,
-          description: p.description ?? p.short_description ?? null,
-          calendar_link: p.calendar_link ?? p.google_calendar_id ?? null,
+          bedrooms: bedroomsVal,
+          bathrooms: bathroomsVal,
+          pool: poolVal,
+          status: statusVal,
+          imageUrl: img,
+          description: p.description || null,
+          calendar_link: p.calendar_link || null,
           _raw: p,
-          listing_type: p.listing_type ?? 'sale',
-          assigned_agent:
-            typeof p.assigned_agent === 'number'
-              ? p.assigned_agent
-              : p.assigned_agent?.id ?? null,
+          listing_type: listingType,
+          assigned_agent: p.assigned_agent || null,
         };
       });
-
-      // 🔍 LOG MAPPED DATA
-      console.log('[Sales] Mapped sale properties:', mapped);
 
       if (opts?.ignoreResults?.current) return;
 
@@ -497,7 +468,6 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
     return () => {
       ignore.current = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRetry = () => {
@@ -505,19 +475,14 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
     loadProperties({ ignoreResults: ignore });
   };
 
-  // Filter logic: only 'sale' listing_type, plus agent ID == current user
+  // IMPORTANT: This API already returns ONLY properties assigned to the current agent
+  // So no need to filter by agent ID in frontend
   const filteredProperties = useMemo(() => {
     const lower = searchTerm.toLowerCase();
 
     return properties.filter((p) => {
-      if ((p.listing_type ?? 'sale') !== 'sale') return false;
-
-      if (effectiveAgentId === null) return false;
-
-      if (Number(p.assigned_agent ?? -1) !== Number(effectiveAgentId)) {
-        return false;
-      }
-
+      // ✅ Already filtered by backend to show only agent's properties
+      
       if (!lower) return true;
 
       return (
@@ -525,7 +490,7 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
         p.address.toLowerCase().includes(lower)
       );
     });
-  }, [searchTerm, properties, effectiveAgentId]);
+  }, [searchTerm, properties]);
 
   const shouldShowNoData =
     !loading &&
@@ -542,17 +507,6 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
           <p className="text-gray-600 text-sm">
             Access assigned sales properties and marketing materials.
           </p>
-
-          {/* <div className="mt-3 text-sm text-gray-500">
-            {effectiveAgentId !== null ? (
-              <>
-                Showing sales assigned to agent ID{' '}
-                <strong>{effectiveAgentId}</strong>.
-              </>
-            ) : (
-              <>You are not associated with an agent account. No sales are visible.</>
-            )}
-          </div> */}
         </header>
 
         <div className="relative mb-8">

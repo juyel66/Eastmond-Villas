@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 interface DescriptionProps {
   descriptionData: string;
@@ -13,38 +13,65 @@ const Description: React.FC<DescriptionProps> = ({
   const toggleShow = () => setShowFull((prev) => !prev);
 
   const text = descriptionData;
-  const shortText = text.slice(0, 550) + '...';
-  const title = 'Descriptions';
+  const shortText = text.slice(0, 550) + "...";
+  const title = "Descriptions";
 
   return (
     <div className="flex mt-20 gap-5 flex-col md:flex-row items-start justify-center">
-      <div className="w-full md:w-1/2 bg-white rounded-lg flex items-start justify-start">
-        <div className="h-96 w-full flex items-start justify-start">
-          <div className="h-full w-full p-4 text-left">
-            <h2 className="text-2xl font-bold text-[#0F172A] mb-4">{title}</h2>
-            <div className="text-gray-600 text-base leading-relaxed mb-4">
-              {showFull ? text : shortText}
-            </div>
-            <button
-              onClick={toggleShow}
-              className="text-teal-600 hover:text-teal-800 font-medium transition-colors duration-200"
-            >
-              {showFull ? 'See Less' : 'See More'}
-            </button>
+      {/* TEXT SECTION */}
+      <div className="w-full md:w-1/2 bg-white rounded-lg">
+        <div className="h-96 w-full p-4 text-left">
+          <h2 className="text-2xl font-bold text-[#0F172A] mb-4">
+            {title}
+          </h2>
+
+          <div className="text-gray-600 text-base leading-relaxed mb-4">
+            {showFull ? text : shortText}
           </div>
+
+          <button
+            onClick={toggleShow}
+            className="text-teal-600 hover:text-teal-800 font-medium transition-colors duration-200"
+          >
+            {showFull ? "See Less" : "See More"}
+          </button>
         </div>
       </div>
 
+      {/* IMAGE / PLACEHOLDER SECTION */}
       <div className="w-full md:w-1/2 flex items-center justify-center">
-        <div className="h-[440px] w-full rounded-lg overflow-hidden">
-          <img
-            className="h-full w-full object-cover rounded-xl"
-            src={
-              descriptionImage ||
-              'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760298884/imgggggggg_barfpz.png'
-            }
-            alt="Property description"
-          />
+        <div className="h-[440px] w-full rounded-lg overflow-hidden bg-gray-100">
+          {descriptionImage ? (
+            <img
+              src={descriptionImage}
+              alt="Property Description"
+              className="h-full w-full object-cover rounded-xl"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="h-full w-full flex flex-col items-center justify-center rounded-xl bg-gray-100">
+              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-3">
+                <svg
+                  className="w-10 h-10 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 7h18M3 17h18M5 7v10M19 7v10"
+                  />
+                </svg>
+              </div>
+              <p className="text-gray-400 text-sm font-medium">
+                Property Image Not Available
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
