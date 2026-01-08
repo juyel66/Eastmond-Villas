@@ -547,9 +547,37 @@ export default function Calendars() {
       >
         <div className="p-4 space-y-3">
           {properties.length === 0 && !loading ? (
-            <div className="text-sm text-gray-500 text-center py-8">
-              No rent properties found for the selected month/year.
-            </div>
+           <div className="flex justify-center py-10">
+  <div className="w-full max-w-md bg-white border border-gray-200 rounded-xl shadow-sm p-8 text-center">
+    <div className="flex justify-center mb-4">
+      <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 13h6m-6 4h6M7 9h10M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
+          />
+        </svg>
+      </div>
+    </div>
+
+    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+      No Properties Found
+    </h3>
+
+    <p className="text-sm text-gray-500">
+      No rent properties found for the selected month and year.
+    </p>
+  </div>
+</div>
+
           ) : null}
 
           {properties.map((prop) => (

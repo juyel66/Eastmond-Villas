@@ -679,8 +679,11 @@ const Profile = () => {
                 </p>
                 <div className="flex items-center space-x-2 text-xs">
                   <span className="text-teal-600 font-medium">
-                    {profileData.role || '—'}
-                  </span>
+  {profileData.role
+    ? profileData.role.charAt(0).toUpperCase() + profileData.role.slice(1)
+    : '—'}
+</span>
+
                   <span className="text-gray-500">|</span>
                   <span className="text-gray-500">
                     Joined {formattedJoined || '—'}
