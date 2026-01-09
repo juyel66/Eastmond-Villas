@@ -66,7 +66,9 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
   }
   return (
     <span className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor} ${textColor}`}>
-      {priority} priority
+      {/* {priority} priority */}
+
+      {priority.charAt(0).toUpperCase() + priority.slice(1)} priority
     </span>
   );
 };
@@ -161,7 +163,7 @@ const UpdateCard = ({ update }: { update: any }) => {
               attachmentCount > 0 ? "bg-gray-200 text-gray-700" : "bg-gray-100 text-gray-500"
             }`}
           >
-            {attachmentCount > 0 ? `${attachmentCount} attachment(s)` : "No attachments"}
+            {attachmentCount > 0 ? `${attachmentCount} Attachment(s)` : "No attachments"}
           </span>
         </div>
 
