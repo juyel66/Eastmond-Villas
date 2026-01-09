@@ -653,7 +653,7 @@ const PropertiesRentalsDetails: FC = () => {
               onClick={handleShowAvailability}
             />
             <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760999922/Icon_41_fxo3ap.png"
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1767906306/Icon_26_ejcmnk.png"
               label="Copy Description"
               onClick={handleCopyDescription}
             />
@@ -667,11 +667,11 @@ const PropertiesRentalsDetails: FC = () => {
               label="Download Images"
               onClick={handleDownloadImages}
             />
-            <QuickActionButton
+            {/* <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
               label="Mark as Sold"
               onClick={handleMarkAsSold}
-            />
+            /> */}
           </div>
         </div>
 
