@@ -230,7 +230,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               {title}
             </h2>
             <div className="flex items-center gap-2">
-              <StatusBadge status={status} />
+              <StatusBadge status={status.charAt(0).toLowerCase() + status.slice(1)} />
             </div>
           </div>
 
