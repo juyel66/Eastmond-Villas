@@ -22,7 +22,7 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   pool: number;
-  status: 'published' | 'draft' | 'pending_review' | 'pending';
+  status: 'Published' | 'draft' | 'pending_review' | 'pending';
   imageUrl: string;
   description?: string | null;
   calendar_link?: string | null;
@@ -141,9 +141,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
   const StatusBadge = ({ status }: { status: Property['status'] }) => {
     let bgColor = 'bg-gray-100 text-gray-700';
-    if (status === 'published') bgColor = 'bg-green-100 text-green-700';
-    else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
-    else if (status === 'pending_review' || status === 'pending') bgColor = 'bg-blue-100 text-blue-700';
+    if (status === 'Published') bgColor = 'bg-green-100 text-green-700';
+    else if (status === 'Draft') bgColor = 'bg-yellow-100 text-yellow-700';
+    else if (status === 'Pending Review' || status === 'Pending')
+      bgColor = 'bg-blue-100 text-blue-700';
     return (
       <span
         className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
@@ -232,7 +233,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               {title}
             </h2>
             <div className="flex items-center gap-2">
-              <StatusBadge status={status} />
+              <StatusBadge
+                status={status.charAt(0).toUpperCase() + status.slice(1)}
+              />
             </div>
           </div>
 
@@ -245,7 +248,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             <div>
               <p className="text-gray-500 text-xs uppercase">Price</p>
               <p className="font-semibold text-gray-800">
-               USD{formatPrice(price)}
+                USD{formatPrice(price)}
               </p>
             </div>
             <div>
@@ -351,25 +354,26 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
     try {
       // ✅ FETCHING SALE PROPERTIES FROM AGENT SPECIFIC API
       const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=sale`;
-      
+
       console.log('[Sales] Fetching from URL:', url);
-      
+
       // Add authorization headers
       const headers: HeadersInit = {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       };
-      
+
       try {
-        const token = localStorage.getItem('auth_access') || 
-                     localStorage.getItem('access_token') || 
-                     localStorage.getItem('token');
+        const token =
+          localStorage.getItem('auth_access') ||
+          localStorage.getItem('access_token') ||
+          localStorage.getItem('token');
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
       } catch (e) {
         console.warn('Token error:', e);
       }
-      
+
       const res = await fetch(url, {
         headers,
       });
@@ -390,31 +394,35 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
       const mapped: Property[] = list.map((p: any) => {
         // Get first media image
         let img = PLACEHOLDER_IMAGE;
-        if (p.media_images && Array.isArray(p.media_images) && p.media_images.length > 0) {
+        if (
+          p.media_images &&
+          Array.isArray(p.media_images) &&
+          p.media_images.length > 0
+        ) {
           img = p.media_images[0]?.image || PLACEHOLDER_IMAGE;
         }
-        
+
         // Parse price - handle string like "751.00"
-        const priceVal = parseFloat(p.price || p.price_display || "0") || 0;
-        
+        const priceVal = parseFloat(p.price || p.price_display || '0') || 0;
+
         // Parse bedrooms and bathrooms - handle string like "76.0"
-        const bedroomsVal = parseFloat(p.bedrooms || "0") || 0;
-        const bathroomsVal = parseFloat(p.bathrooms || "0") || 0;
-        
+        const bedroomsVal = parseFloat(p.bedrooms || '0') || 0;
+        const bathroomsVal = parseFloat(p.bathrooms || '0') || 0;
+
         // Pool as number
-        const poolVal = parseInt(p.pool || "0", 10) || 0;
-        
+        const poolVal = parseInt(p.pool || '0', 10) || 0;
+
         // Address
         const address = p.address || p.city || 'No address provided';
-        
+
         // Status normalization
         let statusVal: Property['status'] = 'draft';
         const rawStatus = (p.status || '').toLowerCase();
-        if (rawStatus === 'published') statusVal = 'published';
+        if (rawStatus === 'published') statusVal = 'Published';
         else if (rawStatus === 'pending_review') statusVal = 'pending_review';
         else if (rawStatus === 'pending') statusVal = 'pending';
         else statusVal = 'draft';
-        
+
         // Listing type
         const listingTypeRaw = String(p.listing_type || '').toLowerCase();
         let listingType: Property['listing_type'] = 'other';
@@ -482,7 +490,7 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
 
     return properties.filter((p) => {
       // ✅ Already filtered by backend to show only agent's properties
-      
+
       if (!lower) return true;
 
       return (

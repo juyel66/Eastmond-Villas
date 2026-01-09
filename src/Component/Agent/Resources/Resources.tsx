@@ -6,7 +6,7 @@ import { fetchResources } from '../../../features/Properties/PropertiesSlice';
 import { API_BASE, authFetch } from '../../../features/Auth/authSlice';
 import Swal from 'sweetalert2';
 
-type APIResourceFile = { name: string; url: string; type: 'image' | 'video' | 'pdf' | 'other' };
+type APIResourceFile = { name: string; url: string; type: 'image' | 'video' | 'pdf' | 'Other' };
 type UIResource = {
   id: string | number;
   title: string;
@@ -105,7 +105,7 @@ const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource
 
         <div className="text-right">
           <p className="text-xs text-gray-500 font-medium uppercase">Files</p>
-          <span className="text-sm font-medium text-gray-700">{fileCount} file(s)</span>
+          <span className="text-sm font-medium text-gray-700">{fileCount} File(s)</span>
         </div>
       </div>
 
@@ -143,7 +143,7 @@ export default function AdminResources() {
   const [newDescription, setNewDescription] = useState('');
 
   const [selectedFiles, setSelectedFiles] = useState<
-    Array<{ file: File; preview?: string; name: string; kind: 'image' | 'video' | 'pdf' | 'other' }>
+    Array<{ file: File; preview?: string; name: string; kind: 'image' | 'video' | 'pdf' | 'Other' }>
   >([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -174,7 +174,7 @@ export default function AdminResources() {
               const url = getFileUrl(f.file ?? f.url ?? f.path ?? f);
               const name = f.name ?? f.filename ?? String(f.file ?? url ?? '').split('/').pop() ?? 'file';
               const ctype = String(f.content_type || f.type || '').toLowerCase();
-              let type: APIResourceFile['type'] = 'other';
+              let type: APIResourceFile['type'] = 'Other';
               if (ctype.startsWith('image')) type = 'image';
               else if (ctype.startsWith('video')) type = 'video';
               else if (ctype.includes('pdf')) type = 'pdf';
@@ -260,7 +260,7 @@ export default function AdminResources() {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       const lowered = (f.type || '').toLowerCase();
-      let kind: 'image' | 'video' | 'pdf' | 'other' = 'other';
+      let kind: 'image' | 'video' | 'pdf' | 'Other' = 'Other';
       if (lowered.startsWith('image/')) kind = 'image';
       else if (lowered.startsWith('video/')) kind = 'video';
       else if (lowered.includes('pdf')) kind = 'pdf';
@@ -370,7 +370,7 @@ export default function AdminResources() {
                 ? 'video'
                 : ctype.includes('pdf')
                 ? 'pdf'
-                : 'other';
+                : 'Other';
               return { name, url, type };
             })
           : [];
@@ -530,7 +530,7 @@ export default function AdminResources() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Resources</h1>
-            <p className="text-gray-600 text-sm">Access marketing materials, templates, images and PDFs</p>
+            <p className="text-gray-600 text-sm">Access marketing materials, templates, images and PDFs.</p>
           </div>
 
           <div className="flex items-center gap-3">
