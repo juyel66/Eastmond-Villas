@@ -1,270 +1,3 @@
-// // File: AgentCalendar.tsx
-// import React, { useEffect, useMemo, useState } from "react";
-
-// /**
-//  * AgentCalendar.tsx
-//  *
-//  * Fetches:
-//  *  https://api.eastmondvillas.com/api/villas/agent/bookings/monthly/?month=<1-12>&year=<yyyy>
-//  *
-//  * Behavior:
-//  * - Builds rows from response.data (property_id -> id, property_title -> name)
-//  * - Booked days (inside any booking range) = YELLOW (disabled)
-//  * - Available days = GREEN (clickable if you later want to add booking)
-//  * - Month & Year selectors refetch data
-//  *
-//  * NOTE:
-//  * - check_out is treated EXCLUSIVE (booking covers check_in .. day before check_out).
-//  *   To treat check_out inclusive, change the while condition in parseBookingDays.
-//  */
-
-// type BookingItem = {
-//   booking_id: number;
-//   full_name: string;
-//   check_in: string; // "YYYY-MM-DD"
-//   check_out: string; // "YYYY-MM-DD"
-//   status?: string;
-//   total_price?: string;
-// };
-
-// type BookingResponseItem = {
-//   property_id: number;
-//   property_title: string;
-//   city?: string;
-//   total_bookings_this_month?: number;
-//   bookings: BookingItem[];
-// };
-
-// type BookingResponse = {
-//   agent: number;
-//   month: number;
-//   year: number;
-//   properties_count: number;
-//   data: BookingResponseItem[];
-// };
-
-// type Property = {
-//   id: number;
-//   name: string;
-//   city?: string;
-//   total_bookings_this_month?: number;
-// };
-
-// const API_BASE = "https://api.eastmondvillas.com"; // your base
-// const MONTHLY_PATH = "/api/villas/agent/bookings/monthly/"; // appended with ?month=&year=
-
-// function monthNames() {
-//   return [
-//     "January","February","March","April","May","June",
-//     "July","August","September","October","November","December"
-//   ];
-// }
-
-// export default function AgentCalendar() {
-//   const today = new Date();
-//   // default: current month/year
-//   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth() + 1);
-//   const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear());
-
-//   const [properties, setProperties] = useState<Property[]>([]);
-//   // map key: `${propertyId}-${year}-${month}`
-//   const [bookingsMap, setBookingsMap] = useState<Map<string, Set<number>>>(() => new Map());
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-
-//   // days in selected month
-//   const daysInMonth = useMemo(
-//     () => new Date(selectedYear, selectedMonth, 0).getDate(),
-//     [selectedMonth, selectedYear]
-//   );
-//   const daysArray = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
-
-//   function mapKey(propertyId: number, year = selectedYear, month = selectedMonth) {
-//     return `${propertyId}-${year}-${month}`;
-//   }
-
-//   // parse booking range into list of day numbers inside selected month/year
-//   function parseBookingDays(checkInIso: string, checkOutIso: string, month: number, year: number) {
-//     // check_out exclusive
-//     const days: number[] = [];
-//     const start = new Date(checkInIso + "T00:00:00");
-//     const end = new Date(checkOutIso + "T00:00:00"); // exclusive
-//     const d = new Date(start);
-//     while (d < end) {
-//       if (d.getFullYear() === year && d.getMonth() + 1 === month) {
-//         days.push(d.getDate());
-//       }
-//       d.setDate(d.getDate() + 1);
-//     }
-//     return days;
-//   }
-
-//   async function fetchMonthly(month: number, year: number) {
-//     setLoading(true);
-//     setError(null);
-//     try {
-//       const url = `${API_BASE}${MONTHLY_PATH}?month=${month}&year=${year}`;
-//       const resp = await fetch(url);
-//       if (!resp.ok) {
-//         throw new Error(`API returned ${resp.status}`);
-//       }
-//       const data = (await resp.json()) as BookingResponse;
-
-//       // build property list from response.data
-//       const props: Property[] = Array.isArray(data.data)
-//         ? data.data.map((it) => ({
-//             id: it.property_id,
-//             name: it.property_title,
-//             city: it.city,
-//             total_bookings_this_month: it.total_bookings_this_month,
-//           }))
-//         : [];
-//       setProperties(props);
-
-//       // build bookings map
-//       const map = new Map<string, Set<number>>();
-//       // ensure keys exist for all returned properties
-//       props.forEach((p) => map.set(mapKey(p.id, data.year ?? year, data.month ?? month), new Set()));
-
-//       (data.data || []).forEach((item) => {
-//         const key = mapKey(item.property_id, data.year ?? year, data.month ?? month);
-//         const setDays = new Set<number>(map.get(key) ? Array.from(map.get(key)!) : []);
-//         (item.bookings || []).forEach((b) => {
-//           try {
-//             const days = parseBookingDays(b.check_in, b.check_out, data.month ?? month, data.year ?? year);
-//             days.forEach((d) => setDays.add(d));
-//           } catch (err) {
-//             // ignore malformed date for single booking
-//             console.warn("parse booking error", err, b);
-//           }
-//         });
-//         map.set(key, setDays);
-//       });
-
-//       setBookingsMap(map);
-//     } catch (err: any) {
-//       console.error(err);
-//       setError(err?.message ?? "Failed to fetch bookings");
-//       setProperties([]);
-//       setBookingsMap(new Map());
-//     } finally {
-//       setLoading(false);
-//     }
-//   }
-
-//   useEffect(() => {
-//     fetchMonthly(selectedMonth, selectedYear);
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [selectedMonth, selectedYear]);
-
-//   function isBooked(propertyId: number, day: number) {
-//     const key = mapKey(propertyId);
-//     const s = bookingsMap.get(key);
-//     return s ? s.has(day) : false;
-//   }
-
-//   // UI: keep simple, tailwind classes for visuals
-//   return (
-//     <div className="p-6 bg-gray-50 min-h-screen">
-//       <div className="flex items-center justify-between mb-4">
-//         <div>
-//           <h1 className="text-xl font-semibold text-gray-800">Agent Calendar</h1>
-//           <p className="text-sm text-gray-500">Booked = yellow, Available = green</p>
-//         </div>
-
-//         <div className="flex items-center gap-3">
-//           <label className="text-sm text-gray-600">Month</label>
-//           <select
-//             value={selectedMonth}
-//             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-//             className="px-2 py-1 border rounded"
-//           >
-//             {monthNames().map((mn, idx) => (
-//               <option key={mn} value={idx + 1}>{mn}</option>
-//             ))}
-//           </select>
-
-//           <label className="text-sm text-gray-600">Year</label>
-//           <select
-//             value={selectedYear}
-//             onChange={(e) => setSelectedYear(Number(e.target.value))}
-//             className="px-2 py-1 border rounded"
-//           >
-//             {/* show a reasonable year range: current-2 .. current+2 */}
-//             {(() => {
-//               const nowY = new Date().getFullYear();
-//               const arr = [];
-//               for (let y = nowY - 2; y <= nowY + 2; y++) arr.push(y);
-//               return arr;
-//             })().map((y) => <option key={y} value={y}>{y}</option>)}
-//           </select>
-
-//           <button
-//             onClick={() => fetchMonthly(selectedMonth, selectedYear)}
-//             className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm"
-//           >
-//             Refresh
-//           </button>
-//         </div>
-//       </div>
-
-//       {loading && <div className="text-sm text-gray-500 mb-3">Loading bookings…</div>}
-//       {error && <div className="text-sm text-red-600 mb-3">Error: {error}</div>}
-
-//       <div className="space-y-4">
-//         {properties.length === 0 && !loading ? (
-//           <div className="text-sm text-gray-500">No properties found for this month/year.</div>
-//         ) : null}
-
-//         {properties.map((p) => (
-//           <div key={p.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-//             <div className="flex items-center justify-between">
-//               <div>
-//                 <div className="text-sm font-medium text-gray-800">{p.name}</div>
-//                 {p.city && <div className="text-xs text-gray-500">{p.city}</div>}
-//                 <div className="text-xs text-gray-400 mt-1">Total bookings: {p.total_bookings_this_month ?? 0}</div>
-//               </div>
-//               <div className="text-xs text-gray-500">{monthNames()[selectedMonth - 1]} {selectedYear}</div>
-//             </div>
-
-//             <div className="mt-3 overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
-//               <div className="flex items-center gap-2 py-1">
-//                 {daysArray.map((d) => {
-//                   const booked = isBooked(p.id, d);
-//                   return (
-//                     <div
-//                       key={`${p.id}-${d}`}
-//                       className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-medium
-//                         ${booked ? "bg-yellow-100 border-yellow-200 text-yellow-800" : "bg-green-50 border-green-100 text-green-700"}
-//                       `}
-//                       title={booked ? `Booked: ${d}/${selectedMonth}/${selectedYear}` : `Available: ${d}/${selectedMonth}/${selectedYear}`}
-//                     >
-//                       {d}
-//                     </div>
-//                   );
-//                 })}
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       <style>{`
-//         .no-scrollbar::-webkit-scrollbar { height: 8px; display: none; }
-//         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-//       `}</style>
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-
-
 // src/features/Properties/Calendars.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
@@ -312,9 +45,6 @@ type Property = {
 const API_BASE = "https://api.eastmondvillas.com";
 const MONTHLY_PATH = "/api/villas/agent/bookings/monthly/";
 
-const MIN_YEAR = 2025;
-const MAX_YEAR = 2030;
-
 function monthNames() {
   return [
     "January","February","March","April","May","June",
@@ -344,10 +74,12 @@ function daysForBooking(
 
 export default function Calendars() {
   const now = new Date();
-  const initialYear = Math.min(MAX_YEAR, Math.max(MIN_YEAR, now.getFullYear()));
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
 
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(initialYear);
+  // Set initial state to current month/year - no previous dates allowed
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [properties, setProperties] = useState<Property[]>([]);
   const [bookingsMap, setBookingsMap] = useState<Map<string, Set<number>>>(new Map());
   const [bookingsDetails, setBookingsDetails] =
@@ -364,12 +96,42 @@ export default function Calendars() {
     [daysInMonth]
   );
 
-  // Year options for dropdown
-  const years = useMemo(() => {
-    const arr: number[] = [];
-    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) arr.push(y);
-    return arr;
-  }, []);
+  // Generate available months based on current date
+  const availableMonths = useMemo(() => {
+    const months = [];
+    const today = new Date();
+    
+    // If selected year is current year, only show current and future months
+    if (selectedYear === currentYear) {
+      for (let i = currentMonth; i <= 12; i++) {
+        months.push({
+          value: i,
+          name: monthNames()[i - 1],
+          isCurrent: i === currentMonth
+        });
+      }
+    } else {
+      // For future years, show all months
+      for (let i = 1; i <= 12; i++) {
+        months.push({
+          value: i,
+          name: monthNames()[i - 1],
+          isCurrent: false
+        });
+      }
+    }
+    
+    return months;
+  }, [selectedYear, currentYear, currentMonth]);
+
+  // Generate available years (current year and future years only)
+  const availableYears = useMemo(() => {
+    const years = [];
+    for (let y = currentYear; y <= currentYear + 5; y++) {
+      years.push(y);
+    }
+    return years;
+  }, [currentYear]);
 
   function mapKey(propertyId: number) {
     return `${propertyId}-${selectedYear}-${selectedMonth}`;
@@ -384,7 +146,10 @@ export default function Calendars() {
   }
 
   async function fetchMonthly(month: number, year: number) {
-    if (year < MIN_YEAR || year > MAX_YEAR) return;
+    // Prevent fetching past dates
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -482,11 +247,47 @@ export default function Calendars() {
     return `Booked: ${Array.from(s).sort((a, b) => a - b).join(", ")}`;
   }
 
-  // Handle year change with validation
+  // Handle month change - prevent selecting past months
+  const handleMonthChange = (value: string) => {
+    const month = Number(value);
+    // Only allow if selected year is current year and month is current or future
+    // OR if selected year is future year (any month allowed)
+    if (selectedYear === currentYear && month < currentMonth) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cannot select past month',
+        text: `You can only view ${monthNames()[currentMonth - 1]} ${currentYear} and onwards`,
+        toast: true,
+        position: 'top-center',
+        timer: 3000,
+        showConfirmButton: false
+      });
+      return;
+    }
+    setSelectedMonth(month);
+  };
+
+  // Handle year change - prevent selecting past years
   const handleYearChange = (value: string) => {
-    const y = Number(value);
-    if (!y || y < MIN_YEAR || y > MAX_YEAR) return;
-    setSelectedYear(y);
+    const year = Number(value);
+    if (year < currentYear) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cannot select past year',
+        text: `You can only view ${currentYear} and onwards`,
+        toast: true,
+        position: 'top-center',
+        timer: 3000,
+        showConfirmButton: false
+      });
+      return;
+    }
+    
+    // If switching to current year, ensure month is not in the past
+    if (year === currentYear && selectedMonth < currentMonth) {
+      setSelectedMonth(currentMonth);
+    }
+    setSelectedYear(year);
   };
 
   return (
@@ -499,18 +300,25 @@ export default function Calendars() {
           <p className="text-sm text-gray-500">
             Booked = red, Available = green (view-only)
           </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Showing: {monthNames()[selectedMonth - 1]} {selectedYear}
+          </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           <label className="text-sm text-gray-600">Month</label>
           <select
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            onChange={(e) => handleMonthChange(e.target.value)}
             className="px-2 py-1 border rounded text-sm"
           >
-            {monthNames().map((mn, idx) => (
-              <option key={mn} value={idx + 1}>
-                {mn}
+            {availableMonths.map((month) => (
+              <option 
+                key={month.value} 
+                value={month.value}
+                disabled={selectedYear === currentYear && month.value < currentMonth}
+              >
+                {month.name} {month.isCurrent ? "" : ""}
               </option>
             ))}
           </select>
@@ -521,9 +329,13 @@ export default function Calendars() {
             onChange={(e) => handleYearChange(e.target.value)}
             className="px-2 py-1 border rounded text-sm"
           >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
+            {availableYears.map((year) => (
+              <option 
+                key={year} 
+                value={year}
+                disabled={year < currentYear}
+              >
+                {year} {year === currentYear ? "" : ""}
               </option>
             ))}
           </select>
@@ -658,6 +470,9 @@ export default function Calendars() {
 
       <p className="text-xs text-gray-400 mt-3">
         Booked days are red; available days are green. Calendar is read-only for agents.
+      </p>
+      <p className="text-xs text-gray-500 mt-1">
+        Note: You can only view current and future dates. Past dates are not accessible.
       </p>
 
       <style>{`
