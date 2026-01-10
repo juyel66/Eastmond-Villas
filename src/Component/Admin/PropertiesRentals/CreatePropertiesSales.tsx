@@ -810,6 +810,7 @@ const CreatePropertySales = ({
                 <option value="pending_review">Pending Review</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
+                <option value="sold">sold</option>
               </select>
 
               {/* Custom Dropdown Arrow */}

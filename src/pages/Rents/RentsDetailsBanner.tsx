@@ -279,7 +279,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             </div>
 
             <div className="text-sm text-gray-700">
-              <strong>Total price (calculated):</strong> ${calcTotalPrice()}
+              {/* <strong>Total price (calculated):</strong> ${calcTotalPrice()} */}
             </div>
           </div>
 
