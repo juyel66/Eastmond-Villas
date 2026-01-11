@@ -16,6 +16,7 @@ interface Property {
   // numbers / booking stats
   add_guest?: number;
   bedrooms?: number;
+  tbc_by?: string;
   bathrooms?: number;
   pool?: number;
   price?: number;
@@ -238,6 +239,7 @@ const PropertiesSalesDetails: FC = () => {
           commission_rate: p.commission_rate ?? p.agent_commission ?? '',
           security_deposit: p.security_deposit ?? '',
           damage_deposit: p.damage_deposit ?? '',
+          tbc_by: p.tbc_by ?? '',
 
           outdoor_amenities: outdoorAmenities,
           interior_amenities: interiorAmenities,
@@ -415,11 +417,11 @@ const PropertiesSalesDetails: FC = () => {
               label="Show Staff"
               onClick={handleShowStaff}
             />
-            <QuickActionButton
+            {/* <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151122/search-eye-line_w28zd9.png"
               label="Show Availability"
               onClick={handleShowAvailability}
-            />
+            /> */}
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1767906306/Icon_26_ejcmnk.png"
               label="Copy Description"
@@ -431,11 +433,11 @@ const PropertiesSalesDetails: FC = () => {
               label="Download Images"
               onClick={handleDownloadImages}
             />
-            <QuickActionButton
+            {/* <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
               label="Mark as Sold"
               onClick={handleMarkAsSold}
-            />
+            /> */}
           </div>
         </div>
 
@@ -504,7 +506,7 @@ const PropertiesSalesDetails: FC = () => {
 
               {/* Commission & Damage deposit */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
-                {/* <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <img
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920561/discount-percent-fill_fc6s5e.png"
                     alt="Commission"
@@ -515,7 +517,7 @@ const PropertiesSalesDetails: FC = () => {
                       ? `${property.commission_rate}% Commission offered to agent`
                       : 'Commission rate not set'}
                   </span>
-                </div> */}
+                </div>
                 {/* <div className="flex items-center gap-2">
                   <img
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
@@ -534,7 +536,7 @@ const PropertiesSalesDetails: FC = () => {
               <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
-                  <span>Booking TBC by Owner</span>
+                  <span>Booking TBC by {property.tbc_by}</span>
                 </div>
                 {/* <div className="flex items-center gap-2">
                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />

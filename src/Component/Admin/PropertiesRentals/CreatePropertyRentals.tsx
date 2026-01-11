@@ -233,6 +233,7 @@ const CreatePropertyRentals = ({
         security_deposit: editData.security_deposit || '',
         damage_deposit: editData.damage_deposit || '',
         commission_rate: editData.commission_rate || '',
+        tbc_by: editData.tbc_by || '',
         youtube_link: editData.youtube_link || '',
       };
       reset(formData);
@@ -415,6 +416,7 @@ const CreatePropertyRentals = ({
         security_deposit: '',
         damage_deposit: '',
         commission_rate: '',
+        tbc_by: '',
         youtube_link: '',
       });
 
@@ -700,6 +702,9 @@ const CreatePropertyRentals = ({
         commission_rate: values.commission_rate
           ? String(values.commission_rate)
           : '',
+        tbc_by: values.tbc_by
+          ? String(values.tbc_by)
+          : '',
         concierge_services: conciergeRows
           .map((s) => s.trim())
           .filter((s) => s.length > 0),
@@ -752,6 +757,7 @@ const CreatePropertyRentals = ({
       append('security_deposit', processed.security_deposit);
       append('damage_deposit', processed.damage_deposit);
       append('commission_rate', processed.commission_rate);
+      append('tbc_by', processed.tbc_by);
       append('concierge_services', processed.concierge_services);
       append('youtube_link', processed.youtube_link);
 
@@ -1572,6 +1578,23 @@ const CreatePropertyRentals = ({
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
+
+          
+          <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Booking TBC
+            </label>
+            <input
+              name="tbc_by"
+              type="text"
+              step="0.01"
+              {...register('tbc_by')}
+              placeholder="add booking TBC information"
+              className=" border w-full rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+
+
         </div>
 
         {/* Concierge services */}

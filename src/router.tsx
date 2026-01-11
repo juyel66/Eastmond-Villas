@@ -331,6 +331,18 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      {
+        element: <ProtectedRoute allowedRoles={['customer']} />,
+        children: [
+      
+          { path: 'customer-announcements', element: <Announcements /> },
+          { path: 'customer-resources', element: <Resources /> },
+          { path: 'customer-faqs', element: <AgentFaqs /> },
+          { path: 'customer-profile', element: <Profile /> },
+        
+         
+        ],
+      },
 
       // Patient / Doctor Routes (assuming these are public to authenticated users)
       {

@@ -276,7 +276,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
   const populateFormWithData = (propertyData) => {
     console.log('Populating form with data:', propertyData);
     
-    // Populate form fields including youtube_link
+    // Populate form fields including youtube_link, tbc_by, and commission_rate
     const formData = {
       title: propertyData.title || '',
       description: propertyData.description || '',
@@ -292,6 +292,8 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       seo_title: propertyData.seo_title || '',
       seo_description: propertyData.seo_description || '',
       youtube_link: propertyData.youtube_link || '',
+      tbc_by: propertyData.tbc_by || '', // Added field
+      commission_rate: propertyData.commission_rate || '', // Added field
     };
     reset(formData);
 
@@ -613,6 +615,8 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         latitude: location.lat ?? null,
         longitude: location.lng ?? null,
         youtube_link: values.youtube_link || '',
+        tbc_by: values.tbc_by || '', // Added field
+        commission_rate: values.commission_rate || '', // Added field
       };
 
       console.log('--- Update payload for Sales ID:', propertyId, '---');
@@ -632,7 +636,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         }
       };
 
-      // Append all processed data including youtube_link
+      // Append all processed data including youtube_link, tbc_by, and commission_rate
       Object.entries(processed).forEach(([key, value]) => {
         append(key, value);
       });
@@ -903,6 +907,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
                 <option value="pending_review">Pending Review</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
+                <option value="sold">Sold</option>
               </select>
               <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
                 ▼
@@ -1203,6 +1208,35 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
             className="w-full border rounded-lg p-3 bg-gray-50"
             placeholder="https://www.youtube.com/watch?v=..."
           />
+        </div>
+
+        {/* New Fields: Booking TBC and Commission Rate */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 md:col-span-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Booking TBC
+            </label>
+            <input
+              name="tbc_by"
+              {...register('tbc_by')}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter booking TBC details"
+            />
+          </div>
+
+          <div className="col-span-12 md:col-span-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Commission Rate (%)
+            </label>
+            <input
+              name="commission_rate"
+              type="number"
+              step="0.01"
+              {...register('commission_rate')}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter commission rate percentage"
+            />
+          </div>
         </div>
 
         {/* Signature Distinctions */}

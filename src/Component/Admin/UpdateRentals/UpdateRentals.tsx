@@ -331,6 +331,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
       security_deposit: propertyData.security_deposit || '',
       damage_deposit: propertyData.damage_deposit || '',
       commission_rate: propertyData.commission_rate || '',
+      tbc_by: propertyData.tbc_by || '',
       youtube_link: propertyData.youtube_link || '',
     };
     reset(formData);
@@ -761,6 +762,9 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
           : '',
         commission_rate: values.commission_rate
           ? String(values.commission_rate)
+          : '',
+        tbc_by: values.tbc_by
+          ? String(values.tbc_by)
           : '',
         concierge_services: conciergeRows.filter(Boolean),
         youtube_link: values.youtube_link || '',
@@ -1669,6 +1673,19 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
               step="0.01"
               {...register('commission_rate')}
               placeholder="20.00"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+          <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Booking TBC
+            </label>
+            <input
+              name="tbc_by"
+              type="text"
+              step="0.01"
+              {...register('tbc_by')}
+              placeholder="add booking TBC information"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
