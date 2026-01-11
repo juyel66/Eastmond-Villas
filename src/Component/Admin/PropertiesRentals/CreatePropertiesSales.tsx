@@ -218,6 +218,8 @@ const CreatePropertySales = ({
         seo_title: editData.seo_title || '',
         seo_description: editData.seo_description || '',
         youtube_link: editData.youtube_link || '',
+        tbc_by: editData.tbc_by || '', // Added field
+        commission_rate: editData.commission_rate || '', // Added field
       };
       reset(formData);
 
@@ -351,6 +353,8 @@ const CreatePropertySales = ({
         seo_title: '',
         seo_description: '',
         youtube_link: '',
+        tbc_by: '', // Added field
+        commission_rate: '', // Added field
       });
 
       setSignatureList(['']);
@@ -537,6 +541,8 @@ const CreatePropertySales = ({
         latitude: location.lat ?? null,
         longitude: location.lng ?? null,
         youtube_link: values.youtube_link || '',
+        tbc_by: values.tbc_by || '', // Added field
+        commission_rate: values.commission_rate || '', // Added field
       };
 
       console.log('--- Processed payload to send ---');
@@ -578,6 +584,8 @@ const CreatePropertySales = ({
       append('latitude', processed.latitude);
       append('longitude', processed.longitude);
       append('youtube_link', processed.youtube_link);
+      append('tbc_by', processed.tbc_by); // Added field
+      append('commission_rate', processed.commission_rate); // Added field
 
       const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
       mediaMeta.forEach((meta) =>
@@ -810,7 +818,7 @@ const CreatePropertySales = ({
                 <option value="pending_review">Pending Review</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
-                <option value="sold">sold</option>
+                <option value="sold">Sold</option>
               </select>
 
               {/* Custom Dropdown Arrow */}
@@ -819,8 +827,6 @@ const CreatePropertySales = ({
               </span>
             </div>
           </div>
-
-      
 
           <div className="col-span-12 sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1075,7 +1081,34 @@ const CreatePropertySales = ({
           />
         </div>
 
-   
+        {/* New Fields: Booking TBC and Commission Rate */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 md:col-span-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Booking TBC
+            </label>
+            <input
+              name="tbc_by"
+              {...register('tbc_by')}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter booking TBC details"
+            />
+          </div>
+
+          <div className="col-span-12 md:col-span-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Commission Rate (%)
+            </label>
+            <input
+              name="commission_rate"
+              type="number"
+              step="0.01"
+              {...register('commission_rate')}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter commission rate percentage"
+            />
+          </div>
+        </div>
 
         {/* Signature Distinctions */}
         <div>
