@@ -226,7 +226,7 @@ import NotificationsPage from './Component/Notifications/NotificationsPage';
 import ProtectedRoute from './Component/Auth/ProtectedRoute';
 import AllReview from './pages/AllReview/AllReviews';
 import AgentFaqs from './Component/Agent/FaQs/AgentFaqs';
-import NewsLetter from './Component/Admin/NewsLetter/NewsLetter';
+import NewsLetter from './Component/Admin/NewsLetter/CreateNewsletterPage';
 import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy';
 import UpdateRentals from './Component/Admin/UpdateRentals/UpdateRentals';
 import UpdateSales from './Component/Admin/UpdateSales/UpdateSales';
