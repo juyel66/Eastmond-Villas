@@ -2,6 +2,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import JSZip from 'jszip';
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -48,6 +49,13 @@ interface Property {
   _raw?: any;
 }
 
+// Image interface
+interface PropertyImage {
+  image: string;
+  alt_text?: string;
+  is_main?: boolean;
+}
+
 // --- API base (use env var if available) ---
 const API_BASE =
   (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/, '') ||
@@ -82,48 +90,19 @@ const copyToClipboard = (text: string, successMessage: string) => {
   }
 };
 
-const downloadImage = async (imgUrl?: string | null, title = 'image') => {
-  if (!imgUrl) {
-    showActionMessage('No image available to download.');
-    return;
-  }
-  try {
-    const url =
-      String(imgUrl).startsWith('http') || String(imgUrl).startsWith('//')
-        ? String(imgUrl)
-        : `${API_BASE.replace(/\/api\/?$/, '')}${
-            imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl
-          }`;
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    const ext = blob.type.split('/')[1] || 'jpg';
-    a.download = `${title.replace(/\s+/g, '-').toLowerCase()}.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(blobUrl);
-  } catch (err) {
-    console.error('Download error:', err);
-    showActionMessage('Failed to download image.');
-  }
-};
-
 // --- QUICK ACTION BUTTON ---
 interface QuickActionButtonProps {
   imgSrc: string;
   label: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
-const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick }) => (
+const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick, disabled }) => (
   <button
     onClick={onClick}
     type="button"
-    className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer"
+    disabled={disabled}
+    className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
   >
     <img src={imgSrc} alt={label} className="w-5 h-5" />
     <span>{label}</span>
@@ -146,6 +125,8 @@ const PropertiesSalesDetails: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [localStatus, setLocalStatus] = useState<string>('draft');
+  const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -169,6 +150,92 @@ const PropertiesSalesDetails: FC = () => {
           throw new Error(`Failed to fetch property (status ${res.status}).`);
         }
         const p = await res.json();
+
+        // --- Collect all images from API response ---
+        const images: PropertyImage[] = [];
+        
+        // Main image
+        if (p.main_image_url) {
+          images.push({
+            image: p.main_image_url,
+            alt_text: `${p.title || 'Property'} - Main Image`,
+            is_main: true
+          });
+        }
+        
+        if (p.image_url && !images.some(img => img.image === p.image_url)) {
+          images.push({
+            image: p.image_url,
+            alt_text: `${p.title || 'Property'} - Image`,
+            is_main: false
+          });
+        }
+        
+        if (p.imageUrl && !images.some(img => img.image === p.imageUrl)) {
+          images.push({
+            image: p.imageUrl,
+            alt_text: `${p.title || 'Property'} - Image`,
+            is_main: false
+          });
+        }
+        
+        // Media images
+        if (Array.isArray(p.media_images)) {
+          p.media_images.forEach((img: any, index: number) => {
+            if (img.image && !images.some(existing => existing.image === img.image)) {
+              images.push({
+                image: img.image,
+                alt_text: img.alt_text || `${p.title || 'Property'} - Image ${index + 1}`,
+                is_main: false
+              });
+            }
+          });
+        }
+
+        // Other potential image fields
+        const processImageField = (fieldName: string, value: any) => {
+          if (Array.isArray(value)) {
+            value.forEach((item: any, index: number) => {
+              if (typeof item === 'string' && !images.some(img => img.image === item)) {
+                images.push({
+                  image: item,
+                  alt_text: `${p.title || 'Property'} - ${fieldName} ${index + 1}`,
+                  is_main: false
+                });
+              } else if (item && item.url && !images.some(img => img.image === item.url)) {
+                images.push({
+                  image: item.url,
+                  alt_text: item.alt_text || `${p.title || 'Property'} - ${fieldName} ${index + 1}`,
+                  is_main: false
+                });
+              }
+            });
+          } else if (typeof value === 'string' && !images.some(img => img.image === value)) {
+            images.push({
+              image: value,
+              alt_text: `${p.title || 'Property'} - ${fieldName}`,
+              is_main: false
+            });
+          }
+        };
+
+        // Check other image fields
+        const imageFields = ['thumbnail_url', 'banner_image', 'cover_image', 'gallery_images', 'photos', 'images'];
+        imageFields.forEach(field => {
+          if (p[field]) {
+            processImageField(field, p[field]);
+          }
+        });
+
+        console.log('=== All Images from API ===');
+        console.log('Total images found:', images.length);
+        images.forEach((img, index) => {
+          console.log(`[${index + 1}] ${img.image}`);
+          if (img.alt_text) console.log(`    Alt: ${img.alt_text}`);
+        });
+
+        // Set property images
+        setPropertyImages(images);
 
         // --- Normalize listing_type from backend ---
         const rawLt = String(p.listing_type ?? p.listingType ?? '')
@@ -203,13 +270,14 @@ const PropertiesSalesDetails: FC = () => {
           staffName = p.staff.name ?? '';
         }
 
-        // map server object to local Property shape (safe fallbacks)
-        let img = p.main_image_url ?? p.image_url ?? p.imageUrl ?? null;
-        if (!img && Array.isArray(p.media_images) && p.media_images.length > 0) {
-          img = p.media_images[0]?.image ?? null;
-        }
-        if (img && img.startsWith('/')) {
-          img = `${API_BASE.replace(/\/api\/?$/, '')}${img}`;
+        // Determine main image for display
+        let mainImage = images.find(img => img.is_main)?.image || 
+                      images[0]?.image || 
+                      'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
+
+        // Ensure proper URL for images starting with /
+        if (mainImage.startsWith('/')) {
+          mainImage = `${API_BASE.replace(/\/api\/?$/, '')}${mainImage}`;
         }
 
         const address =
@@ -224,9 +292,7 @@ const PropertiesSalesDetails: FC = () => {
           status: String(p.status ?? 'draft'),
           listing_type: normalizedLt,
           location: address,
-          image_url:
-            img ||
-            'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable',
+          image_url: mainImage,
           description: p.description ?? p.short_description ?? '',
 
           add_guest: Number(p.add_guest ?? 0) || 0,
@@ -279,6 +345,79 @@ const PropertiesSalesDetails: FC = () => {
       cancelled = true;
     };
   }, [id]);
+
+  // Function to download all images as zip
+  const downloadAllImagesAsZip = async () => {
+    if (propertyImages.length === 0) {
+      showActionMessage('No images available to download.');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const zip = new JSZip();
+      const imageFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_images`);
+      
+      if (!imageFolder) {
+        throw new Error('Failed to create zip folder');
+      }
+
+      // Download each image and add to zip
+      const downloadPromises = propertyImages.map(async (img, index) => {
+        try {
+          // Ensure proper URL
+          let imageUrl = img.image;
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
+          }
+          
+          const response = await fetch(imageUrl);
+          if (!response.ok) {
+            console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
+            return null;
+          }
+          
+          const blob = await response.blob();
+          const extension = blob.type.split('/')[1] || 'jpg';
+          const fileName = `${property?.title.replace(/\s+/g, '_')}_${index + 1}.${extension}`;
+          
+          return { fileName, blob };
+        } catch (error) {
+          console.error(`Error downloading image ${index + 1}:`, error);
+          return null;
+        }
+      });
+
+      const downloadedImages = await Promise.all(downloadPromises);
+      
+      // Add downloaded images to zip
+      downloadedImages.forEach((item, index) => {
+        if (item) {
+          imageFolder.file(item.fileName, item.blob);
+        }
+      });
+
+      // Generate zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      
+      // Create download link without file-saver
+      const blobUrl = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${property?.title.replace(/\s+/g, '_')}_images.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      
+      showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
+    } catch (error) {
+      console.error('Error creating zip file:', error);
+      showActionMessage('Failed to create zip file. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -380,9 +519,6 @@ const PropertiesSalesDetails: FC = () => {
   const handleCopyCalendarLink = () =>
     copyToClipboard(property.viewing_link ?? '', 'Calendar link copied!');
 
-  const handleDownloadImages = () =>
-    downloadImage(property.image_url, property.title);
-
   const handleMarkAsSold = () => {
     setLocalStatus('sold');
     showActionMessage('This property has been marked as SOLD (local state only).');
@@ -412,11 +548,11 @@ const PropertiesSalesDetails: FC = () => {
               label="Amenities"
               onClick={handleShowAmenities}
             />
-            <QuickActionButton
+            {/* <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151081/user-community-line_sodsbc.png"
               label="Show Staff"
               onClick={handleShowStaff}
-            />
+            /> */}
             {/* <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151122/search-eye-line_w28zd9.png"
               label="Show Availability"
@@ -427,18 +563,22 @@ const PropertiesSalesDetails: FC = () => {
               label="Copy Description"
               onClick={handleCopyDescription}
             />
-         
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
-              label="Download Images"
-              onClick={handleDownloadImages}
+              label={`Download All Images (${propertyImages.length})`}
+              onClick={downloadAllImagesAsZip}
+              disabled={downloading || propertyImages.length === 0}
             />
-            {/* <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
-              label="Mark as Sold"
-              onClick={handleMarkAsSold}
-            /> */}
+
+
+            
+
           </div>
+          {downloading && (
+            <div className="mt-3 text-sm text-blue-600">
+              Downloading {propertyImages.length} images as zip...
+            </div>
+          )}
         </div>
 
         {/* Property card - same style as screenshot */}

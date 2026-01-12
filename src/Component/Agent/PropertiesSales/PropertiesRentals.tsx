@@ -495,6 +495,10 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
     ((Array.isArray(properties) && properties.length === 0) ||
       filteredProperties.length === 0);
 
+
+
+      console.log("properties data: ",properties );
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto">

@@ -1,239 +1,9 @@
-// import React, { FC } from 'react';
-// import { Link, Link as RouterLink } from 'react-router-dom';
-// import { ChevronLeft, CheckCircle, MoveRight, BackpackIcon } from 'lucide-react';
-
-// // --- TYPE DEFINITIONS ---
-// interface Property {
-//   title: string;
-//   status: string;
-//   location: string;
-//   image_url: string;
-//   main_details: { icon_url: string; value: string }[];
-//   description: string;
-//   amenities: string[];
-//   seo_info: {
-//     meta_title: string;
-//     meta_description: string;
-//     keywords: string[];
-//   };
-//   viewing_link: string;
-// }
-
-// // --- MOCK DATA ---
-// const mockData: { property: Property } = {
-//   property: {
-//     title: "Luxury Waterfront Villa",
-//     status: "published",
-//     location: "123 Ocean Drive, Miami Beach, FL",
-//     image_url:
-//       "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760554174/Image_Luxury_Modern_Villa_with_Pool_sdpezo.png",
-//     main_details: [
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920371/user-fill_1_lnonyj.png", value: "12 Guests" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920370/Frame_7_trc1r6.png", value: "4 Beds" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920370/Frame_8_yq0nm0.png", value: "3 Baths" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920370/Frame_9_y3ta9d.png", value: "2 Pools" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920561/discount-percent-fill_fc6s5e.png", value: "20% Commission offered to agent" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920560/exchange-dollar-line_dl1mal.png", value: "US$1,000.00 Damage Deposit" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920560/shake-hands-fill_i83l66.png", value: "Booking TBC by Owner" },
-//       { icon_url: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920559/calendar-fill_husixk.png", value: "100% Calendar accuracy" }
-//     ],
-//     description: `Welcome to St. James, Barbados, where within the elegant enclave of Derricks lies the majestic Seaclusion Villa. This gorgeous, colonial style, private luxury villa is situated on Barbados’ platinum coast revealing spectacular panoramic sea views and private beach access to the golden sand and clear waters of Barbados’s finest beach.`,
-//     amenities: [
-//       "Open-Air Dining Spot",
-//       "Chill Lounge Area",
-//       "Grill Area",
-//       "Electric Gates for Easy Access",
-//       "Cozy Enclosed Garden",
-//       "Fairmont Beach Club Pavilion",
-//       "Free Parking on Site",
-//       "24/7 Security",
-//       "Patio Furniture",
-//       "Outdoor Cooking Area",
-//       "Private Balconies for Relaxing",
-//       "Direct Beach Access"
-//     ],
-//     seo_info: {
-//       meta_title: "Modern Penthouse in Downtown NYC | Luxury Sky Living",
-//       meta_description: "Exclusive 3-bedroom penthouse with panoramic city views, rooftop terrace, and premium amenities in the heart of Manhattan.",
-//       keywords: ["penthouse nyc", "luxury apartment", "downtown manhattan", "skyline view"]
-//     },
-//     viewing_link: "https://calendly.com/agent/property-viewing-2"
-//   }
-// };
-
-// // --- HELPER FUNCTIONS ---
-// const showActionMessage = (message: string) => {
-//   console.log(message);
-//   alert(message);
-// };
-
-// const copyToClipboard = (text: string, successMessage: string) => {
-//   const el = document.createElement('textarea');
-//   el.value = text;
-//   document.body.appendChild(el);
-//   el.select();
-//   document.execCommand('copy');
-//   document.body.removeChild(el);
-//   showActionMessage(successMessage);
-// };
-
-// // --- QUICK ACTION BUTTON ---
-// interface QuickActionButtonProps {
-//   imgSrc: string;
-//   label: string;
-//   onClick?: () => void;
-// }
-// const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick }) => (
-//   <button
-//     onClick={onClick}
-//     className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer"
-//   >
-//     <img src={imgSrc} alt={label} className="w-5 h-5" />
-//     <span>{label}</span>
-//   </button>
-// );
-
-// const PropertiesRentalsDetails: FC = () => {
-//   const { property } = mockData;
-//   const [isExpanded, setIsExpanded] = React.useState(false);
-
-//   const getStatusStyle = (status: string) => {
-//     switch (status.toLowerCase()) {
-//       case "published":
-//         return "bg-green-100 text-green-700";
-//       case "draft":
-//         return "bg-yellow-100 text-yellow-700";
-//       default:
-//         return "bg-gray-100 text-gray-700";
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-50 font-sans">
-//       <div className="mx-auto p-4 sm:p-6 lg:p-8">
-//          <Link to="/dashboard/agent-properties-rentals"
-//                                 className="flex items-center text-gray-500 hover:text-gray-800 transition-colors mb-4"
-//                                 onClick={() => console.log('Back button clicked')}
-//                                 aria-label="Back to Agent List"
-//                             >
-//                                 <ChevronLeft className="w-5 h-5 mr-1" />
-//                                 <span className="text-sm font-medium">Back</span>
-//                             </Link>
-
-//         {/* Quick Actions */}
-//         <div className="p-4 bg-white rounded-xl shadow-lg mb-8 border border-gray-200">
-//           <h2 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h2>
-//           <div className="flex flex-wrap gap-3">
-//             <QuickActionButton imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920016/verified-badge-line_gvbpid.png" label="Amenities" />
-//             <QuickActionButton imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920016/user-community-line_sxrigx.png" label="Show Staff" />
-//             <QuickActionButton imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920013/search-eye-line_fbpuvn.png" label="Show Availability" />
-//             <QuickActionButton imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920066/Icon_33_t3wy08.png" label="Copy Description" onClick={() => copyToClipboard(property.description, 'Property description copied!')} /> 
-//             <QuickActionButton imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920088/Icon_34_cgp4g7.png" label="Copy Calendar Link" onClick={() => copyToClipboard(property.viewing_link, 'Calendar link copied!')} />
-//             <QuickActionButton imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png" label="Download Images" />
-//           </div>
-//         </div>
-
-//         {/* Property Section */}
-//         <h2 className="text-xl font-bold text-gray-800 mb-4">Property</h2>
-//         <div className="bg-white shadow-xl rounded-xl overflow-hidden p-6 mb-8 border border-gray-200">
-//           <div className="flex flex-col lg:flex-row gap-6">
-//             <div className="lg:w-1/3 flex-shrink-0">
-//               <div className="relative h-64 rounded-lg overflow-hidden">
-//                 <img
-//                   src={property.image_url}
-//                   alt={property.title}
-//                   className="w-full h-full object-cover"
-//                   onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable"; }}
-//                 />
-//               </div>
-//             </div>
-//             <div className="lg:w-2/3">
-//               <div className="flex justify-between items-start mb-2">
-//                 <h1 className="text-3xl font-extrabold text-gray-900">{property.title}</h1>
-//                 <span className={`text-sm font-semibold px-3 py-1 rounded-full ${getStatusStyle(property.status)}`}>
-//                   {property.status}
-//                 </span>
-//               </div>
-//               <p className="flex items-center text-lg text-gray-500 font-medium mb-4">
-//                  {property.location}
-//               </p>
-//               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-medium text-gray-700">
-//                 {property.main_details.map((item, index) => (
-//                   <div key={index} className="flex items-center whitespace-nowrap">
-//                     <img src={item.icon_url} className="w-4 h-4 mr-2" alt={item.value} />
-//                     <span>{item.value}</span>
-//                   </div>
-//                 ))}
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Description */}
-//         <h2 className="text-xl font-bold text-gray-800 mb-4">Description</h2>
-//         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
-//           <div className={`text-gray-700 leading-relaxed transition-all duration-300 ${isExpanded ? 'max-h-full' : 'max-h-[150px] overflow-hidden'}`} style={{ whiteSpace: 'pre-line' }}>
-//             {property.description}
-//           </div>
-//           <button onClick={() => setIsExpanded(!isExpanded)} className="mt-2 text-sm text-indigo-600 font-semibold hover:text-indigo-800 transition">
-//             {isExpanded ? 'See less...' : 'See more...'}
-//           </button>
-//         </div>
-
-//         {/* Amenities */}
-//         <h2 className="text-xl font-bold text-gray-800 mb-4">Outdoor Amenities</h2>
-//         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-//             {property.amenities.map((amenity, index) => (
-//               <div key={index} className="flex items-center text-gray-700 text-base">
-//                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760921593/Frame_1000004304_lba3o7.png" alt="" />
-//                 <span>{amenity}</span>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-
-//         {/* SEO Info */}
-//         <h2 className="text-xl font-bold text-gray-800 mb-4">SEO & Marketing Information</h2>
-//         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-4">
-//           <div>
-//             <p className="text-gray-500 text-sm font-medium">Meta Title</p>
-//             <p className="text-gray-800 font-semibold">{property.seo_info.meta_title}</p>
-//           </div>
-//           <div>
-//             <p className="text-gray-500 text-sm font-medium">Meta Description</p>
-//             <p className="text-gray-700">{property.seo_info.meta_description}</p>
-//           </div>
-//           <div>
-//             <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
-//             <div className="flex flex-wrap gap-2">
-//               {property.seo_info.keywords.map((keyword, index) => (
-//                 <span key={index} className="px-3 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded-full">{keyword}</span>
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Viewing Calendar */}
-//         <h2 className="text-xl font-bold text-gray-800 mb-4">Viewing Calendar</h2>
-//         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-//           <p className="text-gray-500 text-sm font-medium">Schedule a Viewing</p>
-//           <a href={property.viewing_link} target="_blank" rel="noopener noreferrer" className="flex items-center  hover:text-indigo-800 transition break-all cursor-pointer">
-//             <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_31_evyeki.png" alt="Link Icon" className="w-4 h-4 mr-2" /> 
-//             {property.viewing_link}
-//           </a>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default PropertiesRentalsDetails;
-
 // src/features/Properties/PropertiesSalesDetails.tsx
 import React, { FC, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import JSZip from 'jszip';
+import Swal from 'sweetalert2';
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -279,6 +49,14 @@ interface Property {
   _raw?: any;
 }
 
+// Image interface
+interface PropertyImage {
+  id?: number;
+  image: string;
+  alt_text?: string;
+  is_main?: boolean;
+}
+
 // --- API base (use env var if available) ---
 const API_BASE =
   (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/, '') ||
@@ -313,48 +91,19 @@ const copyToClipboard = (text: string, successMessage: string) => {
   }
 };
 
-const downloadImage = async (imgUrl?: string | null, title = 'image') => {
-  if (!imgUrl) {
-    showActionMessage('No image available to download.');
-    return;
-  }
-  try {
-    const url =
-      String(imgUrl).startsWith('http') || String(imgUrl).startsWith('//')
-        ? String(imgUrl)
-        : `${API_BASE.replace(/\/api\/?$/, '')}${
-            imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl
-          }`;
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    const ext = blob.type.split('/')[1] || 'jpg';
-    a.download = `${title.replace(/\s+/g, '-').toLowerCase()}.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(blobUrl);
-  } catch (err) {
-    console.error('Download error:', err);
-    showActionMessage('Failed to download image.');
-  }
-};
-
 // --- QUICK ACTION BUTTON ---
 interface QuickActionButtonProps {
   imgSrc: string;
   label: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
-const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick }) => (
+const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick, disabled }) => (
   <button
     onClick={onClick}
     type="button"
-    className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer"
+    disabled={disabled}
+    className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
   >
     <img src={imgSrc} alt={label} className="w-5 h-5" />
     <span>{label}</span>
@@ -377,6 +126,8 @@ const PropertiesRentalsDetails: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [localStatus, setLocalStatus] = useState<string>('draft');
+  const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -400,6 +151,93 @@ const PropertiesRentalsDetails: FC = () => {
           throw new Error(`Failed to fetch property (status ${res.status}).`);
         }
         const p = await res.json();
+
+        // --- Collect all images from API response ---
+        const images: PropertyImage[] = [];
+        
+        // Main image
+        if (p.main_image_url) {
+          images.push({
+            image: p.main_image_url,
+            alt_text: `${p.title || 'Property'} - Main Image`,
+            is_main: true
+          });
+        }
+        
+        if (p.image_url && !images.some(img => img.image === p.image_url)) {
+          images.push({
+            image: p.image_url,
+            alt_text: `${p.title || 'Property'} - Image`,
+            is_main: false
+          });
+        }
+        
+        if (p.imageUrl && !images.some(img => img.image === p.imageUrl)) {
+          images.push({
+            image: p.imageUrl,
+            alt_text: `${p.title || 'Property'} - Image`,
+            is_main: false
+          });
+        }
+        
+        // Media images
+        if (Array.isArray(p.media_images)) {
+          p.media_images.forEach((img: any, index: number) => {
+            if (img.image && !images.some(existing => existing.image === img.image)) {
+              images.push({
+                id: img.id || index,
+                image: img.image,
+                alt_text: img.alt_text || `${p.title || 'Property'} - Image ${index + 1}`,
+                is_main: false
+              });
+            }
+          });
+        }
+
+        // Other potential image fields
+        const processImageField = (fieldName: string, value: any) => {
+          if (Array.isArray(value)) {
+            value.forEach((item: any, index: number) => {
+              if (typeof item === 'string' && !images.some(img => img.image === item)) {
+                images.push({
+                  image: item,
+                  alt_text: `${p.title || 'Property'} - ${fieldName} ${index + 1}`,
+                  is_main: false
+                });
+              } else if (item && item.url && !images.some(img => img.image === item.url)) {
+                images.push({
+                  image: item.url,
+                  alt_text: item.alt_text || `${p.title || 'Property'} - ${fieldName} ${index + 1}`,
+                  is_main: false
+                });
+              }
+            });
+          } else if (typeof value === 'string' && !images.some(img => img.image === value)) {
+            images.push({
+              image: value,
+              alt_text: `${p.title || 'Property'} - ${fieldName}`,
+              is_main: false
+            });
+          }
+        };
+
+        // Check other image fields
+        const imageFields = ['thumbnail_url', 'banner_image', 'cover_image', 'gallery_images', 'photos', 'images'];
+        imageFields.forEach(field => {
+          if (p[field]) {
+            processImageField(field, p[field]);
+          }
+        });
+
+        console.log('=== All Images from API ===');
+        console.log('Total images found:', images.length);
+        images.forEach((img, index) => {
+          console.log(`[${index + 1}] ${img.image}`);
+          if (img.alt_text) console.log(`    Alt: ${img.alt_text}`);
+        });
+
+        // Set property images
+        setPropertyImages(images);
 
         // --- Normalize listing_type from backend ---
         const rawLt = String(p.listing_type ?? p.listingType ?? '')
@@ -434,13 +272,14 @@ const PropertiesRentalsDetails: FC = () => {
           staffName = p.staff.name ?? '';
         }
 
-        // map server object to local Property shape (safe fallbacks)
-        let img = p.main_image_url ?? p.image_url ?? p.imageUrl ?? null;
-        if (!img && Array.isArray(p.media_images) && p.media_images.length > 0) {
-          img = p.media_images[0]?.image ?? null;
-        }
-        if (img && img.startsWith('/')) {
-          img = `${API_BASE.replace(/\/api\/?$/, '')}${img}`;
+        // Determine main image for display
+        let mainImage = images.find(img => img.is_main)?.image || 
+                      images[0]?.image || 
+                      'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
+
+        // Ensure proper URL for images starting with /
+        if (mainImage.startsWith('/')) {
+          mainImage = `${API_BASE.replace(/\/api\/?$/, '')}${mainImage}`;
         }
 
         const address =
@@ -455,9 +294,7 @@ const PropertiesRentalsDetails: FC = () => {
           status: String(p.status ?? 'draft'),
           listing_type: normalizedLt,
           location: address,
-          image_url:
-            img ||
-            'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable',
+          image_url: mainImage,
           description: p.description ?? p.short_description ?? '',
 
           add_guest: Number(p.add_guest ?? 0) || 0,
@@ -509,6 +346,86 @@ const PropertiesRentalsDetails: FC = () => {
       cancelled = true;
     };
   }, [id]);
+
+  // Function to download all images as zip
+  const downloadAllImagesAsZip = async () => {
+    if (propertyImages.length === 0) {
+      showActionMessage('No images available to download.');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const zip = new JSZip();
+      const imageFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_images`);
+      
+      if (!imageFolder) {
+        throw new Error('Failed to create zip folder');
+      }
+
+      // Download each image and add to zip
+      const downloadPromises = propertyImages.map(async (img, index) => {
+        try {
+          // Ensure proper URL
+          let imageUrl = img.image;
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
+          }
+          
+          const response = await fetch(imageUrl);
+          if (!response.ok) {
+            console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
+            return null;
+          }
+          
+          const blob = await response.blob();
+          const extension = blob.type.split('/')[1] || 'jpg';
+          const fileName = `${property?.title.replace(/\s+/g, '_')}_${index + 1}.${extension}`;
+          
+          return { fileName, blob };
+        } catch (error) {
+          console.error(`Error downloading image ${index + 1}:`, error);
+          return null;
+        }
+      });
+
+      const downloadedImages = await Promise.all(downloadPromises);
+      
+      // Add downloaded images to zip
+      downloadedImages.forEach((item, index) => {
+        if (item) {
+          imageFolder.file(item.fileName, item.blob);
+        }
+      });
+
+      // Generate zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      
+      // Create download link without file-saver
+      const blobUrl = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${property?.title.replace(/\s+/g, '_')}_images.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      
+      // showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
+      // showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Downloaded ${propertyImages.length} images as zip file`,
+      })
+
+    } catch (error) {
+      console.error('Error creating zip file:', error);
+      showActionMessage('Failed to create zip file. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -610,9 +527,6 @@ const PropertiesRentalsDetails: FC = () => {
   const handleCopyCalendarLink = () =>
     copyToClipboard(property.viewing_link ?? '', 'Calendar link copied!');
 
-  const handleDownloadImages = () =>
-    downloadImage(property.image_url, property.title);
-
   const handleMarkAsSold = () => {
     setLocalStatus('sold');
     showActionMessage('This property has been marked as SOLD (local state only).');
@@ -664,22 +578,23 @@ const PropertiesRentalsDetails: FC = () => {
             />
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
-              label="Download Images"
-              onClick={handleDownloadImages}
+              label={`Download All Images (${propertyImages.length})`}
+              onClick={downloadAllImagesAsZip}
+              disabled={downloading || propertyImages.length === 0}
             />
-            {/* <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
-              label="Mark as Sold"
-              onClick={handleMarkAsSold}
-            /> */}
           </div>
+          {downloading && (
+            <div className="mt-3 text-sm text-blue-600">
+              Downloading {propertyImages.length} images as zip...
+            </div>
+          )}
         </div>
 
         {/* Property card - same style as screenshot */}
         <h2 className="text-xl font-bold text-gray-800 mb-3">Property</h2>
         <div className="bg-white shadow-xl rounded-xl overflow-hidden p-6 mb-8 border border-gray-200">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left image */}
+            {/* Left image - showing one image from API */}
             <div className="lg:w-1/3 flex-shrink-0">
               <div className="relative h-56 rounded-lg overflow-hidden">
                 <img
