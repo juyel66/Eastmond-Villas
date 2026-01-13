@@ -1,9 +1,12 @@
 // src/features/Properties/PropertiesSalesDetails.tsx
 import React, { FC, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Copy } from 'lucide-react';
 import JSZip from 'jszip';
 import Swal from 'sweetalert2';
+
+// Import the Calendar component (make sure the path is correct)
+import Calendar from "../../../pages/Rents/Calendar";
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -14,6 +17,9 @@ interface Property {
   location: string;
   image_url: string;
   description: string;
+  
+  // slug for dynamic calendar link
+  slug?: string;
 
   // numbers / booking stats
   add_guest?: number;
@@ -110,6 +116,22 @@ const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick,
   </button>
 );
 
+// --- COPY BUTTON COMPONENT ---
+interface CopyButtonProps {
+  onClick: () => void;
+  label?: string;
+}
+const CopyButton: FC<CopyButtonProps> = ({ onClick, label = "Copy" }) => (
+  <button
+    onClick={onClick}
+    type="button"
+    className="flex items-center gap-1 px-3 py-1.5 bg-gray-200 text-black text-xs font-medium rounded-lg hover:bg-gray-300 transition duration-150 cursor-pointer"
+  >
+    <Copy className="w-3 h-3" />
+    <span>{label}</span>
+  </button>
+);
+
 const formatMoney = (value?: string | number) => {
   const n = typeof value === 'string' ? Number(value) : value;
   if (!n || Number.isNaN(n)) return '';
@@ -128,6 +150,30 @@ const PropertiesRentalsDetails: FC = () => {
   const [localStatus, setLocalStatus] = useState<string>('draft');
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
   const [downloading, setDownloading] = useState(false);
+  
+  // State to control calendar visibility
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // Function to generate dynamic calendar link from slug
+  const generateCalendarLink = (): string => {
+    if (!property?.slug) {
+      return property?.viewing_link || '';
+    }
+    
+    // Format the slug: convert to lowercase, replace spaces with hyphens
+    const formattedSlug = property.slug
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '');
+    
+    // Determine suffix based on listing type (rent or sale)
+    let suffix = 's.ics'; // Default suffix for sales
+    if (property.listing_type === 'rent') {
+      suffix = 'ics';
+    }
+    
+    return `https://www.eastmondvillas.com/dashboard/properties/ical-link/${formattedSlug}/bookings.${suffix}`;
+  };
 
   useEffect(() => {
     if (!id) {
@@ -288,6 +334,9 @@ const PropertiesRentalsDetails: FC = () => {
           p.city ??
           '—';
 
+        // Extract slug - check multiple possible fields
+        const slug = p.slug || p.name_slug || p.property_slug || null;
+
         const mapped: Property = {
           id: Number(p.id ?? p.pk ?? NaN),
           title: p.title ?? p.name ?? 'Untitled',
@@ -296,6 +345,7 @@ const PropertiesRentalsDetails: FC = () => {
           location: address,
           image_url: mainImage,
           description: p.description ?? p.short_description ?? '',
+          slug: slug, // Add slug to property
 
           add_guest: Number(p.add_guest ?? 0) || 0,
           bedrooms: Number(p.bedrooms ?? 0) || 0,
@@ -411,8 +461,6 @@ const PropertiesRentalsDetails: FC = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
       
-      // showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
-      // showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
       Swal.fire({
         icon: 'success',
         title: 'Success',
@@ -425,6 +473,118 @@ const PropertiesRentalsDetails: FC = () => {
     } finally {
       setDownloading(false);
     }
+  };
+
+  // Function to copy all SEO text
+  const handleCopyAllSeoText = () => {
+    if (!property) return;
+
+    const seoText = `
+SEO & Marketing Information for "${property.title}"
+
+Meta Title:
+${property.seo_info?.meta_title || 'Not available'}
+
+Meta Description:
+${property.seo_info?.meta_description || 'Not available'}
+
+Keywords:
+${property.seo_info?.keywords?.join(', ') || 'Not available'}
+
+Property Title: ${property.title}
+Location: ${property.location}
+Description: ${property.description.substring(0, 200)}...
+    `.trim();
+
+    copyToClipboard(seoText, 'All SEO information copied to clipboard!');
+  };
+
+  // Function to copy Meta Title
+  const handleCopyMetaTitle = () => {
+    if (!property) return;
+    const title = property.seo_info?.meta_title || 'Not available';
+    copyToClipboard(title, 'Meta Title copied to clipboard!');
+  };
+
+  // Function to copy Meta Description
+  const handleCopyMetaDescription = () => {
+    if (!property) return;
+    const description = property.seo_info?.meta_description || 'Not available';
+    copyToClipboard(description, 'Meta Description copied to clipboard!');
+  };
+
+  // Function to copy Keywords
+  const handleCopyKeywords = () => {
+    if (!property) return;
+    const keywords = property.seo_info?.keywords?.join(', ') || 'Not available';
+    copyToClipboard(keywords, 'Keywords copied to clipboard!');
+  };
+
+  // Function to copy dynamic calendar link
+  const handleCopyCalendarLink = () => {
+    if (!property) return;
+    
+    const calendarLink = generateCalendarLink();
+    
+    if (!calendarLink) {
+      showActionMessage('Calendar link is not available for this property.');
+      return;
+    }
+    
+    copyToClipboard(calendarLink, 'Calendar link copied!');
+  };
+
+  // Function to copy description
+  const handleCopyDescription = () => {
+    if (!property) return;
+    copyToClipboard(property.description, 'Description copied to clipboard!');
+  };
+
+  // Function to copy outdoor amenities
+  const handleCopyOutdoorAmenities = () => {
+    if (!property) return;
+    const amenitiesText = [...property.outdoor_amenities, ...property.interior_amenities].join(', ');
+    if (amenitiesText) {
+      copyToClipboard(amenitiesText, 'Outdoor & Interior amenities copied to clipboard!');
+    } else {
+      showActionMessage('No amenities available to copy.');
+    }
+  };
+
+  // --- Quick Action Handlers (matching screenshot labels) ---
+  const handleShowAmenities = () => {
+    const el = document.getElementById('outdoor-amenities-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showActionMessage('Amenities section not found on page.');
+    }
+  };
+
+  const handleShowStaff = () => {
+    if (property?.staff_name) {
+      showActionMessage(`Staff: ${property.staff_name}`);
+    } else {
+      showActionMessage('No staff information available.');
+    }
+  };
+
+  const handleShowAvailability = () => {
+    // Instead of opening a link, show the calendar component
+    setShowCalendar(true);
+    
+    // Scroll to calendar section
+    setTimeout(() => {
+      const calendarSection = document.getElementById('availability-calendar-section');
+      if (calendarSection) {
+        calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
+  const handleMarkAsSold = () => {
+    setLocalStatus('sold');
+    showActionMessage('This property has been marked as SOLD (local state only).');
   };
 
   if (loading) {
@@ -495,42 +655,8 @@ const PropertiesRentalsDetails: FC = () => {
     }
   };
 
-  // --- Quick Action Handlers (matching screenshot labels) ---
-  const handleShowAmenities = () => {
-    const el = document.getElementById('outdoor-amenities-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      showActionMessage('Amenities section not found on page.');
-    }
-  };
-
-  const handleShowStaff = () => {
-    if (property.staff_name) {
-      showActionMessage(`Staff: ${property.staff_name}`);
-    } else {
-      showActionMessage('No staff information available.');
-    }
-  };
-
-  const handleShowAvailability = () => {
-    if (property.viewing_link) {
-      window.open(property.viewing_link, '_blank', 'noopener');
-    } else {
-      showActionMessage('No viewing / calendar link set for this property.');
-    }
-  };
-
-  const handleCopyDescription = () =>
-    copyToClipboard(property.description ?? '', 'Description copied!');
-
-  const handleCopyCalendarLink = () =>
-    copyToClipboard(property.viewing_link ?? '', 'Calendar link copied!');
-
-  const handleMarkAsSold = () => {
-    setLocalStatus('sold');
-    showActionMessage('This property has been marked as SOLD (local state only).');
-  };
+  // Get the dynamic calendar link
+  const dynamicCalendarLink = generateCalendarLink();
 
   return (
     <div className="min-h-screen p-4 bg-gray-50 font-sans">
@@ -696,8 +822,11 @@ const PropertiesRentalsDetails: FC = () => {
           </div>
         </div>
 
-        {/* Description */}
-        <h2 className="text-xl font-bold text-gray-800 mb-3">Description</h2>
+        {/* Description with Copy Button */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold text-gray-800">Description</h2>
+          <CopyButton onClick={handleCopyDescription} label="Copy Description" />
+        </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           <div
             className={`text-gray-700 leading-relaxed transition-all duration-300 ${
@@ -716,13 +845,16 @@ const PropertiesRentalsDetails: FC = () => {
           </button>
         </div>
 
-        {/* Outdoor Amenities (match screenshot section title) */}
-        <h2
-          id="outdoor-amenities-section"
-          className="text-xl font-bold text-gray-800 mb-3"
-        >
-          Outdoor Amenities
-        </h2>
+        {/* Outdoor Amenities with Copy Button */}
+        <div className="flex justify-between items-center mb-3">
+          <h2
+            id="outdoor-amenities-section"
+            className="text-xl font-bold text-gray-800"
+          >
+            Outdoor Amenities
+          </h2>
+          <CopyButton onClick={handleCopyOutdoorAmenities} label="Copy Amenities" />
+        </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           {property.outdoor_amenities.length === 0 &&
           property.interior_amenities.length === 0 ? (
@@ -748,36 +880,63 @@ const PropertiesRentalsDetails: FC = () => {
           )}
         </div>
 
-        {/* SEO & Marketing Information */}
-        <h2 className="text-xl font-bold text-gray-800 mb-3">
-          SEO & Marketing Information
-        </h2>
-        <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-4">
-          <div>
-            <p className="text-gray-500 text-sm font-medium">Meta Title</p>
-            <p className="text-gray-800 font-semibold">
-              {property.seo_info?.meta_title}
-            </p>
+        {/* SEO & Marketing Information with Copy Buttons */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold text-gray-800">
+            SEO & Marketing Information
+          </h2>
+          <CopyButton onClick={handleCopyAllSeoText} label="Copy All SEO" />
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-6">
+          {/* Meta Title with Copy Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm font-medium mb-1">Meta Title</p>
+              <p className="text-gray-800 font-semibold">
+                {property.seo_info?.meta_title || 'Not available'}
+              </p>
+            </div>
+            <div className="sm:mt-0">
+              <CopyButton onClick={handleCopyMetaTitle} label="Copy" />
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium">
-              Meta Description
-            </p>
-            <p className="text-gray-700  font-semibold">
-              {property.seo_info?.meta_description}
-            </p>
+
+          {/* Meta Description with Copy Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm font-medium mb-1">
+                Meta Description
+              </p>
+              <p className="text-gray-700">
+                {property.seo_info?.meta_description || 'Not available'}
+              </p>
+            </div>
+            <div className="sm:mt-0">
+              <CopyButton onClick={handleCopyMetaDescription} label="Copy" />
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
-            <div className="flex flex-wrap gap-2">
-              {property.seo_info?.keywords?.map((keyword, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-full"
-                >
-                  {keyword}
-                </span>
-              ))}
+
+          {/* Keywords with Copy Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
+              <div className="flex flex-wrap gap-2">
+                {property.seo_info?.keywords?.length > 0 ? (
+                  property.seo_info.keywords.map((keyword, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-full"
+                    >
+                      {keyword}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-500 text-sm">No keywords available</span>
+                )}
+              </div>
+            </div>
+            <div className="sm:mt-0">
+              <CopyButton onClick={handleCopyKeywords} label="Copy" />
             </div>
           </div>
         </div>
@@ -792,12 +951,24 @@ const PropertiesRentalsDetails: FC = () => {
           </p>
         
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          
+            {/* Display the dynamic calendar link */}
             <span className="text-xs text-gray-500 break-all">
-              {property.viewing_link || 'No link available'}
+              {dynamicCalendarLink || 'No link available'}
             </span>
           </div>
         </div>
+
+        {/* Availability Calendar Section */}
+        {showCalendar && property?.id && (
+          <div id="availability-calendar-section" className="mt-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-3">
+              Availability Calendar
+            </h2>
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+              <Calendar villaId={property.id} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
