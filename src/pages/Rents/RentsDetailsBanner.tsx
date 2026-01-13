@@ -576,26 +576,33 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
           </div>
 
           <div className="flex flex-col items-center mb-4">
-         <p className="text-lg font-medium text-green-700">
-  {(() => {
-    const formatPrice = (price: number | string) =>
-      Number(price).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+            <p className="text-lg font-medium text-green-700">
+              {(() => {
+                const formatPrice = (price: number | string) =>
+                  Number(price).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
 
-    if (effectiveVilla?.price_display) {
-      return `From USD$${formatPrice(effectiveVilla.price_display)}${
-        isRentType ? "/night" : ""
-      }`;
-    }
+                if (effectiveVilla?.price_display) {
+                  // ✅ Sale type এর জন্য "For sale at" দেখাবে
+                  if (isSaleType) {
+                    return `For sale at USD$${formatPrice(effectiveVilla.price_display)}`;
+                  }
+                  // ✅ Rent type এর জন্য "From" দেখাবে
+                  return `From USD$${formatPrice(effectiveVilla.price_display)}${
+                    isRentType ? "/night" : ""
+                  }`;
+                }
 
-    return isRentType
-      ? `From USD$${formatPrice(850000)}/night`
-      : `From USD$${formatPrice(850000)}`;
-  })()}
-</p>
-
+                // Default fallback
+                return isSaleType
+                  ? `For sale at USD$${formatPrice(850000)}`
+                  : isRentType
+                  ? `From USD$${formatPrice(850000)}/night`
+                  : `USD$${formatPrice(850000)}`;
+              })()}
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">

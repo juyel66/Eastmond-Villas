@@ -296,10 +296,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   // Determine price display based on rateType
   const getPriceDisplay = () => {
     if (property.rateType?.toLowerCase() === "rent") {
-      return `From USD$${formattedPrice}/night`;
+      return `For sale at USD$${formattedPrice}/night`;
     }
     // For "sale" or any other type
-    return `From USD$${formattedPrice}`;
+    return `For sale at USD$${formattedPrice}`;
   };
 
   const amenities = [

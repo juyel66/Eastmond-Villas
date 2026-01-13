@@ -86,6 +86,11 @@ const Calendar: React.FC<Props> = ({ villaId, initialDate }) => {
   );
 
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  
+
+
+
+
 
   useEffect(() => {
     if (!villaId) return;
@@ -189,6 +194,8 @@ const Calendar: React.FC<Props> = ({ villaId, initialDate }) => {
             <span className="text-sm text-gray-600">Booked</span>
           </div>
         </div>
+
+      
         
         <button
           onClick={handleNext}
