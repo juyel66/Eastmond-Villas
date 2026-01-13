@@ -1,6 +1,6 @@
 // src/features/Properties/PropertiesSales.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/features/Auth/authSlice';
@@ -29,6 +29,15 @@ interface Property {
   _raw?: any;
   listing_type?: 'sale' | 'rent' | 'other';
   assigned_agent?: number | null;
+}
+
+interface PaginationInfo {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  current_page: number;
+  total_pages: number;
+  page_size: number;
 }
 
 // --- API base (defaults to your server) ---
@@ -213,7 +222,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   return (
     <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100 flex flex-col md:flex-row gap-5 mb-6 w-full">
       {/* Image */}
-      <div className="w-full md:w-48 lg:w-52 h-44 md:h-auto flex-shrink-0">
+      <div className="w-full md:w-48 lg:w-52 h-44 flex-shrink-0">
         <img
           src={imageUrl ?? PLACEHOLDER_IMAGE}
           alt={title}
@@ -302,20 +311,6 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             Copy Description
           </button>
 
-          {/* <button
-            onClick={() =>
-              copyToClipboard(property.calendar_link ?? '', 'Calendar Link')
-            }
-            className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
-          >
-            <img
-              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_31_evyeki.png"
-              alt=""
-              className="h-4 w-4"
-            />
-            Copy Calendar Link
-          </button> */}
-
           <button
             onClick={() => downloadImage(property.imageUrl)}
             className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
@@ -333,6 +328,134 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
+// --- PAGINATION COMPONENT ---
+interface PaginationProps {
+  pagination: PaginationInfo | null;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  loading: boolean;
+}
+
+const Pagination: React.FC<PaginationProps> = ({
+  pagination,
+  currentPage,
+  onPageChange,
+  loading,
+}) => {
+  if (!pagination || pagination.total_pages <= 1) return null;
+
+  const totalPages = pagination.total_pages;
+  const pagesToShow = 5; // Show 5 page numbers at a time
+
+  // Calculate which page numbers to show
+  let startPage = Math.max(1, currentPage - Math.floor(pagesToShow / 2));
+  let endPage = Math.min(totalPages, startPage + pagesToShow - 1);
+
+  // Adjust if we're near the end
+  if (endPage - startPage + 1 < pagesToShow) {
+    startPage = Math.max(1, endPage - pagesToShow + 1);
+  }
+
+  const pageNumbers = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
+      <div className="text-sm text-gray-600">
+        Showing {pagination.count > 0 ? (currentPage - 1) * 20 + 1 : 0} -{' '}
+        {Math.min(currentPage * 20, pagination.count)} of {pagination.count}{' '}
+        properties
+      </div>
+
+      <div className="flex items-center gap-2">
+        {/* Previous button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1 || loading}
+          className={`flex items-center gap-1 px-3 py-2 rounded-lg border ${
+            currentPage === 1 || loading
+              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span>Previous</span>
+        </button>
+
+        {/* Page numbers */}
+        <div className="flex items-center gap-1">
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => onPageChange(1)}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
+                  currentPage === 1
+                    ? 'bg-teal-900 text-white border-gray-900'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                1
+              </button>
+              {startPage > 2 && (
+                <span className="px-2 text-gray-400">...</span>
+              )}
+            </>
+          )}
+
+          {pageNumbers.map((page) => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              disabled={loading}
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
+                currentPage === page
+                  ? 'bg-teal-600 text-white '
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {page}
+            </button>
+          ))}
+
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && (
+                <span className="px-2 text-gray-400">...</span>
+              )}
+              <button
+                onClick={() => onPageChange(totalPages)}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
+                  currentPage === totalPages
+                    ? 'bg-gray-900 text-white  border-gray-900'
+                    : 'bg-white text-gray-700  border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Next button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages || loading}
+          className={`flex items-center gap-1 px-3 py-2 rounded-lg border ${
+            currentPage === totalPages || loading
+              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <span>Next</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // --- MAIN COMPONENT (Sales) ---
 type Props = {
   agentId?: number | null;
@@ -344,16 +467,20 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastFetchAt, setLastFetchAt] = useState<number | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
-  const loadProperties = async (opts?: {
+  const loadProperties = async (page: number = 1, opts?: {
     ignoreResults?: { current: boolean };
   }) => {
     setLoading(true);
     setLoadError(null);
 
     try {
-      // ✅ FETCHING SALE PROPERTIES FROM AGENT SPECIFIC API
-      const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=sale`;
+      // ✅ FETCHING SALE PROPERTIES FROM AGENT SPECIFIC API WITH PAGINATION
+      const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=sale&page=${page}`;
 
       console.log('[Sales] Fetching from URL:', url);
 
@@ -388,7 +515,17 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
       // Extract properties from results array
       const list = Array.isArray(data?.results) ? data.results : [];
 
-      console.log('[Sales] API Response count:', list.length);
+      console.log('[Sales] API Response count:', list.length, 'Page:', page);
+
+      // Set pagination info
+      const paginationInfo: PaginationInfo = {
+        count: data.count || 0,
+        next: data.next || null,
+        previous: data.previous || null,
+        current_page: page,
+        total_pages: Math.ceil((data.count || 0) / 20), // Assuming 20 items per page
+        page_size: 20,
+      };
 
       // Map API response to our Property interface
       const mapped: Property[] = list.map((p: any) => {
@@ -450,11 +587,14 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
       if (opts?.ignoreResults?.current) return;
 
       setProperties(mapped);
+      setPagination(paginationInfo);
+      setCurrentPage(page);
       setLastFetchAt(Date.now());
     } catch (err: any) {
       console.error('Failed to load properties', err);
       if (opts?.ignoreResults?.current) return;
       setProperties([]);
+      setPagination(null);
       setLoadError(err?.message ?? 'Failed to load properties.');
     } finally {
       if (!opts?.ignoreResults?.current) {
@@ -471,16 +611,23 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
 
   useEffect(() => {
     const ignore = { current: false };
-    loadProperties({ ignoreResults: ignore });
+    loadProperties(1, { ignoreResults: ignore });
 
     return () => {
       ignore.current = true;
     };
   }, []);
 
+  const handlePageChange = (page: number) => {
+    if (page < 1 || (pagination && page > pagination.total_pages)) return;
+    loadProperties(page);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleRetry = () => {
     const ignore = { current: false };
-    loadProperties({ ignoreResults: ignore });
+    loadProperties(1, { ignoreResults: ignore });
   };
 
   // IMPORTANT: This API already returns ONLY properties assigned to the current agent
@@ -543,6 +690,14 @@ const PropertiesSales: React.FC<Props> = ({ agentId: propAgentId = null }) => {
             {filteredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
+            
+            {/* Pagination Component */}
+            <Pagination
+              pagination={pagination}
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
+              loading={loading}
+            />
           </>
         )}
       </div>
