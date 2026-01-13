@@ -1,8 +1,9 @@
 // src/features/Properties/PropertiesSalesDetails.tsx
 import React, { FC, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Copy } from 'lucide-react';
 import JSZip from 'jszip';
+import Swal from 'sweetalert2';
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -105,6 +106,22 @@ const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick,
     className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
   >
     <img src={imgSrc} alt={label} className="w-5 h-5" />
+    <span>{label}</span>
+  </button>
+);
+
+// --- COPY BUTTON COMPONENT ---
+interface CopyButtonProps {
+  onClick: () => void;
+  label?: string;
+}
+const CopyButton: FC<CopyButtonProps> = ({ onClick, label = "Copy" }) => (
+  <button
+    onClick={onClick}
+    type="button"
+    className="flex items-center gap-1 px-3 py-1.5 bg-gray-200 text-gray-900 text-xs font-medium rounded-lg hover:bg-gray-300 transition duration-150 cursor-pointer"
+  >
+    <Copy className="w-3 h-3" />
     <span>{label}</span>
   </button>
 );
@@ -410,13 +427,64 @@ const PropertiesSalesDetails: FC = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
       
-      showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
+      // showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Downloaded ${propertyImages.length} images as zip file`,
+      })
     } catch (error) {
       console.error('Error creating zip file:', error);
       showActionMessage('Failed to create zip file. Please try again.');
     } finally {
       setDownloading(false);
     }
+  };
+
+  // Function to copy all SEO text
+  const handleCopyAllSeoText = () => {
+    if (!property) return;
+
+    const seoText = `
+SEO & Marketing Information for "${property.title}"
+
+Meta Title:
+${property.seo_info?.meta_title || 'Not available'}
+
+Meta Description:
+${property.seo_info?.meta_description || 'Not available'}
+
+Keywords:
+${property.seo_info?.keywords?.join(', ') || 'Not available'}
+
+Property Title: ${property.title}
+Location: ${property.location}
+Description: ${property.description.substring(0, 200)}...
+    `.trim();
+
+    copyToClipboard(seoText, 'All SEO information copied to clipboard!');
+  };
+
+  // Function to copy Meta Title
+  const handleCopyMetaTitle = () => {
+    if (!property) return;
+    const title = property.seo_info?.meta_title || 'Not available';
+    copyToClipboard(title, 'Meta Title copied to clipboard!');
+  };
+
+  // Function to copy Meta Description
+  const handleCopyMetaDescription = () => {
+    if (!property) return;
+    const description = property.seo_info?.meta_description || 'Not available';
+    copyToClipboard(description, 'Meta Description copied to clipboard!');
+  };
+
+  // Function to copy Keywords
+  const handleCopyKeywords = () => {
+    if (!property) return;
+    const keywords = property.seo_info?.keywords?.join(', ') || 'Not available';
+    copyToClipboard(keywords, 'Keywords copied to clipboard!');
   };
 
   if (loading) {
@@ -498,7 +566,7 @@ const PropertiesSalesDetails: FC = () => {
   };
 
   const handleShowStaff = () => {
-    if (property.staff_name) {
+    if (property?.staff_name) {
       showActionMessage(`Staff: ${property.staff_name}`);
     } else {
       showActionMessage('No staff information available.');
@@ -506,7 +574,7 @@ const PropertiesSalesDetails: FC = () => {
   };
 
   const handleShowAvailability = () => {
-    if (property.viewing_link) {
+    if (property?.viewing_link) {
       window.open(property.viewing_link, '_blank', 'noopener');
     } else {
       showActionMessage('No viewing / calendar link set for this property.');
@@ -514,10 +582,10 @@ const PropertiesSalesDetails: FC = () => {
   };
 
   const handleCopyDescription = () =>
-    copyToClipboard(property.description ?? '', 'Description copied!');
+    copyToClipboard(property?.description ?? '', 'Description copied!');
 
   const handleCopyCalendarLink = () =>
-    copyToClipboard(property.viewing_link ?? '', 'Calendar link copied!');
+    copyToClipboard(property?.viewing_link ?? '', 'Calendar link copied!');
 
   const handleMarkAsSold = () => {
     setLocalStatus('sold');
@@ -548,16 +616,6 @@ const PropertiesSalesDetails: FC = () => {
               label="Amenities"
               onClick={handleShowAmenities}
             />
-            {/* <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151081/user-community-line_sodsbc.png"
-              label="Show Staff"
-              onClick={handleShowStaff}
-            /> */}
-            {/* <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151122/search-eye-line_w28zd9.png"
-              label="Show Availability"
-              onClick={handleShowAvailability}
-            /> */}
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1767906306/Icon_26_ejcmnk.png"
               label="Copy Description"
@@ -569,10 +627,6 @@ const PropertiesSalesDetails: FC = () => {
               onClick={downloadAllImagesAsZip}
               disabled={downloading || propertyImages.length === 0}
             />
-
-
-            
-
           </div>
           {downloading && (
             <div className="mt-3 text-sm text-blue-600">
@@ -624,12 +678,6 @@ const PropertiesSalesDetails: FC = () => {
 
               {/* Guests / beds / baths / pools */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-700">
-                {/* <div className="flex items-center gap-1">
-                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/user-fill_tqy1wd.png" alt="" />
-                  <span>
-                    {property.add_guest ?? 0} Guests
-                  </span>
-                </div> */}
                 <div className="flex items-center gap-1">
                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
                   <span>{property.bedrooms ?? 0} Beds</span>
@@ -658,18 +706,6 @@ const PropertiesSalesDetails: FC = () => {
                       : 'Commission rate not set'}
                   </span>
                 </div>
-                {/* <div className="flex items-center gap-2">
-                  <img
-                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
-                    alt="Damage Deposit"
-                    className="w-4 h-4"
-                  />
-                  <span>
-                    {property.damage_deposit
-                      ? `US$ ${formatMoney(property.damage_deposit)} Damage Deposit`
-                      : 'No Damage Deposit'}
-                  </span>
-                </div> */}
               </div>
 
               {/* Booking status + calendar accuracy */}
@@ -678,10 +714,6 @@ const PropertiesSalesDetails: FC = () => {
                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
                   <span>Booking TBC by {property.tbc_by}</span>
                 </div>
-                {/* <div className="flex items-center gap-2">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />
-                  <span>100% Calendar accuracy</span>
-                </div> */}
               </div>
             </div>
           </div>
@@ -739,42 +771,66 @@ const PropertiesSalesDetails: FC = () => {
           )}
         </div>
 
-        {/* SEO & Marketing Information */}
-        <h2 className="text-xl font-bold text-gray-800 mb-3">
-          SEO & Marketing Information
-        </h2>
-        <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-4">
-          <div>
-            <p className="text-gray-500 text-sm font-medium">Meta Title</p>
-            <p className="text-gray-800 font-semibold">
-              {property.seo_info?.meta_title}
-            </p>
+        {/* SEO & Marketing Information with Copy Buttons */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold text-gray-800">
+            SEO & Marketing Information
+          </h2>
+          <CopyButton onClick={handleCopyAllSeoText} label="Copy All SEO" />
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-6">
+          {/* Meta Title with Copy Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm font-medium mb-1">Meta Title</p>
+              <p className="text-gray-800 font-semibold">
+                {property.seo_info?.meta_title || 'Not available'}
+              </p>
+            </div>
+            <div className="sm:mt-0">
+              <CopyButton onClick={handleCopyMetaTitle} label="Copy" />
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium">
-              Meta Description
-            </p>
-            <p className="text-gray-700  font-semibold">
-              {property.seo_info?.meta_description}
-            </p>
+
+          {/* Meta Description with Copy Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm font-medium mb-1">
+                Meta Description
+              </p>
+              <p className="text-gray-700">
+                {property.seo_info?.meta_description || 'Not available'}
+              </p>
+            </div>
+            <div className="sm:mt-0">
+              <CopyButton onClick={handleCopyMetaDescription} label="Copy" />
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
-            <div className="flex flex-wrap gap-2">
-              {property.seo_info?.keywords?.map((keyword, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-full"
-                >
-                  {keyword}
-                </span>
-              ))}
+
+          {/* Keywords with Copy Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
+              <div className="flex flex-wrap gap-2">
+                {property.seo_info?.keywords?.length > 0 ? (
+                  property.seo_info.keywords.map((keyword, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-full"
+                    >
+                      {keyword}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-500 text-sm">No keywords available</span>
+                )}
+              </div>
+            </div>
+            <div className="sm:mt-0">
+              <CopyButton onClick={handleCopyKeywords} label="Copy" />
             </div>
           </div>
         </div>
-
-        {/* Viewing Calendar / Schedule a Viewing */}
-    
       </div>
     </div>
   );
