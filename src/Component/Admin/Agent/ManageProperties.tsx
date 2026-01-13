@@ -14,7 +14,6 @@ import Swal from "sweetalert2";
 
 // ---------- CONFIG ----------
 const API_BASE = "https://api.eastmondvillas.com";
-const PROPERTIES_PATH = "/api/villas/properties/"; // used with ?page=1
 const PROPERTY_ASSIGNMENTS_API = (agentId: number | string) => 
   `${API_BASE.replace(/\/+$/, "")}/api/villas/property-assignments/?agent_id=${agentId}`;
 const ASSIGN_PROPERTY_TO_AGENT_API = 
@@ -234,23 +233,34 @@ export default function ManageProperties({
       p.assigned_agent?.username ??
       null;
 
+    // Get image from the new API format
+    let imageUrl = "https://placehold.co/120x80/cccccc/333333?text=N/A";
+    if (p.images && Array.isArray(p.images) && p.images.length > 0) {
+      // Take the first image from the images array
+      imageUrl = p.images[0]?.image || imageUrl;
+    } else if (p.media_images && Array.isArray(p.media_images) && p.media_images.length > 0) {
+      // Fallback to media_images if images array is not present
+      imageUrl = p.media_images[0]?.image || imageUrl;
+    } else if (p.main_image_url) {
+      // Fallback to main_image_url
+      imageUrl = p.main_image_url;
+    } else if (p.imageUrl) {
+      // Fallback to imageUrl
+      imageUrl = p.imageUrl;
+    }
+
     const normalized: NormalizedProperty = {
       id: p.id,
       name: p.title ?? p.name ?? `Untitled #${p.id}`,
       location: p.address ?? p.city ?? "",
-      status: p.status ?? "Published",
+      status: p.status ?? "Published", // Default status since not in new API response
       type: (p.listing_type ?? p.type ?? "")
         .toString()
         .toLowerCase()
         .includes("rent")
         ? "rentals"
         : "sales",
-      imageUrl:
-        (p.media_images && p.media_images[0] && p.media_images[0].image) ||
-        p.main_image_url ||
-        p.imageUrl ||
-        (p.images && p.images[0] && p.images[0].image) || // New from assignments API
-        "https://placehold.co/120x80/cccccc/333333?text=N/A",
+      imageUrl: imageUrl,
       raw: p,
       assigned_agent: assignedAgentId,
       assigned_agent_name: assignedAgentName,
@@ -274,7 +284,21 @@ export default function ManageProperties({
         throw new Error(`Failed to fetch properties (${res.status})`);
       
       const json = await res.json();
-      const list = Array.isArray(json.results) ? json.results : json.data ?? [];
+      
+      // Handle both response formats: array directly or with results/data field
+      let list = [];
+      if (Array.isArray(json)) {
+        // Direct array response (like in your example)
+        list = json;
+      } else if (Array.isArray(json.results)) {
+        // Results field response
+        list = json.results;
+      } else if (Array.isArray(json.data)) {
+        // Data field response
+        list = json.data;
+      }
+      
+      console.log('[ManageProperties] Fetched properties:', list.length);
 
       const normalized = list.map(normalizeProperty);
       setProperties(normalized);
@@ -287,6 +311,7 @@ export default function ManageProperties({
       setSelectedPropertyIds(preselected);
       setInitialAssignedIds(preselected);
     } catch (err: any) {
+      console.error('[ManageProperties] Error fetching properties:', err);
       setError(err?.message || "Failed to load properties");
       setProperties([]);
       setSelectedPropertyIds([]);
@@ -523,13 +548,16 @@ export default function ManageProperties({
         <main className="space-y-4 mb-8">
           <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
             {loading && (
-              <div className="text-sm text-gray-500">
-                Loading properties…
+              <div className="flex justify-center items-center py-10">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-gray-900 animate-spin" />
+                  <p className="text-sm text-gray-600">Loading properties…</p>
+                </div>
               </div>
             )}
             {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
 
-            {filteredProperties.map((property) => (
+            {!loading && filteredProperties.map((property) => (
               <PropertyListItem
                 key={property.id}
                 property={property}
