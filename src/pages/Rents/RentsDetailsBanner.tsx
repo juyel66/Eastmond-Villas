@@ -1,5 +1,5 @@
 // File: RentsDetailsBanner.tsx
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
   FaFacebookF,
@@ -25,7 +25,7 @@ const LOCAL_PREVIEW = '/mnt/data/ff015d0f-3872-4d4d-a90f-8ac7502627ac.png';
 // Use same base fallback as your slice
 const API_BASE =
   (import.meta && (import.meta as any).env?.VITE_API_BASE) ||
-  'https://api.eastmondvillas.com/api';
+  'https://api.eastmondvillas.com';
 
 const getAccessToken = () => {
   try {
@@ -52,13 +52,16 @@ interface FormData {
   check_out_data: string;
   guests: number;
   phone: string;
+  message: string; // Added for sale inquiries
 }
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   propertyId: number | string;
+  propertyTitle?: string;
   villaPrice?: string | number | null;
+  isSaleType?: boolean;
   onSuccess?: (resp?: any) => void;
 }
 
@@ -66,7 +69,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
   isOpen,
   onClose,
   propertyId,
+  propertyTitle = '',
   villaPrice,
+  isSaleType = false,
   onSuccess,
 }) => {
   const [formData, setFormData] = useState<FormData>({
@@ -76,10 +81,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
     check_out_data: '',
     guests: 1,
     phone: '',
+    message: '', // Added for sale inquiries
   });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -109,7 +115,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     // If not logged in, redirect to login immediately
     const token = getAccessToken();
     if (!token) {
-      toast.error('Please log in to create a booking.');
+      toast.error('Please log in to send your inquiry.');
       // close modal and send user to login (preserve return url if desired)
       onClose();
       // redirect to login (simple redirect — adapt to router if needed)
@@ -119,63 +125,127 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
     setLoading(true);
 
-    const total_price = calcTotalPrice();
+    if (isSaleType) {
+      // Sale property: Send inquiry message to /api/list_vila/contect/
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message || `Interested in purchasing ${propertyTitle}`,
+        property_id: propertyId,
+        property_title: propertyTitle,
+      };
 
-    const payload = {
-      property: propertyId,
-      full_name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      check_in: formData.check_in_data,
-      check_out: formData.check_out_data,
-      total_price: total_price,
-    };
-
-    try {
-      const res = await fetch(`${API_BASE}/villas/bookings/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        console.error('Booking POST failed:', data);
-        Swal.fire({
-          icon: 'error',
-          title: 'Booking failed',
-          text: data?.detail || res.statusText,
+      try {
+        // Use the contact API endpoint for sale inquiries
+        const res = await fetch(`${API_BASE}/list_vila/contect/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         });
-        toast.error(data?.detail || res.statusText || 'Booking failed');
-        setLoading(false);
-        return;
-      }
 
-      console.log('Booking created successfully:', data);
-      Swal.fire({
-        title: 'Booking created successfully!',
-        icon: 'success',
-      });
-      setFormData({
-        name: '',
-        email: '',
-        check_in_data: '',
-        check_out_data: '',
-        guests: 1,
-        phone: '',
-      });
-      onClose();
-      toast.success('Booking created successfully!');
-      if (onSuccess) onSuccess(data);
-    } catch (err) {
-      console.error('Booking error:', err);
-      toast.error('Booking failed — see console.');
-    } finally {
-      setLoading(false);
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          console.error('Sale inquiry POST failed:', data);
+          Swal.fire({
+            icon: 'error',
+            title: 'Inquiry failed',
+            text: data?.detail || data?.message || res.statusText,
+          });
+          toast.error(data?.detail || data?.message || res.statusText || 'Inquiry failed');
+          setLoading(false);
+          return;
+        }
+
+        console.log('Sale inquiry sent successfully:', data);
+        Swal.fire({
+          title: 'Inquiry sent successfully!',
+          text: 'We will contact you soon regarding this property.',
+          icon: 'success',
+        });
+        setFormData({
+          name: '',
+          email: '',
+          check_in_data: '',
+          check_out_data: '',
+          guests: 1,
+          phone: '',
+          message: '',
+        });
+        onClose();
+        toast.success('Inquiry sent successfully!');
+        if (onSuccess) onSuccess(data);
+      } catch (err) {
+        console.error('Sale inquiry error:', err);
+        toast.error('Inquiry failed — please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Rent property: Original booking logic
+      const total_price = calcTotalPrice();
+
+      const payload = {
+        property: propertyId,
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        check_in: formData.check_in_data,
+        check_out: formData.check_out_data,
+        total_price: total_price,
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/villas/bookings/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          console.error('Booking POST failed:', data);
+          Swal.fire({
+            icon: 'error',
+            title: 'Booking failed',
+            text: data?.detail || res.statusText,
+          });
+          toast.error(data?.detail || res.statusText || 'Booking failed');
+          setLoading(false);
+          return;
+        }
+
+        console.log('Booking created successfully:', data);
+        Swal.fire({
+          title: 'Booking created successfully!',
+          icon: 'success',
+        });
+        setFormData({
+          name: '',
+          email: '',
+          check_in_data: '',
+          check_out_data: '',
+          guests: 1,
+          phone: '',
+          message: '',
+        });
+        onClose();
+        toast.success('Booking created successfully!');
+        if (onSuccess) onSuccess(data);
+      } catch (err) {
+        console.error('Booking error:', err);
+        toast.error('Booking failed — see console.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -186,19 +256,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}
     >
-
-      
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 m-4 transform transition-all duration-300"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 m-4 transform transition-all duration-300 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-semibold text-gray-800">
-            Book Your Stay
+            {isSaleType ? 'Inquire About Purchase' : 'Book Your Stay'}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-500 text-3xl leading-none"
+            className="text-gray-500 text-3xl leading-none hover:text-gray-700"
           >
             &times;
           </button>
@@ -215,7 +283,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border rounded"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 placeholder="John Guest"
               />
             </div>
@@ -230,7 +298,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border rounded"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 placeholder="guest@example.com"
               />
             </div>
@@ -244,52 +312,80 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border rounded"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 placeholder="+1234567890"
               />
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Check-in
-                </label>
-                <input
-                  name="check_in_data"
-                  type="date"
-                  value={formData.check_in_data}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border rounded"
-                />
+            {/* Only show date fields for rent properties */}
+            {!isSaleType && (
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Check-in
+                  </label>
+                  <input
+                    name="check_in_data"
+                    type="date"
+                    value={formData.check_in_data}
+                    onChange={handleChange}
+                    required={!isSaleType}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Check-out
+                  </label>
+                  <input
+                    name="check_out_data"
+                    type="date"
+                    value={formData.check_out_data}
+                    onChange={handleChange}
+                    required={!isSaleType}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
               </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Check-out
-                </label>
-                <input
-                  name="check_out_data"
-                  type="date"
-                  value={formData.check_out_data}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border rounded"
-                />
-              </div>
-            </div>
+            )}
 
-            <div className="text-sm text-gray-700">
-              {/* <strong>Total price (calculated):</strong> ${calcTotalPrice()} */}
-            </div>
+            {/* Show guests field only for rent properties */}
+          
+
+            {/* Show message field for sale properties */}
+            {isSaleType && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="I'm interested in purchasing this property. Please contact me with more details."
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+            )}
+
+            {!isSaleType && (
+              <div className="">
+                {/* <strong>Total price (calculated):</strong> ${calcTotalPrice()} */}
+              </div>
+            )}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-6">
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded disabled:opacity-60"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded disabled:opacity-60 font-medium"
             >
-              {loading ? 'Booking...' : 'Confirm Booking'}
+              {loading 
+                ? (isSaleType ? 'Sending Inquiry...' : 'Booking...') 
+                : (isSaleType ? 'Send Inquiry' : 'Confirm Booking')
+              }
             </button>
           </div>
         </form>
@@ -421,7 +517,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
           </div>
           <button
             onClick={copyLink}
-            className="bg-gray-100 border px-3 py-2 rounded"
+            className="bg-gray-100 border px-3 py-2 rounded hover:bg-gray-200"
           >
             {' '}
             <FaRegCopy />{' '}
@@ -433,7 +529,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             <button
               key={p.name}
               onClick={() => openSharePopup(p.url)}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded hover:bg-gray-100"
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
             >
               <span className="text-2xl text-teal-600">{p.icon}</span>
               <span className="font-medium text-gray-800">{p.name}</span>
@@ -509,7 +605,6 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
           <h1 className="text-2xl md:text-4xl font-semibold drop-shadow-lg mb-2 leading-snug">
             {title}
           </h1>
-          {/* <h2 className="text-2xl font-light drop-shadow-lg">Masterpiece</h2> */}
           <div className="flex items-center justify-center mt-4 text-xl drop-shadow-lg">
             <svg
               className="w-6 h-6 mr-2"
@@ -606,51 +701,39 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded hover:bg-teal-700 transition-colors"
+            >
+              <img
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_qgrxix.png"
+                alt="share"
+                className="w-5 h-5"
+              />
+              <span>Share</span>
+            </button>
 
-
-           <button
-  onClick={() => setIsShareModalOpen(true)}
-  className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded"
->
-  <img
-    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_qgrxix.png"
-    alt="share"
-    className="w-5 h-5"
-  />
-  <span>Share</span>
-</button>
-
-
-            {/* Book Now: only visible for rent-type properties */}
-            {isRentType ? (
-
-
-
-             <button
-  onClick={() => {
-    // if not logged in, redirect to login right away
-    const token = getAccessToken();
-    if (!token) {
-      toast.error("Please log in to book.");
-      window.location.assign("/login");
-      return;
-    }
-    setIsModalOpen(true);
-  }}
-  className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded"
->
-  <img
-    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_1_gnvufv.png"
-    alt="book"
-    className="w-5 h-5"
-  />
-  <span>Book Now</span>
-</button>
-
-
-
-
-            ) : null}
+            {/* Book Now/Inquire Now: visible for both rent and sale properties */}
+            <button
+              onClick={() => {
+                // if not logged in, redirect to login right away
+                const token = getAccessToken();
+                if (!token) {
+                  toast.error("Please log in to proceed.");
+                  window.location.assign("/login");
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
+              className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded hover:bg-teal-700 transition-colors"
+            >
+              <img
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_1_gnvufv.png"
+                alt={isSaleType ? "inquire" : "book"}
+                className="w-5 h-5"
+              />
+              <span>{isSaleType ? 'Inquire Now' : 'Book Now'}</span>
+            </button>
           </div>
 
           {feedbackMsg && (
@@ -661,13 +744,21 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
         </div>
       </div>
 
-      {/* Booking modal stays declared, but it will only be opened via the Book Now button (which is hidden for sale) */}
+      {/* Booking/Inquiry modal */}
       <BookingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         propertyId={propertyId}
+        propertyTitle={title}
         villaPrice={effectiveVilla?.price}
-        onSuccess={() => setFeedbackMsg('Booking created successfully.')}
+        isSaleType={isSaleType}
+        onSuccess={(resp) => {
+          if (isSaleType) {
+            setFeedbackMsg('Inquiry sent successfully');
+          } else {
+            setFeedbackMsg('Booking created successfully.');
+          }
+        }}
       />
 
       <ShareModal
