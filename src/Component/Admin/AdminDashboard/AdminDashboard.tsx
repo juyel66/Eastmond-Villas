@@ -527,7 +527,9 @@ const AdminDashboard = () => {
                     <p className="text-gray-600 text-sm">${property.price}</p>
                   </div>
                   <div className={`px-3 py-1 text-xs font-medium rounded-full ${getPropertyStatusClass(property.status)}`}>
-                    {property.status}
+                   {property.status &&
+  property.status.charAt(0).toUpperCase() + property.status.slice(1).toLowerCase()}
+
                   </div>
                 </div>
               ))

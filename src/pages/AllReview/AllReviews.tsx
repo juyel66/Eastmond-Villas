@@ -483,56 +483,81 @@ const AllReview: React.FC = () => {
 
       {/* Modal: View Review */}
       {selectedReview && (
-        <div role="dialog" aria-modal="true" aria-labelledby="view-review-title" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="view-review-title" className="fixed  inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={closeView} />
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto z-10">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <h3 id="view-review-title" className="text-lg font-semibold text-gray-800">Review #{selectedReview.id}</h3>
-          
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-gray-600">
-                  <StarRow rating={selectedReview.rating} />
-                </div>
-                <div className="text-sm">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${selectedReview.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {selectedReview.status === 'approved' ? 'Approved' : (selectedReview.status ?? 'Pending')}
-                  </span>
-                </div>
-                <button onClick={closeView} className="text-gray-600 hover:text-gray-800 p-2" aria-label="Close">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto z-10 mx-auto">
 
-            <div className="p-4 space-y-4">
-              <div className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReview.comment}</div>
+  {/* Image Banner */}
+  {selectedReview.images && selectedReview.images.length > 0 && (
+    <div className="relative w-full h-64 overflow-hidden rounded-t-2xl">
+      <img
+        src={selectedReview.images[0].image}
+        alt="Review Banner"
+        className="w-full h-full object-cover"
+      />
 
-              {selectedReview.images && selectedReview.images.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {selectedReview.images.map((img, idx) => (
-                    <a key={img.id} href={img.image} target="_blank" rel="noreferrer" className="block relative group">
-                      <img src={img.image} alt={`review-${selectedReview.id}-img-${img.id}`} className="w-full h-40 object-cover rounded" />
-                      <span className="absolute top-1 left-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">#{idx + 1}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
+      <div className="absolute inset-0 bg-black/40 flex items-end justify-center p-4">
+        <span className="text-white text-sm bg-black/60 px-4 py-1 rounded-full">
+          {selectedReview.images.length} Photo
+          {selectedReview.images.length > 1 ? "s" : ""}
+        </span>
+      </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div>Created: {formatDate(selectedReview.created_at)}</div>
-                <div>Rating: {selectedReview.rating} / 5</div>
-             
-              </div>
+      <button
+        onClick={closeView}
+        className="absolute top-4 right-4 bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black"
+      >
+        ✕
+      </button>
+    </div>
+  )}
 
-              <div className="flex justify-end">
-                <button onClick={closeView} className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">Close</button>
-              </div>
-            </div>
-          </div>
+  {/* Header */}
+  <div className="p-6 text-center border-b space-y-3">
+    <h3 className="text-xl font-bold text-gray-800">
+      Review
+    </h3>
+
+    <div className="flex justify-center items-center gap-3">
+      <StarRow rating={selectedReview.rating} />
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-semibold
+        ${
+          selectedReview.status === "approved"
+            ? "bg-green-100 text-green-700"
+            : "bg-yellow-100 text-yellow-700"
+        }`}
+      >
+        {selectedReview.status === "approved"
+          ? "Approved"
+          : selectedReview.status ?? "Pending"}
+      </span>
+    </div>
+  </div>
+
+  {/* Body */}
+  <div className="p-6 space-y-6 text-center">
+
+    <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-w-2xl mx-auto">
+      {selectedReview.comment}
+    </div>
+
+    <div className="flex justify-center gap-6 text-xs text-gray-500">
+      <div>Created: {formatDate(selectedReview.created_at)}</div>
+      <div>Rating: {selectedReview.rating} / 5</div>
+    </div>
+
+    <div className="flex justify-center pt-2">
+      <button
+        onClick={closeView}
+        className="px-6 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
         </div>
       )}
     </>

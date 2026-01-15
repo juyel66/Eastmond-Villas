@@ -380,7 +380,7 @@ export default function UserManagement() {
 
           {/* total count */}
           <div className="text-sm text-gray-600 mb-1">
-            Total users: <strong>{users.length}</strong>
+            Total Users: <strong>{users.length}</strong>
           </div>
 
           <div className="w-full max-w-lg">

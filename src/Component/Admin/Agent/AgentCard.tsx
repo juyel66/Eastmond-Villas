@@ -244,7 +244,7 @@ export default function AgentCard({
         </div>
 
         <span className="inline-block px-3 py-1 text-sm font-medium rounded-md bg-[#ECEEF2] text-black mb-4 inline-flex items-center gap-2">
-          {role}
+          {role.charAt(0).toUpperCase() + role.slice(1)}
         </span>
 
         {/* Contact Info */}

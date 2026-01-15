@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
 
           {/* USER INFO — Name ABOVE Role */}
           <div className="flex flex-col text-left">
-            <p className="text-lg font-semibold">{username}</p>
+            <p className="text-lg font-semibold">{username.charAt(0).toUpperCase() + username.slice(1)}</p>
             <p className="text-gray-500 text-sm">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</p>
           </div>
 

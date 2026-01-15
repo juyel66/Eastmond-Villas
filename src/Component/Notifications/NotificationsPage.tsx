@@ -1,10 +1,12 @@
 // src/pages/NotificationsPage.tsx
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchNotifications,
   markAsReadAsync,
   markAsReadLocal,
+  markAllAsReadAsync,
+  markAllAsReadLocal,
   type Notification,
 } from "../../features/notificationsSlice";
 import type { RootState } from "@/store";
@@ -14,6 +16,7 @@ import type { RootState } from "@/store";
  * - Loads all notifications from API list endpoint
  * - Unseen items are highlighted (light green) + green dot
  * - Clicking an item marks it as read (global optimistic) and fires markAsReadAsync
+ * - Mark All Read button marks all notifications as read via single API call
  */
 
 const NotificationsPage: React.FC = () => {
@@ -24,6 +27,8 @@ const NotificationsPage: React.FC = () => {
   const unreadCount = useSelector(
     (s: RootState) => s.notifications.unreadCount
   );
+  
+  const [markingAll, setMarkingAll] = useState(false);
 
   // Fetch notifications
   useEffect(() => {
@@ -45,20 +50,29 @@ const NotificationsPage: React.FC = () => {
     if (!notif.read) {
       // optimistic: update Redux item + unreadCount immediately
       dispatch(markAsReadLocal(notif.id));
+      // fire server-side mark-as-read (slice thunk)
+      dispatch(markAsReadAsync({ id: notif.id }) as any);
     }
-    // fire server-side mark-as-read (slice thunk)
-    dispatch(markAsReadAsync({ id: notif.id }) as any);
   };
 
-  // Mark all read (iterate)
-  const markAllRead = async () => {
-    const unread = notifications.filter((n) => !n.read);
-    for (const n of unread) {
-      // global optimistic
-      dispatch(markAsReadLocal(n.id));
-      // await each call to avoid flooding
-      // eslint-disable-next-line no-await-in-loop
-      await dispatch(markAsReadAsync({ id: n.id }) as any);
+  // Mark all read with single API call
+  const handleMarkAllRead = async () => {
+    if (unreadCount === 0) return;
+    
+    setMarkingAll(true);
+    
+    try {
+      // Optimistic update - immediately update UI
+      dispatch(markAllAsReadLocal());
+      
+      // API call to mark all as read - POST to /api/notifications/mark-all-as-read/
+      await dispatch(markAllAsReadAsync() as any);
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+      // If API fails, refetch to restore correct state
+      dispatch(fetchNotifications() as any);
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -85,95 +99,84 @@ const NotificationsPage: React.FC = () => {
 
         <div className="flex gap-2">
           <button
-            onClick={markAllRead}
-            className="px-3 py-1 border rounded text-sm hover:bg-gray-50"
+            onClick={handleMarkAllRead}
+            disabled={unreadCount === 0 || markingAll}
+            className={`px-4 py-2 border rounded-md text-sm font-medium ${
+              unreadCount === 0 || markingAll
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+            }`}
           >
-            Mark all read
+            {markingAll ? "Marking..." : "Mark all read"}
           </button>
         </div>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-gray-500">
+        <div className="text-gray-500 text-center py-10">
           No notifications available.
         </div>
       ) : (
         <div className="space-y-3">
           {sorted.map((n) => {
             const isRead = Boolean(n.read);
-            const itemClass = isRead ? "bg-white" : "bg-green-50";
+            const itemClass = isRead 
+              ? "bg-white border-gray-200" 
+              : "bg-green-50 border-green-200";
 
             const name = n.data?.name;
             const email = n.data?.email;
             const phone = n.data?.phone;
-            const message =
-              n.data?.message || n.body || "";
-            const createdAt =
-              n.data?.created_at || n.created_at;
-              
+            const message = n.data?.message || n.body || "";
+            const createdAt = n.data?.created_at || n.created_at;
 
             return (
               <div
                 key={n.id}
-                className={`${itemClass} p-4 border rounded-lg cursor-pointer hover:shadow-sm transition`}
+                className={`${itemClass} p-4 border rounded-lg cursor-pointer hover:shadow-sm transition-all duration-200`}
+                onClick={() => handleClick(n)}
               >
                 <div className="flex justify-between items-start">
-                  <div
-                    className="flex-1"
-                    // clicking the content marks as read (global optimistic)
-                    onClick={() => handleClick(n)}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-base font-medium">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <div className="text-base font-semibold text-gray-800">
                         {n.title}
                       </div>
                       {!isRead && (
-                        <span className="ml-2 inline-block w-3 h-3 bg-green-600 rounded-full" />
-                        
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-green-700">NEW</span>
+                          <span className="inline-block w-3 h-3 bg-green-600 rounded-full" />
+                        </div>
                       )}
                     </div>
 
                     {/* Contact details from data */}
                     {name && (
-                      <div className="text-sm text-gray-800 mt-1">
-                        <span className="font-semibold">
-                          Name:
-                        </span>{" "}
-                        {name}
+                      <div className="text-sm text-gray-800 mb-1">
+                        <span className="font-medium">Name:</span> {name}
                       </div>
                     )}
                     {email && (
-                      <div className="text-sm text-gray-800">
-                        <span className="font-semibold">
-                          Email:
-                        </span>{" "}
-                        {email}
+                      <div className="text-sm text-gray-800 mb-1">
+                        <span className="font-medium">Email:</span> {email}
                       </div>
                     )}
                     {phone && (
-                      <div className="text-sm text-gray-800">
-                        <span className="font-semibold">
-                          Phone:
-                        </span>{" "}
-                        {phone}
+                      <div className="text-sm text-gray-800 mb-1">
+                        <span className="font-medium">Phone:</span> {phone}
                       </div>
                     )}
 
                     {message && (
-                      <div className="text-sm text-gray-700 mt-2">
+                      <div className="text-sm text-gray-700 mt-3 p-2 bg-gray-50 rounded">
                         {message}
                       </div>
                     )}
 
-                    <div className="text-xs text-gray-400 mt-2">
+                    <div className="text-xs text-gray-400 mt-3">
                       {fmtDate(createdAt)}
                     </div>
                   </div>
-
-                
-
-                  {/* Delete / Clear removed so nothing is "fake-deleted" */}
-                
                 </div>
               </div>
             );

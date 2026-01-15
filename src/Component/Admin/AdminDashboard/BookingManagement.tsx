@@ -327,10 +327,10 @@ export default function BookingManagement(): JSX.Element {
       <div>
         <div className="mb-6 text-center">
           <h1 className="text-2xl sm:text-3xl font-semibold mb-1">
-            Booking management
+            Booking Management
           </h1>
           <p className="text-sm text-gray-600 mb-4 mt-4">
-            Total booking: {bookings.length}
+            Total Booking: {bookings.length}
           </p>
 
           <input

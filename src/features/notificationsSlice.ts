@@ -160,9 +160,9 @@ export const markAsReadAsync = createAsyncThunk<
     const token = localStorage.getItem("auth_access") || "";
 
     const res = await fetch(
-      `https://api.eastmondvillas.com/api/notifications/${id}/mark-read/`,
+      `https://api.eastmondvillas.com/api/notifications/list/${id}/`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
@@ -178,6 +178,43 @@ export const markAsReadAsync = createAsyncThunk<
     }
 
     return { id };
+  } catch (err: any) {
+    return rejectWithValue({
+      message: err.message || "Network error",
+    });
+  }
+});
+
+/* -----------------------------------
+   Mark All as Read Async
+----------------------------------- */
+export const markAllAsReadAsync = createAsyncThunk<
+  void,
+  void,
+  { rejectValue: { message: string } }
+>("notifications/markAllAsReadAsync", async (_, { rejectWithValue }) => {
+  try {
+    const token = localStorage.getItem("auth_access") || "";
+
+    const res = await fetch(
+      "https://api.eastmondvillas.com/api/notifications/mark-all-as-read/",
+      {
+        method: "POST",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      return rejectWithValue({
+        message: txt || "Failed to mark all notifications as read",
+      });
+    }
+
+    return;
   } catch (err: any) {
     return rejectWithValue({
       message: err.message || "Network error",
@@ -221,6 +258,14 @@ const slice = createSlice({
       }
     },
 
+    // local synchronous mark-all-as-read (optimistic update)
+    markAllAsReadLocal(state) {
+      state.items.forEach((item) => {
+        item.read = true;
+      });
+      state.unreadCount = 0;
+    },
+
     clearAll(state) {
       state.items = [];
       state.unreadCount = 0;
@@ -249,8 +294,20 @@ const slice = createSlice({
       state.unreadCount = state.items.filter((i) => !i.read).length;
     });
 
+    builder.addCase(markAllAsReadAsync.fulfilled, (state) => {
+      // Mark all items as read when the API call succeeds
+      state.items.forEach((item) => {
+        item.read = true;
+      });
+      state.unreadCount = 0;
+    });
+
     // optional: handle rejected to rollback optimistic UI if you implement optimistic updates
     builder.addCase(markAsReadAsync.rejected, () => {
+      // no-op here; UI could show an error toast instead
+    });
+    
+    builder.addCase(markAllAsReadAsync.rejected, () => {
       // no-op here; UI could show an error toast instead
     });
   },
@@ -261,6 +318,7 @@ export const {
   setUnreadCount,
   removeNotification,
   markAsReadLocal,
+  markAllAsReadLocal,
   clearAll,
 } = slice.actions;
 

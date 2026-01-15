@@ -376,15 +376,25 @@ const AdminPropertiesRentals: React.FC = () => {
                         item.total_price ??
                         '-'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {String(
-                        item.listing_type ??
-                          item.rateType ??
-                          item.property_type ??
-                          item.type ??
-                          '-'
-                      )}
-                    </td>
+
+
+                   <td className="px-6 py-4 text-sm text-gray-500">
+  {(() => {
+    const value =
+      item.listing_type ??
+      item.rateType ??
+      item.property_type ??
+      item.type ??
+      "-";
+
+    const str = String(value);
+
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  })()}
+</td>
+
+
+
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {item.updated_at ?? item.updateDate ?? '-'}
                     </td>
