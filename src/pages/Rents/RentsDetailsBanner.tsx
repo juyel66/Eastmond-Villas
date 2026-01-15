@@ -322,7 +322,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Check-in
+                    Check-In
                   </label>
                   <input
                     name="check_in_data"
@@ -335,7 +335,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Check-out
+                    Check-Out
                   </label>
                   <input
                     name="check_out_data"
