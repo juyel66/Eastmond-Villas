@@ -77,7 +77,7 @@ const Navbar = () => {
           <DropdownMenuItem
             onClick={() => {
               handleLinkClick();
-              navigate("/rentals");
+              navigate("/properties");
             }}
             className={`cursor-pointer font-semibold ${
               location.pathname === "/rents" ? "text-teal-600" : "text-gray-800"
