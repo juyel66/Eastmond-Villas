@@ -195,13 +195,13 @@ const Footer = () => {
           <div className="text-center sm:text-left md:text-left ">
             <h4 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Follow Us</h4>
             <div className="flex items-center justify-center sm:justify-start md:justify-start space-x-4">
-              <a href="https://www.facebook.com/" className="text-gray-300 hover:text-teal-400 transition-colors duration-200">
+              <a href="https://www.instagram.com/eastmondvillas" target="_blank" className="text-gray-300 hover:text-teal-400 transition-colors duration-200">
                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760826820/Frame_dccruw.png" alt="Facebook" />
               </a>
-              <a href="https://www.instagram.com/" className="text-gray-300 hover:text-teal-400 transition-colors duration-200">
+              <a href="https://x.com/" target="_blank" className="text-gray-300 hover:text-teal-400 transition-colors duration-200">
                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760826937/Frame_1_m7bui5.png" alt="Instagram" />
               </a>
-              <a href="https://x.com/" className="text-gray-300 hover:text-teal-400 transition-colors duration-200">
+              <a href="https://www.facebook.com/" target="_blank" className="text-gray-300 hover:text-teal-400 transition-colors duration-200">
                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760826976/Frame_2_dmncqr.png" alt="Twitter" />
               </a>
             </div>
