@@ -169,6 +169,7 @@ const NotificationsPage: React.FC = () => {
 
                     {message && (
                       <div className="text-sm text-gray-700 mt-3 p-2 bg-gray-50 rounded">
+                        
                         {message}
                       </div>
                     )}
