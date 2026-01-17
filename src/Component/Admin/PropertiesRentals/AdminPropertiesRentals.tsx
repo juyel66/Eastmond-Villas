@@ -54,7 +54,7 @@ function toArray(payload: any): any[] {
 const availableStatuses = [
   { label: "All Status", value: "All Status" },
   { label: "Published", value: "published" },
-  { label: "Pending", value: "pending_review" },
+  { label: "Pending Review", value: "pending_review" },
   { label: "Draft", value: "draft" },
   { label: "Archived", value: "archived" },
 ];
@@ -78,6 +78,21 @@ function isRentalProperty(p: any): boolean {
   if (normalized.includes('rental')) return true;
   // fallback: do not include if unknown
   return false;
+}
+
+/* ---------- helper to format status display ---------- */
+function formatStatusDisplay(status: string): string {
+  if (!status) return 'Draft';
+  
+  const statusStr = String(status).toLowerCase();
+  
+  // Handle different status formats
+  if (statusStr === 'pending_review' || statusStr === 'pending-review') {
+    return 'Pending Review';
+  }
+  
+  // For other statuses, capitalize first letter
+  return statusStr.charAt(0).toUpperCase() + statusStr.slice(1);
 }
 
 /* ---------- small helper: truncate description to 20 chars with ellipsis ---------- */
@@ -404,16 +419,12 @@ const AdminPropertiesRentals: React.FC = () => {
                           (item.status ?? 'draft').toLowerCase() === 'published'
                             ? 'bg-blue-100 text-blue-700'
                             : (item.status ?? 'draft').toLowerCase() ===
-                                'pending'
+                                'pending_review' || (item.status ?? 'draft').toLowerCase() === 'pending-review'
                               ? 'bg-orange-100 text-orange-700'
                               : 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {(item.status ?? 'draft')
-                          .toString()
-                          .charAt(0)
-                          .toUpperCase() +
-                          (item.status ?? 'draft').toString().slice(1)}
+                        {formatStatusDisplay(item.status ?? 'draft')}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -463,7 +474,7 @@ const AdminPropertiesRentals: React.FC = () => {
               <Button
                 onClick={() => paginate(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="bg-white border text-gray-900 hover:text-blue-600 disabled:opacity-50"
+                className="bg-white border text-gray-600  hover:text-white hover:bg-teal-600  disabled:opacity-50"
               >
                 &larr; Previous
               </Button>
@@ -487,7 +498,7 @@ const AdminPropertiesRentals: React.FC = () => {
               <Button
                 onClick={() => paginate(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="bg-white border text-gray-600 hover:text-blue-600 disabled:opacity-50"
+                className="bg-white border text-gray-600  hover:text-white hover:bg-teal-600  disabled:opacity-50"
               >
                 Next &rarr;
               </Button>
