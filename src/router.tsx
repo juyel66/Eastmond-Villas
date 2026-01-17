@@ -158,10 +158,6 @@
 //   },
 // ]);
 
-
-
-
-
 // src/router.jsx  (or wherever your router file lives; replace the content)
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import './index.css';
@@ -235,6 +231,7 @@ import NewsLetter from './Component/Admin/NewsLetter/CreateNewsletterPage';
 import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy';
 import UpdateRentals from './Component/Admin/UpdateRentals/UpdateRentals';
 import UpdateSales from './Component/Admin/UpdateSales/UpdateSales';
+import NewsLetterManagement from './Component/Admin/NewsLetter/NewsLetterManagement';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
@@ -247,7 +244,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <Home /> },
-      { path: '/rentals', element: <Rents /> },
+      { path: '/properties', element: <Rents /> },
       { path: '/sales', element: <Sales /> },
       { path: '/list-with-us', element: <ListWithUs /> },
       { path: '/contact', element: <Contact /> },
@@ -306,8 +303,15 @@ export const router = createBrowserRouter([
           { path: 'admin-allContact', element: <AllContact /> },
           { path: 'admin/notifications', element: <AdminNotificationsPage /> },
           { path: 'admin-allReview', element: <AllReview /> },
-          { path: 'admin-update-property-rentals/:id', element: <UpdateRentals /> },
+          {
+            path: 'admin-update-property-rentals/:id',
+            element: <UpdateRentals />,
+          },
           { path: 'admin-update-property-sales/:id', element: <UpdateSales /> },
+          {
+            path: 'admin-newsletter-management',
+            element: <NewsLetterManagement />,
+          },
         ],
       },
 
@@ -346,7 +350,10 @@ export const router = createBrowserRouter([
           { path: 'customer-resources', element: <Resources /> },
           { path: 'customer-faqs', element: <AgentFaqs /> },
           { path: 'customer-profile', element: <Profile /> },
-          { path: 'customer/notifications', element: <CustomerNotificationsPage /> },
+          {
+            path: 'customer/notifications',
+            element: <CustomerNotificationsPage />,
+          },
         ],
       },
 
