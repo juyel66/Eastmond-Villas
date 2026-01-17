@@ -1515,7 +1515,7 @@ const CreatePropertyRentals = ({
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-in Time
+              Check-In Time
             </label>
             <input
               name="check_in"
@@ -1528,7 +1528,7 @@ const CreatePropertyRentals = ({
 
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-out Time
+              Check-Out Time
             </label>
             <input
               name="check_out"

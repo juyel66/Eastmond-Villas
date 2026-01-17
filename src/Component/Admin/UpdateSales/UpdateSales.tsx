@@ -750,7 +750,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       
       Swal.fire({
         title: 'Updated Successfully!',
-        text: `Sales Property ID: ${propertyId} has been updated.`,
+        text: `Sales Property has been updated.`,
         icon: 'success',
         confirmButtonText: 'OK'
       }).then(() => {

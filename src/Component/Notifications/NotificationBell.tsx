@@ -23,6 +23,9 @@ const NotificationBell: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Get user role from Redux store
+  const userRole = useSelector((s: RootState) => s.auth?.user?.role || '');
+
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!ref.current) return;
@@ -70,6 +73,36 @@ const NotificationBell: React.FC = () => {
     if (url) navigate(url);
   };
 
+  // Determine notification page URL based on user role
+  const getNotificationPageUrl = () => {
+    const basePath = "/dashboard";
+    
+    switch (userRole?.toLowerCase()) {
+      case 'admin':
+        return `${basePath}/admin/notifications`;
+      case 'agent':
+        return `${basePath}/agent/notifications`;
+      case 'customer':
+        return `${basePath}/customer/notifications`;
+      case 'user':
+        return `${basePath}/user/notifications`;
+      default:
+        // Default to admin if role is not recognized or empty
+        return `${basePath}/notifications`;
+    }
+  };
+
+  // Get view all URL with filter parameter
+  const getViewAllUrl = () => {
+    const baseUrl = getNotificationPageUrl();
+    return showAll ? baseUrl : `${baseUrl}?filter=unseen`;
+  };
+
+  // Get open notifications page URL
+  const getOpenNotificationsUrl = () => {
+    return getNotificationPageUrl();
+  };
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -101,10 +134,7 @@ const NotificationBell: React.FC = () => {
             <button
               onClick={() => {
                 setOpen(false);
-                navigate(
-                  "/dashboard/notifications" +
-                    (showAll ? "" : "?filter=unseen")
-                );
+                navigate(getViewAllUrl());
               }}
               className="text-sm text-blue-600"
             >
@@ -157,7 +187,7 @@ const NotificationBell: React.FC = () => {
             <button
               onClick={() => {
                 setOpen(false);
-                navigate("/dashboard/notifications");
+                navigate(getOpenNotificationsUrl());
               }}
               className="text-sm text-blue-600"
             >

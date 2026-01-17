@@ -220,7 +220,12 @@ import BookingManagement from './Component/Admin/AdminDashboard/BookingManagemen
 import UserManagement from './Component/Admin/AdminDashboard/UserManagement';
 import ErrorPage from './pages/ErrorPage/ErrorPage';
 import AllContact from './pages/Contact/AllContact';
-import NotificationsPage from './Component/Notifications/NotificationsPage';
+
+// --- Notification Pages ---
+import AdminNotificationsPage from './Component/Notifications/AdminNotificationsPage';
+import AgentNotificationsPage from './Component/Notifications/AgentNotificationsPage';
+import CustomerNotificationsPage from './Component/Notifications/CustomerNotificationsPage';
+// import UserNotificationsPage from './Component/Notifications/UserNotificationsPage';
 
 // --- Protected Route Wrapper ---
 import ProtectedRoute from './Component/Auth/ProtectedRoute';
@@ -299,7 +304,7 @@ export const router = createBrowserRouter([
           { path: 'admin-faqs', element: <FAQs /> },
           { path: 'admin-profile', element: <Profile /> },
           { path: 'admin-allContact', element: <AllContact /> },
-          { path: 'notifications', element: <NotificationsPage /> },
+          { path: 'admin/notifications', element: <AdminNotificationsPage /> },
           { path: 'admin-allReview', element: <AllReview /> },
           { path: 'admin-update-property-rentals/:id', element: <UpdateRentals /> },
           { path: 'admin-update-property-sales/:id', element: <UpdateSales /> },
@@ -321,6 +326,7 @@ export const router = createBrowserRouter([
             path: 'agent-property-rentals-details/:id',
             element: <PropertiesRentalsDetails />,
           },
+          { path: 'agent/notifications', element: <AgentNotificationsPage /> },
           {
             path: 'agent-property-rentals-details/:id',
             element: <PropertiesRentalsDetails />,
@@ -331,18 +337,26 @@ export const router = createBrowserRouter([
           },
         ],
       },
+
+      // Customer Routes (only users with role 'customer' allowed)
       {
         element: <ProtectedRoute allowedRoles={['customer']} />,
         children: [
-      
           { path: 'customer-announcements', element: <Announcements /> },
           { path: 'customer-resources', element: <Resources /> },
           { path: 'customer-faqs', element: <AgentFaqs /> },
           { path: 'customer-profile', element: <Profile /> },
-        
-         
+          { path: 'customer/notifications', element: <CustomerNotificationsPage /> },
         ],
       },
+
+      // // User Routes (for general authenticated users)
+      // {
+      //   element: <ProtectedRoute allowedRoles={['user']} />,
+      //   children: [
+      //     { path: 'user/notifications', element: <UserNotificationsPage /> },
+      //   ],
+      // },
 
       // Patient / Doctor Routes (assuming these are public to authenticated users)
       {

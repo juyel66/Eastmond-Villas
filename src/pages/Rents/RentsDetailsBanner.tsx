@@ -384,7 +384,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             >
               {loading 
                 ? (isSaleType ? 'Sending Inquiry...' : 'Booking...') 
-                : (isSaleType ? 'Send Inquiry' : 'Confirm Booking')
+                : (isSaleType ? 'Send Inquiry' : 'Request For Booking')
               }
             </button>
           </div>
