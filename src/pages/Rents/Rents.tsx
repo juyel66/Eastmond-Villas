@@ -95,7 +95,7 @@ const PLACEHOLDER_IMG =
   'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760924064/img_5_sd6ueh.png';
 
 const Rents: React.FC = () => {
-  const resultsPerPage = 2;
+  const resultsPerPage = 7;
 
   // master list from API (mapped)
   const [allVillas, setAllVillas] = useState<VillaType[]>([]);

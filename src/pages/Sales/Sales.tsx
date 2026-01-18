@@ -92,7 +92,7 @@ const PLACEHOLDER_IMG =
   'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760924064/img_5_sd6ueh.png';
 
 const Sales: React.FC = () => {
-  const resultsPerPage = 2;
+  const resultsPerPage = 7;
 
   // master list from API (only sale items will be passed to filter via allowedType, but we still store listing_type)
   const [villas, setVillas] = useState<VillaType[]>([]);
