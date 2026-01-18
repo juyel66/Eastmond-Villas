@@ -220,6 +220,83 @@ const NewsLetterManagement = () => {
     }
   };
 
+  /* ---------------- DELETE NEWSLETTER ---------------- */
+  const handleDeleteNewsletter = async (newsletterId: number) => {
+    const newsletter = newsletters.find(nl => nl.id === newsletterId);
+    
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      html: `
+        <div class="text-left">
+          <p class="font-medium text-gray-800 mb-2">You are about to delete this newsletter:</p>
+          <div class="bg-gray-50 p-3 rounded-md mb-3">
+            <p class="text-sm font-medium">${formatPropertyType(newsletter?.property_type || 'rental')} Newsletter</p>
+            <p class="text-xs text-gray-600">${formatFrequency(newsletter || { frequency: 'weekly', scheduled_day: 0, scheduled_date: null, scheduled_time: '09:00' })}</p>
+            <p class="text-xs text-gray-600">Layout: ${formatLayout(newsletter?.layout || 'single')}</p>
+          </div>
+          
+        </div>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    setUpdating(newsletterId);
+    try {
+      const token = localStorage.getItem('auth_access');
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/api/newsletter/newsletters/${newsletterId}/`,
+        {
+          method: 'DELETE',
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete newsletter: ${response.status}`);
+      }
+
+      // Remove from local state
+      setNewsletters((prev) => prev.filter((nl) => nl.id !== newsletterId));
+
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'Newsletter has been deleted successfully.',
+        icon: 'success',
+        confirmButtonColor: '#0d9488',
+      });
+    } catch (error: any) {
+      console.error('Error deleting newsletter:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error.message || 'Failed to delete newsletter',
+        icon: 'error',
+        confirmButtonColor: '#0d9488',
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   /* ---------------- FORMAT FREQUENCY DISPLAY ---------------- */
   const formatFrequency = (newsletter: Newsletter) => {
     if (newsletter.frequency === 'instant') {
@@ -374,9 +451,7 @@ const NewsLetterManagement = () => {
         </div>
       )}
 
-
-
-            {!loading && !error && newsletters.length > 0 && (
+      {!loading && !error && newsletters.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Newsletter Statistics
@@ -406,16 +481,9 @@ const NewsLetterManagement = () => {
                 {newsletters.filter((nl) => nl.frequency === 'instant').length}
               </p>
             </div>
-          
           </div>
-
-         
         </div>
       )}
-
-
-
-      
 
       {/* Newsletters List */}
       {!loading && !error && newsletters.length > 0 && (
@@ -482,13 +550,28 @@ const NewsLetterManagement = () => {
                           : 'Inactive'}
                       </span>
                       
-                      {canManage ? (
-                        <div className="flex gap-2">
-                          {newsletter.is_active ? (
+                      <div className="flex gap-2">
+                        {/* Delete Button - Always visible */}
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+                   
+                        {canManage ? (
+                          newsletter.is_active ? (
                             <button
                               onClick={() => handleStopSchedule(newsletter.id)}
                               disabled={updating === newsletter.id}
-                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
                               title="Stop the scheduled newsletter"
                             >
                               {updating === newsletter.id ? (
@@ -580,31 +663,88 @@ const NewsLetterManagement = () => {
                               )}
                               Activate Schedule
                             </button>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleStopSchedule(newsletter.id)}
-                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed"
-                          title="Instant newsletters cannot be stopped/started"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
+                          )
+                        ) 
+
+
+
+                        
+                        
+                        
+                        
+                        : (
+                          <button
+                            onClick={() => handleStopSchedule(newsletter.id)}
+                            className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed"
+                            title="Instant newsletters cannot be stopped/started"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            ></path>
-                          </svg>
-                          Not Manageable
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                              ></path>
+                            </svg>
+                            Not Manageable
+                          </button>
+                        )}
+
+
+                                               <button
+                          onClick={() => handleDeleteNewsletter(newsletter.id)}
+                          disabled={updating === newsletter.id}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                          title="Delete this newsletter"
+                        >
+                          {updating === newsletter.id ? (
+                            <svg
+                              className="animate-spin h-4 w-4 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                          ) : (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              ></path>
+                            </svg>
+                          )}
+                          Delete
                         </button>
-                      )}
+
+
+
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -790,14 +930,6 @@ const NewsLetterManagement = () => {
           })}
         </div>
       )}
-
-      {/* Stats Summary */}
-
-
-
-
-
-
     </div>
   );
 };
