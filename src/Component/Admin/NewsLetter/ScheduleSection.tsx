@@ -24,7 +24,9 @@ const ScheduleSection: React.FC<Props> = ({
   setScheduledTime,
 }) => {
   const [timezone, setTimezone] = useState("America/Barbados");
-  const [timezones, setTimezones] = useState<string[]>([]);
+  const [utcTime, setUtcTime] = useState("");
+
+  
   
   const weekDays = [
     { value: 0, label: "Sunday" },
@@ -34,6 +36,7 @@ const ScheduleSection: React.FC<Props> = ({
     { value: 4, label: "Thursday" },
     { value: 5, label: "Friday" },
     { value: 6, label: "Saturday" },
+    
   ];
 
   const monthDates = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -45,31 +48,69 @@ const ScheduleSection: React.FC<Props> = ({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   });
 
-  // Load timezones
+  // Function to convert Barbados time to UTC
+  const convertBarbadosToUTC = (localTime: string): string => {
+    try {
+      // Barbados is UTC-4 (no daylight saving)
+      const [hours, minutes] = localTime.split(':').map(Number);
+      
+      // Convert to UTC (add 4 hours)
+      let utcHours = hours + 4;
+      if (utcHours >= 24) {
+        utcHours -= 24;
+      }
+      
+      return `${utcHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    } catch (error) {
+      console.error("Error converting time:", error);
+      return localTime; // Fallback to original time
+    }
+  };
+
+  // Function to convert UTC to Barbados time
+  const convertUTCToBarbados = (utcTime: string): string => {
+    try {
+      const [hours, minutes] = utcTime.split(':').map(Number);
+      
+      // Convert to Barbados time (subtract 4 hours)
+      let barbadosHours = hours - 4;
+      if (barbadosHours < 0) {
+        barbadosHours += 24;
+      }
+      
+      return `${barbadosHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    } catch (error) {
+      console.error("Error converting UTC time:", error);
+      return utcTime; // Fallback to original time
+    }
+  };
+
+  // Update UTC time when scheduledTime changes
   useEffect(() => {
-    const allTimezones = [
-      "America/Barbados",
-      "America/New_York",
-      "America/Los_Angeles",
-      "Europe/London",
-      "Europe/Paris",
-      "Asia/Dubai",
-      "Asia/Tokyo",
-      "Australia/Sydney",
-      "Asia/Kolkata",
-      "Asia/Singapore",
-    ];
-    setTimezones(allTimezones);
+    if (scheduledTime) {
+      const utc = convertBarbadosToUTC(scheduledTime);
+      setUtcTime(utc);
+    }
+  }, [scheduledTime]);
+
+  // Initialize UTC time when component mounts
+  useEffect(() => {
+    const utc = convertBarbadosToUTC(scheduledTime);
+    setUtcTime(utc);
   }, []);
 
-  const handleTimezoneChange = (tz: string) => {
-    setTimezone(tz);
-    Swal.fire({
-      title: "Timezone Changed",
-      text: `Timezone set to ${tz}`,
-      icon: "info",
-      confirmButtonColor: "#0d9488",
-    });
+  // Handle time change from Barbados time input
+  const handleTimeChange = (localTime: string) => {
+    setScheduledTime(localTime);
+    const utc = convertBarbadosToUTC(localTime);
+    setUtcTime(utc);
+  };
+
+  // Handle direct UTC time change (if needed)
+  const handleUTCTimeChange = (utcTime: string) => {
+    setUtcTime(utcTime);
+    const barbadosTime = convertUTCToBarbados(utcTime);
+    setScheduledTime(barbadosTime);
   };
 
   return (
@@ -77,16 +118,10 @@ const ScheduleSection: React.FC<Props> = ({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">Send Schedule</h3>
         <div className="flex items-center gap-2">
-          {/* <span className="text-sm text-gray-500">Timezone:</span> */}
-          {/* <select
-            value={timezone}
-            onChange={(e) => handleTimezoneChange(e.target.value)}
-            className="text-sm border rounded-lg px-3 py-1 bg-gray-50"
-          >
-            {timezones.map((tz) => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select> */}
+          {/* Timezone display only */}
+          <div className="text-sm text-gray-500">
+            Timezone: <span className="font-medium">{timezone}</span>
+          </div>
         </div>
       </div>
 
@@ -136,22 +171,31 @@ const ScheduleSection: React.FC<Props> = ({
                 </div>
                 
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Time</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Time (Barbados)
+                    <span className="text-gray-400 ml-1">(UTC-4)</span>
+                  </label>
                   <select
                     value={scheduledTime}
-                    onChange={(e) => setScheduledTime(e.target.value)}
+                    onChange={(e) => handleTimeChange(e.target.value)}
                     className="w-full border rounded-lg px-4 py-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     {timeSlots.map(time => (
                       <option key={time} value={time}>{time}</option>
                     ))}
                   </select>
+                  {/* <p className="text-xs text-gray-500 mt-1">
+                    UTC: {utcTime}
+                  </p> */}
                 </div>
                 
-                <div className="flex items-end">
+                <div className="flex items-end mt-3">
                   <div className="bg-blue-50 p-3 rounded-lg w-full">
                     <p className="text-xs text-blue-600">
                       Will be sent every {weekDays.find(d => d.value === scheduledDay)?.label} at {scheduledTime} ({timezone})
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      UTC: {utcTime} 
                     </p>
                   </div>
                 </div>
@@ -175,22 +219,31 @@ const ScheduleSection: React.FC<Props> = ({
                 </div>
                 
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Time</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Time (Barbados)
+                    <span className="text-gray-400 ml-1">(UTC-4)</span>
+                  </label>
                   <select
                     value={scheduledTime}
-                    onChange={(e) => setScheduledTime(e.target.value)}
+                    onChange={(e) => handleTimeChange(e.target.value)}
                     className="w-full border rounded-lg px-4 py-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     {timeSlots.map(time => (
                       <option key={time} value={time}>{time}</option>
                     ))}
                   </select>
+                  {/* <p className="text-xs text-gray-500 mt-1">
+                    UTC: {utcTime}
+                  </p> */}
                 </div>
                 
                 <div className="flex items-end">
                   <div className="bg-blue-50 p-3 rounded-lg w-full">
                     <p className="text-xs text-blue-600">
                       Will be sent on {scheduledDate}th of every month at {scheduledTime} ({timezone})
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      UTC: {utcTime}
                     </p>
                   </div>
                 </div>
@@ -210,6 +263,9 @@ const ScheduleSection: React.FC<Props> = ({
                     <div>
                       <p className="font-medium text-green-800">Ready to Send Immediately</p>
                       <p className="text-sm text-green-600">Newsletter will be sent as soon as you click "Send Newsletter"</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Timezone: {timezone} (UTC-4)
+                      </p>
                     </div>
                   </div>
                 </div>

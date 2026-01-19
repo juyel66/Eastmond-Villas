@@ -8,6 +8,7 @@ import mapImage from "../../../assets/map.svg"
 import bedsImg from "../../../assets/beddds.svg"
 import bathImg from "../../../assets/bath.svg"
 import polImg from "../../../assets/pol.svg"
+import shareIcons from "../../../assets/shareIcons.svg"
 
 import {
   FaFacebookF,
@@ -714,7 +715,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
               onClick={() => setIsShareOpen(true)}
               className="p-2 bg-white rounded-full cursor-pointer text-black hover:text-teal-500 hover:bg-white shadow-md transition duration-200"
             >
-              <ShareIcon />
+             <img src={shareIcons} alt="" />
             </button>
           </div>
         </div>

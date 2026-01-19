@@ -437,6 +437,32 @@ const CreateNewsletterPage: React.FC = () => {
     }
   };
 
+  /* ---------------- FORMAT NUMBER WITH DECIMAL IF NEEDED ---------------- */
+  const formatNumberWithDecimal = (value: string | number): string => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    
+    // Check if the number has decimal part
+    if (Number.isInteger(num)) {
+      return num.toString(); // No decimal places for integers
+    } else {
+      // For decimals, show with up to 2 decimal places
+      return num.toFixed(2).replace(/\.?0+$/, ''); // Remove trailing zeros
+    }
+  };
+
+  /* ---------------- GET PLURAL FORM ---------------- */
+  const getPluralForm = (value: string | number, singular: string, plural: string): string => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    
+    // For decimals, always use plural form
+    if (!Number.isInteger(num)) {
+      return plural;
+    }
+    
+    // For integers, check if it's exactly 1
+    return Math.abs(num) === 1 ? singular : plural;
+  };
+
   /* ---------------- RENDER PROPERTY ROW ---------------- */
   const renderPropertyRow = (property: Property) => {
     const isSelected = selectedProperties.includes(property.id);
@@ -445,6 +471,31 @@ const CreateNewsletterPage: React.FC = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+
+    // Format values keeping decimals if they exist
+    const bedsFormatted = formatNumberWithDecimal(property.bedrooms);
+    const bathsFormatted = formatNumberWithDecimal(property.bathrooms);
+    const poolsFormatted = formatNumberWithDecimal(property.pool);
+
+    // Create description text based on values
+    const descriptionParts = [];
+
+    if (parseFloat(property.bedrooms) > 0) {
+      const bedWord = getPluralForm(property.bedrooms, "Bed", "Beds");
+      descriptionParts.push(`${bedsFormatted} ${bedWord}`);
+    }
+    
+    if (parseFloat(property.bathrooms) > 0) {
+      const bathWord = getPluralForm(property.bathrooms, "Bath", "Baths");
+      descriptionParts.push(`${bathsFormatted} ${bathWord}`);
+    }
+    
+    if (property.pool > 0) {
+      const poolWord = getPluralForm(property.pool, "Pool", "Pools");
+      descriptionParts.push(`${poolsFormatted} ${poolWord}`);
+    }
+
+    const descriptionText = descriptionParts.join(" · ");
 
     return (
       <tr key={property.id} className="border-t hover:bg-gray-50">
@@ -472,13 +523,13 @@ const CreateNewsletterPage: React.FC = () => {
             <div>
               <p className="font-medium text-gray-900">{property.title}</p>
               <p className="text-xs text-gray-500">
-                {property.bedrooms} bed · {property.bathrooms} baths · {property.pool} Pools
+                {descriptionText || "No details available"}
               </p>
             </div>
           </div>
         </td>
         <td className="p-4 text-gray-700">{property.address}</td>
-        <td className="p-4 text-gray-900 font-medium">${price}</td>
+        <td className="p-4 text-gray-900 font-medium">USD${price}</td>
         <td className="p-4">
           <span className={`px-3 py-1 rounded-full text-xs ${
             property.status === "published" 
@@ -486,6 +537,7 @@ const CreateNewsletterPage: React.FC = () => {
               : property.status === "draft"
               ? "bg-gray-100 text-gray-800"
               : "bg-yellow-100 text-yellow-800"
+              
           }`}>
             {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
           </span>

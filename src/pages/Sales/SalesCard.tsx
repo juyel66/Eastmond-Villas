@@ -1,7 +1,7 @@
 // SalesCard.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CiShare2 } from "react-icons/ci";
+
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import bathImg from "../../assets/bath.svg";
 import polImg from "../../assets/pol.svg";
 import mapImg from "../../assets/map.svg";
 import bedsImg from "../../assets/beddds.svg";
+import shareIcons from "../../assets/shareIcons.svg";
 
 import {
   FaFacebookF,
@@ -29,7 +30,7 @@ import {
   getAccessToken,
 } from "@/features/Auth/authSlice";
 
-/* -------------------- Types -------------------- */
+
 interface Property {
   id: number;
   slug: string;
@@ -544,7 +545,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 onClick={() => setIsShareOpen(true)}
               >
                 <div className="text-black font-bold">
-                  <CiShare2 />
+                  <img src={shareIcons} alt="" />
                 </div>
               </div>
             </div>

@@ -94,7 +94,7 @@ const Navbar = () => {
               location.pathname === "/sales" ? "text-teal-600" : "text-gray-800"
             }`}
           >
-            Sales
+            For Sales
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
