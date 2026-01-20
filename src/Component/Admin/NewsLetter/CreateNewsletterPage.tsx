@@ -54,6 +54,7 @@ const CreateNewsletterPage: React.FC = () => {
 
   const [openUserModal, setOpenUserModal] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [selectedUserEmails, setSelectedUserEmails] = useState<string[]>([]);
   const [searchUser, setSearchUser] = useState("");
   const [roleFilter, setRoleFilter] = useState<"All" | "admin" | "agent" | "customer">("All");
 
@@ -62,6 +63,17 @@ const CreateNewsletterPage: React.FC = () => {
 
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+
+  // Track if roles were auto-selected
+  const [autoSelectedByRole, setAutoSelectedByRole] = useState<{
+    admin: boolean;
+    agent: boolean;
+    customer: boolean;
+  }>({
+    admin: false,
+    agent: false,
+    customer: false
+  });
 
   /* ---------------- FETCH PROPERTIES ---------------- */
   useEffect(() => {
@@ -139,6 +151,12 @@ const CreateNewsletterPage: React.FC = () => {
 
       const data: User[] = await response.json();
       setAllUsers(data);
+      
+      // Update selected user emails
+      const selectedEmails = data
+        .filter(user => selectedUsers.includes(user.id))
+        .map(user => user.email);
+      setSelectedUserEmails(selectedEmails);
     } catch (error: any) {
       setUsersError(error.message || "Failed to fetch users");
       console.error("Error fetching users:", error);
@@ -146,6 +164,16 @@ const CreateNewsletterPage: React.FC = () => {
       setUsersLoading(false);
     }
   };
+
+  /* ---------------- UPDATE SELECTED USER EMAILS WHEN SELECTED USERS CHANGE ---------------- */
+  useEffect(() => {
+    if (allUsers.length > 0) {
+      const selectedEmails = allUsers
+        .filter(user => selectedUsers.includes(user.id))
+        .map(user => user.email);
+      setSelectedUserEmails(selectedEmails);
+    }
+  }, [selectedUsers, allUsers]);
 
   /* ---------------- PROPERTY SELECTION HANDLER ---------------- */
   const toggleProperty = (id: number) => {
@@ -204,15 +232,62 @@ const CreateNewsletterPage: React.FC = () => {
       .filter((u) => u.role.toLowerCase() === role.toLowerCase())
       .map((u) => u.id);
     
-    setSelectedUsers((prev) => {
-      // Remove all users first
-      const filtered = prev.filter((id) => {
-        const user = allUsers.find((u) => u.id === id);
-        return !user || user.role.toLowerCase() !== role.toLowerCase();
-      });
-      
-      // Add all users of this role
-      return [...filtered, ...usersByRole];
+    // Update selected users
+    const newSelectedUsers = [...selectedUsers, ...usersByRole];
+    setSelectedUsers(newSelectedUsers);
+    
+    // Update selected user emails
+    const newSelectedEmails = allUsers
+      .filter((u) => newSelectedUsers.includes(u.id))
+      .map((u) => u.email);
+    setSelectedUserEmails(newSelectedEmails);
+    
+    // Mark this role as auto-selected
+    setAutoSelectedByRole(prev => ({
+      ...prev,
+      [role]: true
+    }));
+    
+    // Show confirmation
+    Swal.fire({
+      title: `All ${role.charAt(0).toUpperCase() + role.slice(1)}s Selected`,
+      confirmButtonColor: "#0d9488",
+    });
+  };
+
+  /* ---------------- HANDLE USER SELECTION FROM MODAL ---------------- */
+  const handleUserSelection = (userIds: number[]) => {
+    setSelectedUsers(userIds);
+    
+    // Update selected user emails
+    const selectedEmails = allUsers
+      .filter(user => userIds.includes(user.id))
+      .map(user => user.email);
+    setSelectedUserEmails(selectedEmails);
+    
+    // Check if all users of each role are selected
+    const selectedUserObjects = allUsers.filter(user => userIds.includes(user.id));
+    
+    // Get all users by role
+    const allAdmins = allUsers.filter(user => user.role === "admin");
+    const allAgents = allUsers.filter(user => user.role === "agent");
+    const allCustomers = allUsers.filter(user => user.role === "customer");
+    
+    // Check if ALL users of each role are selected
+    const allAdminsSelected = allAdmins.length > 0 && 
+      selectedUserObjects.filter(u => u.role === "admin").length === allAdmins.length;
+    
+    const allAgentsSelected = allAgents.length > 0 && 
+      selectedUserObjects.filter(u => u.role === "agent").length === allAgents.length;
+    
+    const allCustomersSelected = allCustomers.length > 0 && 
+      selectedUserObjects.filter(u => u.role === "customer").length === allCustomers.length;
+    
+    // Update autoSelectedByRole state
+    setAutoSelectedByRole({
+      admin: allAdminsSelected,
+      agent: allAgentsSelected,
+      customer: allCustomersSelected
     });
   };
 
@@ -352,10 +427,35 @@ const CreateNewsletterPage: React.FC = () => {
         selectedUsers.includes(user.id)
       );
 
-      // Check which roles are included
-      const includeAgent = selectedUserObjects.some(user => user.role === "agent");
-      const includeCustomer = selectedUserObjects.some(user => user.role === "customer");
-      const includeAdmin = selectedUserObjects.some(user => user.role === "admin");
+      // Get all users by role
+      const allAdmins = allUsers.filter(user => user.role === "admin");
+      const allAgents = allUsers.filter(user => user.role === "agent");
+      const allCustomers = allUsers.filter(user => user.role === "customer");
+
+      // Check if ALL users of a specific role are selected
+      // Only set to true if ALL users of that role are selected (not just some)
+      const includeAdmin = allAdmins.length > 0 && 
+        selectedUserObjects.filter(u => u.role === "admin").length === allAdmins.length;
+      
+      const includeAgent = allAgents.length > 0 && 
+        selectedUserObjects.filter(u => u.role === "agent").length === allAgents.length;
+      
+      const includeCustomer = allCustomers.length > 0 && 
+        selectedUserObjects.filter(u => u.role === "customer").length === allCustomers.length;
+
+      // Combine selected user emails and manually added emails
+      const manualEmails = inviteEmails
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean);
+      
+      const allExtraEmails = [
+        ...selectedUserEmails, // User থেকে নির্বাচিত ইমেলগুলো
+        ...manualEmails        // ম্যানুয়ালি যোগ করা ইমেলগুলো
+      ];
+
+      // Remove duplicates
+      const uniqueEmails = Array.from(new Set(allExtraEmails));
 
       // Prepare payload
       const payload = {
@@ -365,10 +465,7 @@ const CreateNewsletterPage: React.FC = () => {
         include_agent: includeAgent,
         include_customer: includeCustomer,
         include_admin: includeAdmin,
-        extra_emails: inviteEmails
-          .split(",")
-          .map((e) => e.trim())
-          .filter(Boolean),
+        extra_emails: uniqueEmails,
         scheduled_day: schedule === "weekly" ? scheduledDay : null,
         scheduled_date: schedule === "monthly" ? scheduledDate : null,
         scheduled_time: schedule !== "immediate" ? scheduledTime : null,
@@ -412,7 +509,14 @@ const CreateNewsletterPage: React.FC = () => {
       // Show success message
       await Swal.fire({
         title: "Success!",
-        text: "Newsletter has been sent successfully.",
+        html: `
+       <div class="text-center">
+  <p class="mb-2">Newsletter has been sent successfully.</p>
+  
+
+</div>
+
+        `,
         icon: "success",
         confirmButtonColor: "#0d9488",
       });
@@ -420,7 +524,13 @@ const CreateNewsletterPage: React.FC = () => {
       // Reset form
       setSelectedProperties([]);
       setSelectedUsers([]);
+      setSelectedUserEmails([]);
       setInviteEmails("");
+      setAutoSelectedByRole({
+        admin: false,
+        agent: false,
+        customer: false
+      });
       
     } catch (error: any) {
       setSendError(error.message || "Failed to send newsletter");
@@ -537,7 +647,6 @@ const CreateNewsletterPage: React.FC = () => {
               : property.status === "draft"
               ? "bg-gray-100 text-gray-800"
               : "bg-yellow-100 text-yellow-800"
-              
           }`}>
             {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
           </span>
@@ -766,7 +875,7 @@ const CreateNewsletterPage: React.FC = () => {
       {(selectedProperties.length > 0 || selectedUsers.length > 0 || inviteEmails.trim()) && (
         <div className="bg-gray-50 p-4 rounded-lg border">
           <h3 className="font-medium text-gray-900 mb-2">Selection Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-600">Properties Selected:</p>
               <p className="font-medium">
@@ -781,11 +890,28 @@ const CreateNewsletterPage: React.FC = () => {
               </p>
             </div>
             <div>
+              <p className="text-sm text-gray-600">User Emails:</p>
+              <p className="font-medium">
+                {selectedUserEmails.length} email{selectedUserEmails.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <div>
               <p className="text-sm text-gray-600">Additional Emails:</p>
               <p className="font-medium">
                 {inviteEmails.split(",").filter(e => e.trim()).length} email{inviteEmails.split(",").filter(e => e.trim()).length !== 1 ? 's' : ''}
               </p>
             </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            <p><strong>Note:</strong> All selected user emails will be sent to backend as extra_emails along with manually added emails.</p>
+            <p>Total emails to be sent: {selectedUserEmails.length + inviteEmails.split(",").filter(e => e.trim()).length}</p>
+            <p className="mt-1">
+              <strong>Role-based flags:</strong> 
+              {autoSelectedByRole.admin ? ' Include Admin: Yes' : ''}
+              {autoSelectedByRole.agent ? ' Include Agent: Yes' : ''}
+              {autoSelectedByRole.customer ? ' Include Customer: Yes' : ''}
+              {!autoSelectedByRole.admin && !autoSelectedByRole.agent && !autoSelectedByRole.customer ? ' No role-based flags set' : ''}
+            </p>
           </div>
         </div>
       )}
@@ -796,7 +922,7 @@ const CreateNewsletterPage: React.FC = () => {
         onClose={() => setOpenUserModal(false)}
         users={filteredUsers}
         selected={selectedUsers}
-        setSelected={setSelectedUsers}
+        setSelected={handleUserSelection}
         search={searchUser}
         setSearch={setSearchUser}
         roleFilter={roleFilter}

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { refreshToken } from "../../features/Auth/authSlice";
 import { API_BASE, getAccessToken } from "../../features/Auth/authSlice";
+import Swal from "sweetalert2";
 
 const AllContact = () => {
   const dispatch = useDispatch();
@@ -9,6 +10,7 @@ const AllContact = () => {
   const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -70,6 +72,85 @@ const AllContact = () => {
   useEffect(() => {
     loadContacts();
   }, []);
+
+  // Delete contact message
+  const handleDelete = async (id: number, fromModal: boolean = false) => {  // CHANGED: Added fromModal parameter
+    // Confirm before delete
+    Swal.fire({
+      title: "Are you sure?",
+      text: "This contact message will be permanently deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#0d9488",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setDeletingId(id);
+          
+          // Construct delete URL with ID at the end
+          const deleteUrl = `${API_URL}${id}/`;
+          
+          let res = await authFetch(deleteUrl, {
+            method: "DELETE",
+          });
+
+          if (res.status === 401) {
+            const refreshResult = await dispatch(refreshToken());
+            if (refreshToken.fulfilled.match(refreshResult)) {
+              res = await authFetch(deleteUrl, {
+                method: "DELETE",
+              });
+            } else {
+              throw new Error("Session expired. Login again.");
+            }
+          }
+
+          if (res.status === 204 || res.ok) {
+            // 204 No Content or 200 OK both indicate success
+            // Remove from state
+            setContacts(prev => prev.filter(contact => contact.id !== id));
+            
+            // If we're deleting from modal, close the modal
+            if (fromModal) {  // CHANGED: Check if deleting from modal
+              setShowModal(false);
+              setSelectedMessage(null);
+            }
+            
+            Swal.fire({
+              title: "Deleted!",
+              text: "Contact message has been deleted successfully.",
+              icon: "success",
+              confirmButtonColor: "#0d9488",
+            });
+          } else {
+            const errorText = await res.text();
+            throw new Error(errorText || "Failed to delete contact message");
+          }
+        } catch (err: any) {
+          console.error("Delete error:", err);
+          Swal.fire({
+            title: "Error!",
+            text: err.message || "Failed to delete contact message",
+            icon: "error",
+            confirmButtonColor: "#d33",
+          });
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
+  };
+
+  // Delete contact from modal
+  const handleDeleteFromModal = () => {
+    if (selectedMessage) {
+      // CHANGED: Pass true as second parameter to indicate deletion from modal
+      handleDelete(selectedMessage.id, true);
+    }
+  };
 
   // Open Modal
   const openModal = (contact: any) => {
@@ -135,7 +216,7 @@ const AllContact = () => {
                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
               />
             </svg>
-            <div className="text-sm text-gray-700">Loading Booking...</div>
+            <div className="text-sm text-gray-700">Loading contact messages...</div>
           </div>
         </div>
       )}
@@ -157,7 +238,7 @@ const AllContact = () => {
                 <th className="py-3 px-4 text-left">Phone</th>
                 <th className="py-3 px-4 text-left">Message</th>
                 <th className="py-3 px-4 text-left">Date</th>
-                <th className="py-3 px-4 text-left">Action</th>
+                <th className="py-3 px-4 text-left">Actions</th>
               </tr>
             </thead>
 
@@ -191,12 +272,21 @@ const AllContact = () => {
                     </td>
 
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => openModal(contact)}
-                        className="bg-teal-600 text-white text-sm px-3 py-1 rounded-md hover:bg-teal-500"
-                      >
-                        View
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openModal(contact)}
+                          className="bg-teal-600 text-white text-sm px-3 py-1 rounded-md hover:bg-teal-500 flex items-center gap-1"
+                          title="View Details"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                          View
+                        </button>
+                        
+                      
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -208,39 +298,76 @@ const AllContact = () => {
 
       {/* Modal */}
       {showModal && selectedMessage && (
-        <div className="fixed inset-0 flex items-center justify-center  bg-opacity-40  z-50">
-          <div className="bg-white w-11/12 sm:w-2/3 lg:w-1/3 rounded-xl shadow-xl p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Message Details
-            </h2>
+        <div className="fixed inset-0 flex items-center justify-center  bg-opacity-40 z-50">
+          <div className="bg-white w-11/12 sm:w-2/3 lg:w-1/3 rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Message Details
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-            <p className="text-gray-700 mb-2">
-              <span className="font-semibold">Name:</span>{" "}
-              {selectedMessage.name}
-            </p>
+            <div className="space-y-3">
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">Name:</p>
+                <p className="text-gray-800 bg-gray-50 p-2 rounded">{selectedMessage.name}</p>
+              </div>
 
-            <p className="text-gray-700 mb-2">
-              <span className="font-semibold">Email:</span>{" "}
-              {selectedMessage.email}
-            </p>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">Email:</p>
+                <p className="text-gray-800 bg-gray-50 p-2 rounded">{selectedMessage.email}</p>
+              </div>
 
-            <p className="text-gray-700 mb-2">
-              <span className="font-semibold">Phone:</span>{" "}
-              {selectedMessage.phone}
-            </p>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">Phone:</p>
+                <p className="text-gray-800 bg-gray-50 p-2 rounded">{selectedMessage.phone}</p>
+              </div>
 
-            <p className="text-gray-700 mb-4">
-              <span className="font-semibold">Message:</span>
-              <br />
-              {selectedMessage.message}
-            </p>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">Message:</p>
+                <div className="bg-gray-50 p-3 rounded whitespace-pre-wrap min-h-[100px]">
+                  {selectedMessage.message}
+                </div>
+              </div>
 
-            <p className="text-gray-500 text-sm mb-4">
-              <span className="font-semibold">Date:</span>{" "}
-              {new Date(selectedMessage.created_at).toLocaleString()}
-            </p>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">Date:</p>
+                <p className="text-gray-500">
+                  {new Date(selectedMessage.created_at).toLocaleString()}
+                </p>
+              </div>
+            </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+              <button
+                onClick={handleDeleteFromModal}  // This calls handleDelete with fromModal=true
+                disabled={deletingId === selectedMessage.id}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:bg-red-300 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+              >
+                {deletingId === selectedMessage.id ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Delete Message
+                  </>
+                )}
+              </button>
               <button
                 onClick={() => setShowModal(false)}
                 className="px-5 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-gray-800 font-medium"

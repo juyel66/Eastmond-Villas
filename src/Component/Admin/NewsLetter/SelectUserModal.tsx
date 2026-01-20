@@ -23,7 +23,7 @@ interface Props {
   setInviteOpen: (v: boolean) => void;
   inviteEmails: string;
   setInviteEmails: (v: string) => void;
-  onInvite: (emails: string) => void; // Updated to pass emails back
+  onInvite: (emails: string) => void;
   loading: boolean;
   error: string | null;
   autoSelectUsersByRole: (role: "admin" | "agent" | "customer") => void;
@@ -129,14 +129,15 @@ const SelectUserModal: React.FC<Props> = ({
     Swal.fire({
       title: "Selection Saved",
       html: `
-        <div class="text-left">
-          <p class="font-medium text-gray-800 mb-1">Selected ${selected.length} users</p>
-          <p class="font-medium text-gray-800 mb-1">Selected ${selectedUsers.length} users</p>
-          <div class="text-sm text-gray-600">
-            ${adminCount > 0 ? `<p>Admins: ${adminCount}</p>` : ''}
-            ${agentCount > 0 ? `<p>Agents: ${agentCount}</p>` : ''}
-            ${customerCount > 0 ? `<p>Customers: ${customerCount}</p>` : ''}
-          </div>
+        <div class="text-center">
+          <p class="mb-2"><strong>${selected.length} users selected</strong></p>
+          <p class="mb-1">• Admins: ${adminCount}</p>
+          <p class="mb-1">• Agents: ${agentCount}</p>
+          <p class="mb-1">• Customers: ${customerCount}</p>
+          ${inviteEmails.trim() ? `
+            <p class="mt-3 mb-1"><strong>Additional Emails:</strong></p>
+            <p class="text-sm">${inviteEmails.split(',').filter(e => e.trim()).length} email(s) added</p>
+          ` : ''}
         </div>
       `,
       icon: "success",
@@ -233,7 +234,7 @@ const SelectUserModal: React.FC<Props> = ({
                   {selected.some(id => {
                     const user = allUsers.find(u => u.id === id);
                     return user?.role === "agent";
-                  }) ? 'All Agents Selected' : 'Select All Agents'}
+                  }) ? 'All Agents Selected ' : 'Select All Agents'}
                 </button>
                 <button
                   onClick={() => autoSelectUsersByRole("customer")}
@@ -304,7 +305,7 @@ const SelectUserModal: React.FC<Props> = ({
                   </p>
                 </div>
                 <input
-                  className="w-full border rounded-lg px-8 py-2.5 focus:ring-2   focus:ring-teal-500 focus:border-transparent"
+                  className="w-full border rounded-lg px-8 py-2.5 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="example1@mail.com, example2@mail.com, example3@mail.com"
                   value={inviteEmails}
                   onChange={(e) => setInviteEmails(e.target.value)}

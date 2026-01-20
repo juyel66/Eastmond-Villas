@@ -262,6 +262,20 @@ const AdminPropertiesRentals: React.FC = () => {
     if (pageNumber >= 1 && pageNumber <= totalPages) setCurrentPage(pageNumber);
   };
 
+
+
+    const formatUSD = (amount?: number | string) => {
+  if (amount === null || amount === undefined || amount === "") return "-";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(amount));
+};
+
+
   return (
     <div>
       <ToastNotification
@@ -385,12 +399,13 @@ const AdminPropertiesRentals: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {item.location ?? item.city ?? item.address}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {item.price_display ??
-                        item.price ??
-                        item.total_price ??
-                        '-'}
-                    </td>
+                     <td className="px-6 py-4 text-sm text-gray-500">
+  {formatUSD(
+    item.price_display ??
+      item.price ??
+      item.total_price
+  )}
+</td>
 
 
                    <td className="px-6 py-4 text-sm text-gray-500">
