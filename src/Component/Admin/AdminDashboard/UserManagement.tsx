@@ -1,6 +1,6 @@
 // File: UserManagement.jsx
 import React, { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Eye, EyeOff, Key } from 'lucide-react';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import toast from 'react-hot-toast';
@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
  * - Any attempt to change other fields for current user shows a meaningful Swal/toast.
  * - Delete/Update use Swal confirmation and dual toast feedback (react-hot-toast + Swal fallback).
  * - Roles available: customer, agent, admin.
+ * - Added Password Reset functionality with modal
  */
 
 const ROLE_FILTERS = ['all', 'customer', 'agent', 'admin'];
@@ -42,6 +43,20 @@ export default function UserManagement() {
   const [editing, setEditing] = useState({});
   const [error, setError] = useState(null);
   const [roleFilter, setRoleFilter] = useState('all'); // dropdown filter
+  const [passwordResetModal, setPasswordResetModal] = useState({
+    open: false,
+    userId: null,
+    userName: '',
+    userEmail: '',
+  });
+  const [resetPasswordData, setResetPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [showPassword, setShowPassword] = useState({
+    newPassword: false,
+    confirmPassword: false,
+  });
 
   // Try to derive current user's email from common localStorage keys
   const getCurrentUserEmail = () => {
@@ -167,6 +182,145 @@ export default function UserManagement() {
   function setEditField(id, field, value) {
     setEditing((s) => ({ ...s, [id]: { ...(s[id] || {}), [field]: value } }));
   }
+
+  // Open password reset modal
+  const openPasswordResetModal = (user) => {
+    setPasswordResetModal({
+      open: true,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+    });
+    setResetPasswordData({
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setShowPassword({
+      newPassword: false,
+      confirmPassword: false,
+    });
+  };
+
+  // Close password reset modal
+  const closePasswordResetModal = () => {
+    setPasswordResetModal({
+      open: false,
+      userId: null,
+      userName: '',
+      userEmail: '',
+    });
+    setResetPasswordData({
+      newPassword: '',
+      confirmPassword: '',
+    });
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = (field) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
+  // Handle password reset
+  const handlePasswordReset = async () => {
+    const { userId, userName } = passwordResetModal;
+    const { newPassword, confirmPassword } = resetPasswordData;
+
+    // Validation
+    if (!newPassword || !confirmPassword) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Validation Error',
+        text: 'Both password fields are required.',
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Validation Error',
+        text: 'Passwords do not match.',
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Validation Error',
+        text: 'Password must be at least 6 characters long.',
+      });
+      return;
+    }
+
+    // Confirmation dialog
+    const result = await Swal.fire({
+      title: 'Reset Password?',
+      html: `Are you sure you want to reset password for <strong>${userName}</strong>?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, reset password!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) return;
+
+    setActionInProgress((s) => ({ ...s, [userId]: true }));
+
+    try {
+      // Fixed: Changed from "password" to "new_password" to match API expectation
+      const res = await fetch(`${API_BASE}/reset-password/${userId}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ new_password: newPassword }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        const msg =
+          (data && (data.detail || JSON.stringify(data))) ||
+          `Error ${res.status}`;
+        throw new Error(msg);
+      }
+
+      // Close modal
+      closePasswordResetModal();
+
+      // Success notification
+      await Swal.fire({
+        title: 'Success!',
+        html: `Password has been reset for <strong>${userName}</strong>.`,
+        icon: 'success',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+
+      // Dual toast notifications
+      toast.success('Password reset successfully');
+      showToast('Password reset successfully', 'success', 2500);
+    } catch (err) {
+      console.error('Password reset failed:', err);
+      const message = err && err.message ? err.message : 'Unknown error';
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Reset Failed', 
+        html: `Failed to reset password: <strong>${message}</strong>` 
+      });
+      toast.error('Password reset failed');
+      showToast('Password reset failed', 'error', 3000);
+    } finally {
+      setActionInProgress((s) => {
+        const clone = { ...s };
+        delete clone[userId];
+        return clone;
+      });
+    }
+  };
 
   async function saveEdit(id) {
     const edits = editing[id];
@@ -354,10 +508,149 @@ export default function UserManagement() {
     }
   }
 
+ 
+
   const pretty = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
   return (
     <div className="p-4 sm:p-6 md:p-8 relative">
+      {/* Password Reset Modal */}
+      {passwordResetModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center  bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Reset Password
+                </h3>
+                <button
+                  onClick={closePasswordResetModal}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+
+              <div > </div>
+
+
+              
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-2">
+                  Reset password for:
+                </p>
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <p className="font-medium">{passwordResetModal.userName}</p>
+                  <p className="text-sm text-gray-600">{passwordResetModal.userEmail}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* New Password Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword.newPassword ? "text" : "password"}
+                      value={resetPasswordData.newPassword}
+                      onChange={(e) =>
+                        setResetPasswordData((prev) => ({
+                          ...prev,
+                          newPassword: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('newPassword')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword.newPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword.newPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword.confirmPassword ? "text" : "password"}
+                      value={resetPasswordData.confirmPassword}
+                      onChange={(e) =>
+                        setResetPasswordData((prev) => ({
+                          ...prev,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('confirmPassword')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword.confirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword.confirmPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end space-x-3">
+                <button
+                  onClick={closePasswordResetModal}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordReset}
+                  disabled={
+                    actionInProgress[passwordResetModal.userId] ||
+                    !resetPasswordData.newPassword ||
+                    !resetPasswordData.confirmPassword
+                  }
+                  className="px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {actionInProgress[passwordResetModal.userId] ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                      </svg>
+                      Resetting...
+                    </>
+                  ) : (
+                    'Reset Password'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Centered loading overlay */}
       {loading && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/60">
@@ -425,7 +718,7 @@ export default function UserManagement() {
                 <th className="px-6 py-3 font-medium text-gray-700">Name</th>
                 <th className="px-6 py-3 font-medium text-gray-700">Email</th>
                 <th className="px-6 py-3 font-medium text-gray-700">Role</th>
-                <th className="px-6 py-3 font-medium text-gray-700">Action</th>
+                <th className="px-6 py-3 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -554,7 +847,35 @@ export default function UserManagement() {
                                 : `Edit ${user.name}`
                             }
                           >
-                            Edit
+                             <button
+  disabled={isCurrentUser}
+  className={`text-sm ${
+    isCurrentUser
+      ? "cursor-not-allowed text-gray-400"
+      : "text-black cursor-pointer"
+  }`}
+>
+  Edit
+</button>
+                          </button>
+                          <button
+                            onClick={() => openPasswordResetModal(user)}
+                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            aria-label={`Reset password for ${user.name}`}
+                            title={`Reset password for ${user.name}`}
+                          >
+                            <Key size={14} />
+                           <button
+  disabled={isCurrentUser}
+  className={`text-sm ${
+    isCurrentUser
+      ? "cursor-not-allowed text-gray-400"
+      : "text-black cursor-pointer"
+  }`}
+>
+  Reset Pass
+</button>
+
                           </button>
                           <button
                             onClick={() => handleDelete(user.id)}
@@ -700,22 +1021,33 @@ export default function UserManagement() {
                       </button>
                     </div>
                   ) : (
-                    <div>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(user)}
+                          className="flex-1 px-3 py-2 rounded-md text-sm font-medium border"
+                          aria-label={`Edit ${user.name}`}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="flex-1 px-3 py-2 rounded-md text-white text-sm"
+                          style={{ backgroundColor: '#DC2626' }}
+                          disabled={Boolean(actionInProgress[user.id])}
+                          aria-label={`Delete ${user.name}`}
+                        >
+                          <Trash2 size={16} className="inline mr-1" />
+                          Delete
+                        </button>
+                      </div>
                       <button
-                        onClick={() => startEdit(user)}
-                        className="mb-2 w-full px-3 py-2 rounded-md text-sm font-medium border"
-                        aria-label={`Edit ${user.name}`}
+                        onClick={() => openPasswordResetModal(user)}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        aria-label={`Reset password for ${user.name}`}
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-md text-white text-sm"
-                        style={{ backgroundColor: '#DC2626' }}
-                        disabled={Boolean(actionInProgress[user.id])}
-                        aria-label={`Delete ${user.name}`}
-                      >
-                        <Trash2 size={16} />
+                        <Key size={14} />
+                        Reset Password
                       </button>
                     </div>
                   )}

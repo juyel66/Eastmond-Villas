@@ -356,9 +356,9 @@ const AllReview: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                  <th className="px-10 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-12 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
 
@@ -410,9 +410,7 @@ const AllReview: React.FC = () => {
 
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                            {status === 'approved' ? 'Approved' : 'Pending'}
-                          </span>
+                         
 
                           {/* Dropdown to change status */}
                           <select
@@ -421,8 +419,8 @@ const AllReview: React.FC = () => {
                             disabled={updatingStatusId === r.id}
                             className="ml-2 text-xs border rounded px-2 py-1"
                           >
-                            <option value="pending">pending</option>
-                            <option value="approved">approved</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
                           </select>
 
                           {updatingStatusId === r.id && (

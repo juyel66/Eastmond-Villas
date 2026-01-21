@@ -142,37 +142,6 @@ const Analytics = () => {
     return ['rent', 'rental', 'rentals'].includes(normalized);
   };
 
-  // Generate real dates based on selected range
-  const generateDates = (range) => {
-    const dates = [];
-    const today = new Date();
-    
-    if (range === 'Last 7 Days') {
-      // Last 7 days
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        dates.push(date);
-      }
-    } else if (range === 'Last 30 Days') {
-      // Last 30 days
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        dates.push(date);
-      }
-    } else if (range === 'Last 90 Days') {
-      // Last 90 days, group by weeks
-      for (let i = 89; i >= 0; i -= 7) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        dates.push(date);
-      }
-    }
-    
-    return dates;
-  };
-
   // Format date for display
   const formatDateForDisplay = (date, range) => {
     if (range === 'Last 7 Days') {
@@ -183,10 +152,8 @@ const Analytics = () => {
       // Show date and month for 30 days
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } else if (range === 'Last 90 Days') {
-      // Show week number for 90 days
-      const startDate = new Date(date);
-      startDate.setDate(date.getDate() - 6);
-      return `Week ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      // Show month name for 90 days (monthly view)
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
     return date.toLocaleDateString();
   };
@@ -200,57 +167,153 @@ const Analytics = () => {
     });
   };
 
+  // Helper to get month name from YYYY-MM format
+  const getMonthNameFromYYYYMM = (monthStr) => {
+    if (!monthStr) return '';
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
   // Defensive mapping helpers with proper capitalization and date formatting
   const performanceChartData = useMemo(() => {
-    const dates = generateDates(selectedRange);
-    
-    if (apiData && Array.isArray(apiData.performance) && apiData.performance.length > 0) {
-      console.log('Processing performance data for', selectedRange, ':', apiData.performance);
+    if (!apiData || !Array.isArray(apiData.performance) || apiData.performance.length === 0) {
+      console.log('No performance data found for', selectedRange, 'creating sample data');
       
-      // Map data with proper field names and date formatting
-      const mappedData = dates.map((date, index) => {
-        // Find corresponding data point from API
-        const apiPoint = apiData.performance[index] || apiData.performance[0] || {};
+      // Generate sample dates based on selected range
+      const today = new Date();
+      const dates = [];
+      
+      if (selectedRange === 'Last 7 Days') {
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          dates.push(date);
+        }
+      } else if (selectedRange === 'Last 30 Days') {
+        for (let i = 29; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          dates.push(date);
+        }
+      } else if (selectedRange === 'Last 90 Days') {
+        // For 90 days, show monthly data
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        for (let i = 2; i >= 0; i--) {
+          const date = new Date(currentYear, currentMonth - i, 15);
+          dates.push(date);
+        }
+      }
+      
+      const sampleData = dates.map((date, index) => {
+        let baseValue;
+        let variationFactor = 1;
+        
+        if (selectedRange === 'Last 7 Days') {
+          baseValue = 100;
+          variationFactor = 0.5;
+        } else if (selectedRange === 'Last 30 Days') {
+          baseValue = 50;
+          variationFactor = 0.3;
+        } else if (selectedRange === 'Last 90 Days') {
+          // For 90 days (monthly), use increasing values for each month
+          const monthlyValues = [40, 60, 80];
+          baseValue = monthlyValues[index] || 60;
+          variationFactor = 0.2;
+        } else {
+          baseValue = 50;
+          variationFactor = 0.3;
+        }
+        
+        // Add some variation to make it look realistic
+        const variation = Math.sin(index * 0.5) * 20 + Math.random() * 30;
+        const dayFactor = date.getDay(); // 0=Sunday, 6=Saturday
         
         return {
           date: date,
           displayDate: formatDateForDisplay(date, selectedRange),
           pdfDate: formatDateForPDF(date),
-          Views: Number(apiPoint.views ?? apiPoint.total_views ?? 0),
-          Bookings: Number(apiPoint.bookings ?? apiPoint.total_bookings ?? 0),
-          Downloads: Number(apiPoint.downloads ?? apiPoint.total_downloads ?? 0),
-          Inquiries: Number(apiPoint.inquiries ?? apiPoint.total_inquiries ?? 0),
+          Views: Math.max(0, Math.floor(baseValue * 3 + variation * variationFactor + (dayFactor === 0 || dayFactor === 6 ? 30 : 0))),
+          Bookings: Math.max(0, Math.floor(baseValue * 0.3 + variation * 0.2 * variationFactor + (dayFactor === 0 || dayFactor === 6 ? 5 : 0))),
+          Downloads: Math.max(0, Math.floor(baseValue * 0.6 + variation * 0.3 * variationFactor + (dayFactor === 0 || dayFactor === 6 ? 10 : 0))),
+          Inquiries: Math.max(0, Math.floor(baseValue * 0.45 + variation * 0.25 * variationFactor + (dayFactor === 0 || dayFactor === 6 ? 8 : 0))),
         };
       });
       
-      console.log('Mapped performance data:', mappedData);
-      return mappedData;
+      console.log('Generated sample data:', sampleData);
+      return sampleData;
     }
     
-    // If no data from API, create sample data with real dates
-    console.log('No performance data found for', selectedRange, 'creating sample data');
+    console.log('Processing performance data for', selectedRange, ':', apiData.performance);
     
-    const sampleData = dates.map((date, index) => {
-      const baseValue = selectedRange === 'Last 7 Days' ? 100 : 
-                       selectedRange === 'Last 30 Days' ? 50 : 20;
+    // For 90 days (monthly data)
+    if (selectedRange === 'Last 90 Days') {
+      console.log('Processing 90 days performance data from API:', apiData.performance);
       
-      // Add some variation to make it look realistic
-      const variation = Math.sin(index * 0.5) * 20 + Math.random() * 30;
-      const dayFactor = date.getDay(); // 0=Sunday, 6=Saturday
+      // Create a map of month data from API
+      const monthDataMap = {};
+      apiData.performance.forEach(item => {
+        if (item.month && item.label) {
+          const monthKey = getMonthNameFromYYYYMM(item.month);
+          monthDataMap[monthKey] = {
+            date: new Date(item.month + '-15'), // Middle of the month
+            displayDate: item.label,
+            pdfDate: monthKey,
+            Views: Number(item.views || 0),
+            Bookings: Number(item.bookings || 0),
+            Downloads: Number(item.downloads || 0),
+            Inquiries: Number(item.inquiries || 0),
+          };
+        }
+      });
+      
+      // Generate last 3 months
+      const today = new Date();
+      const last3Months = [];
+      for (let i = 2; i >= 0; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 15);
+        const monthKey = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        // Check if we have data for this month from API
+        if (monthDataMap[monthKey]) {
+          last3Months.push(monthDataMap[monthKey]);
+        } else {
+          // If no data from API, show 0 for this month
+          last3Months.push({
+            date: date,
+            displayDate: date.toLocaleDateString('en-US', { month: 'short' }),
+            pdfDate: monthKey,
+            Views: 0,
+            Bookings: 0,
+            Downloads: 0,
+            Inquiries: 0,
+          });
+        }
+      }
+      
+      console.log('Final 90 days chart data:', last3Months);
+      return last3Months;
+    }
+    
+    // For 7 and 30 days, use EXACT data from API
+    const mappedData = apiData.performance.map(item => {
+      const date = item.date ? new Date(item.date) : new Date();
       
       return {
         date: date,
-        displayDate: formatDateForDisplay(date, selectedRange),
-        pdfDate: formatDateForPDF(date),
-        Views: Math.max(0, Math.floor(baseValue + variation + (dayFactor === 0 || dayFactor === 6 ? 30 : 0))),
-        Bookings: Math.max(0, Math.floor(baseValue * 0.1 + variation * 0.2 + (dayFactor === 0 || dayFactor === 6 ? 5 : 0))),
-        Downloads: Math.max(0, Math.floor(baseValue * 0.2 + variation * 0.3 + (dayFactor === 0 || dayFactor === 6 ? 10 : 0))),
-        Inquiries: Math.max(0, Math.floor(baseValue * 0.15 + variation * 0.25 + (dayFactor === 0 || dayFactor === 6 ? 8 : 0))),
+        displayDate: item.label || formatDateForDisplay(date, selectedRange),
+        pdfDate: item.date || formatDateForPDF(date),
+        Views: Number(item.views || 0),
+        Bookings: Number(item.bookings || 0),
+        Downloads: Number(item.downloads || 0),
+        Inquiries: Number(item.inquiries || 0),
       };
     });
     
-    console.log('Generated sample data:', sampleData);
-    return sampleData;
+    console.log('Mapped performance data:', mappedData);
+    return mappedData;
   }, [apiData, selectedRange]);
 
   // ---------- compute properties by type using analytics.properties OR allProperties fetched from /properties/ ----------
@@ -304,6 +367,8 @@ const Analytics = () => {
         name: a.name ?? a.agent ?? `Agent ${a.id ?? ''}`,
         total_views: Number(a.total_views ?? 0) || 0,
         total_properties: Number(a.total_properties ?? 0) || 0,
+        total_downloads: Number(a.total_downloads ?? 0) || 0,
+        total_bookings: Number(a.total_bookings ?? 0) || 0,
       }));
     }
     return [];
@@ -312,7 +377,17 @@ const Analytics = () => {
   const totals = useMemo(() => {
     const t = apiData && apiData.totals ? apiData.totals : null;
     
-    // Calculate totals from performance data if not available in totals object
+    // Use API totals if available
+    if (t) {
+      return {
+        Views: t.views !== undefined ? t.views : '—',
+        Downloads: t.downloads !== undefined ? t.downloads : '—',
+        Bookings: t.bookings !== undefined ? t.bookings : '—',
+        Inquiries: t.inquiries !== undefined ? t.inquiries : '—',
+      };
+    }
+    
+    // Calculate from performance data if no totals
     let calculatedViews = 0;
     let calculatedBookings = 0;
     let calculatedDownloads = 0;
@@ -328,31 +403,75 @@ const Analytics = () => {
     }
     
     return {
-      Views: t && typeof t.views !== 'undefined' ? t.views : calculatedViews || '—',
-      Downloads: t && typeof t.downloads !== 'undefined' ? t.downloads : calculatedDownloads || '—',
-      Bookings: t && typeof t.bookings !== 'undefined' ? t.bookings : calculatedBookings || '—',
-      Inquiries: t && typeof t.inquiries !== 'undefined' ? t.inquiries : calculatedInquiries || '—',
+      Views: calculatedViews || '—',
+      Downloads: calculatedDownloads || '—',
+      Bookings: calculatedBookings || '—',
+      Inquiries: calculatedInquiries || '—',
     };
   }, [apiData, performanceChartData]);
 
-  // ========== Custom Tooltip Component ==========
+  // ========== Fixed Custom Tooltip Component ==========
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      console.log('Tooltip payload:', payload); // Debug log
+      
+      // Get the actual data point from the payload
+      const dataPoint = payload[0]?.payload;
+      
       return (
-        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg min-w-[180px]">
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-50">
           <p className="font-semibold text-gray-800 mb-2 text-sm">{label}</p>
-          {payload.map((entry, index) => (
-            <div key={`tooltip-${index}`} className="flex items-center justify-between mb-1">
-              <div className="flex items-center">
-                <div 
-                  className="w-3 h-3 rounded-full mr-2" 
-                  style={{ backgroundColor: entry.color }}
-                />
-                <span className="text-sm text-gray-600 font-medium">{entry.dataKey}:</span>
+          
+          {/* Check if we have the data point */}
+          {dataPoint ? (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#3B82F6' }} />
+                  <span className="text-sm text-gray-600 font-medium">Views:</span>
+                </div>
+                <span className="font-semibold text-gray-800 ml-2">{dataPoint.Views || 0}</span>
               </div>
-              <span className="font-semibold text-gray-800 ml-2">{entry.value}</span>
-            </div>
-          ))}
+              
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#10B981' }} />
+                  <span className="text-sm text-gray-600 font-medium">Bookings:</span>
+                </div>
+                <span className="font-semibold text-gray-800 ml-2">{dataPoint.Bookings || 0}</span>
+              </div>
+              
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#9333EA' }} />
+                  <span className="text-sm text-gray-600 font-medium">Downloads:</span>
+                </div>
+                <span className="font-semibold text-gray-800 ml-2">{dataPoint.Downloads || 0}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#F59E0B' }} />
+                  <span className="text-sm text-gray-600 font-medium">Inquiries:</span>
+                </div>
+                <span className="font-semibold text-gray-800 ml-2">{dataPoint.Inquiries || 0}</span>
+              </div>
+            </>
+          ) : (
+            // Fallback if dataPoint is not available
+            payload.map((entry, index) => (
+              <div key={`tooltip-${index}`} className="flex items-center justify-between mb-1">
+                <div className="flex items-center">
+                  <div 
+                    className="w-3 h-3 rounded-full mr-2" 
+                    style={{ backgroundColor: entry.color || '#8884d8' }}
+                  />
+                  <span className="text-sm text-gray-600 font-medium">{entry.dataKey}:</span>
+                </div>
+                <span className="font-semibold text-gray-800 ml-2">{entry.value}</span>
+              </div>
+            ))
+          )}
         </div>
       );
     }
@@ -516,13 +635,10 @@ const Analytics = () => {
         doc.text('Performance Overview', margin, yPos);
         yPos += 10;
 
-        // For 30 days data, show all dates
-        const displayData = performanceChartData;
-
         // Prepare performance data for table
         const performanceHeaders = ['Date', 'Views', 'Downloads', 'Inquiries', 'Bookings'];
-        const performanceBody = displayData.map(item => [
-          item.pdfDate,
+        const performanceBody = performanceChartData.map(item => [
+          item.displayDate,
           item.Views.toString(),
           item.Downloads.toString(),
           item.Inquiries.toString(),
@@ -537,12 +653,12 @@ const Analytics = () => {
           headStyles: {
             fillColor: [147, 51, 234], // purple-600
             textColor: [255, 255, 255],
-            fontSize: 10,
+            fontSize: selectedRange === 'Last 30 Days' ? 8 : 10,
             fontStyle: 'bold',
             cellPadding: 3,
           },
           bodyStyles: {
-            fontSize: 10,
+            fontSize: selectedRange === 'Last 30 Days' ? 8 : 10,
             cellPadding: 3,
           },
           alternateRowStyles: {
@@ -564,11 +680,13 @@ const Analytics = () => {
         yPos += 10;
 
         // Prepare agent data for table
-        const agentHeaders = ['Agent Name', 'Total Views', 'Properties Assigned'];
+        const agentHeaders = ['Agent Name', 'Total Views', 'Properties Assigned', 'Downloads', 'Bookings'];
         const agentBody = agentsChartData.map(agent => [
           agent.name,
           agent.total_views.toString(),
           agent.total_properties.toString(),
+          agent.total_downloads.toString(),
+          agent.total_bookings.toString(),
         ]);
 
         autoTable(doc, {
@@ -732,100 +850,116 @@ const Analytics = () => {
   };
 
   // Chart components with proper date display and larger text
-  const PerformanceOverviewChart = () => (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm pl-4 pr-4 pt-2 h-full">
-      <h2 className="text-xl font-semibold text-gray-800">Performance Overview</h2>
-      <p className="text-gray-500 text-sm mb-2">
-        Views, Bookings, Downloads and Inquiries for {selectedRange}
-        {apiData && apiData.start_date && apiData.end_date ? (
-          <span className="text-xs text-gray-400 ml-2"> ({apiData.start_date} → {apiData.end_date})</span>
-        ) : null}
-      </p>
+  const PerformanceOverviewChart = () => {
+    // Calculate custom interval based on selected range
+    const getXAxisInterval = () => {
+      if (selectedRange === 'Last 7 Days') {
+        return 0; // Show all 7 days
+      } else if (selectedRange === 'Last 30 Days') {
+        // For 30 days, use 'preserveStart' to handle density better
+        return 'preserveStart';
+      } else if (selectedRange === 'Last 90 Days') {
+        return 0; // Show all 3 months
+      }
+      return 0;
+    };
 
-      {apiLoading ? (
-        <div className="flex items-center justify-center p-6">
-          <div className="animate-spin h-5 w-5 border-2 border-teal-600 border-t-transparent rounded-full mr-2"></div>
-          <span className="text-gray-500">Loading analytics for {selectedRange}...</span>
-        </div>
-      ) : apiError ? (
-        <div className="text-sm text-red-600 p-6">Error loading analytics: {apiError}</div>
-      ) : performanceChartData.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-6">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          <span className="text-gray-500 text-sm">No performance data available for {selectedRange}</span>
-          <span className="text-gray-400 text-xs mt-1">Showing sample data for demonstration</span>
-        </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart 
-            data={performanceChartData} 
-            margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-            <XAxis 
-              dataKey="displayDate" 
-              axisLine={false} 
-              tickLine={false}
-              interval={selectedRange === 'Last 30 Days' ? 'preserveStartEnd' : 0}
-              tick={{ fontSize: selectedRange === 'Last 30 Days' ? 11 : 13 }}
-            />
-            <YAxis axisLine={false} tickLine={false} />
-            <Tooltip 
-              content={<CustomTooltip />}
-              cursor={{ strokeDasharray: '3 3', stroke: '#d1d5db' }}
-            />
-            <Legend 
-              wrapperStyle={{ 
-                position: 'relative', 
-                marginTop: '20px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}
-              formatter={(value) => <span style={{ fontSize: '13px', fontWeight: '500' }}>{value}</span>}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="Views" 
-              stroke="#3B82F6" 
-              strokeWidth={3}
-              dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
-              activeDot={{ r: 7 }}
-              name="Views"
-            />
-            <Line 
-              type="monotone" 
-              dataKey="Bookings" 
-              stroke="#10B981" 
-              strokeWidth={3}
-              dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
-              activeDot={{ r: 7 }}
-              name="Bookings"
-            />
-            <Line 
-              type="monotone" 
-              dataKey="Downloads" 
-              stroke="#9333EA" 
-              strokeWidth={3}
-              dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
-              activeDot={{ r: 7 }}
-              name="Downloads"
-            />
-            <Line 
-              type="monotone" 
-              dataKey="Inquiries" 
-              stroke="#F59E0B" 
-              strokeWidth={3}
-              dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
-              activeDot={{ r: 7 }}
-              name="Inquiries"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      )}
-    </div>
-  );
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm pl-4 pr-4 pt-2 h-full">
+        <h2 className="text-xl font-semibold text-gray-800">Performance Overview</h2>
+        <p className="text-gray-500 text-sm mb-2">
+          Views, Bookings, Downloads and Inquiries for {selectedRange}
+          {apiData && apiData.start_date && apiData.end_date ? (
+            <span className="text-xs text-gray-400 ml-2"> ({apiData.start_date} → {apiData.end_date})</span>
+          ) : null}
+        </p>
+
+        {apiLoading ? (
+          <div className="flex items-center justify-center p-6">
+            <div className="animate-spin h-5 w-5 border-2 border-teal-600 border-t-transparent rounded-full mr-2"></div>
+            <span className="text-gray-500">Loading analytics for {selectedRange}...</span>
+          </div>
+        ) : apiError ? (
+          <div className="text-sm text-red-600 p-6">Error loading analytics: {apiError}</div>
+        ) : performanceChartData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span className="text-gray-500 text-sm">No performance data available for {selectedRange}</span>
+            <span className="text-gray-400 text-xs mt-1">Showing sample data for demonstration</span>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart 
+              data={performanceChartData} 
+              margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
+              <XAxis 
+                dataKey="displayDate" 
+                axisLine={false} 
+                tickLine={false}
+                tick={{ fontSize: selectedRange === 'Last 30 Days' ? 11 : 13 }}
+                interval={getXAxisInterval()}
+                minTickGap={selectedRange === 'Last 30 Days' ? 10 : 0}
+              />
+              <YAxis axisLine={false} tickLine={false} />
+              <Tooltip 
+                content={<CustomTooltip />}
+                cursor={{ strokeDasharray: '3 3', stroke: '#d1d5db' }}
+              />
+              <Legend 
+                wrapperStyle={{ 
+                  position: 'relative', 
+                  marginTop: '20px',
+                  fontSize: '13px',
+                  fontWeight: '500'
+                }}
+                formatter={(value) => <span style={{ fontSize: '13px', fontWeight: '500' }}>{value}</span>}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Views" 
+                stroke="#3B82F6" 
+                strokeWidth={3}
+                dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
+                activeDot={{ r: selectedRange === 'Last 30 Days' ? 6 : 7 }}
+                name="Views"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Bookings" 
+                stroke="#10B981" 
+                strokeWidth={3}
+                dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
+                activeDot={{ r: selectedRange === 'Last 30 Days' ? 6 : 7 }}
+                name="Bookings"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Downloads" 
+                stroke="#9333EA" 
+                strokeWidth={3}
+                dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
+                activeDot={{ r: selectedRange === 'Last 30 Days' ? 6 : 7 }}
+                name="Downloads"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Inquiries" 
+                stroke="#F59E0B" 
+                strokeWidth={3}
+                dot={{ r: selectedRange === 'Last 30 Days' ? 4 : 5, strokeWidth: 2, fill: '#fff' }} 
+                activeDot={{ r: selectedRange === 'Last 30 Days' ? 6 : 7 }}
+                name="Inquiries"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    );
+  };
 
   const PropertiesByTypeChart = () => (
     <div className="bg-white border lg:mt-0 md:mt-0 mt-10 border-gray-200 rounded-xl shadow-sm p-6 h-full">
