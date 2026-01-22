@@ -232,6 +232,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy';
 import UpdateRentals from './Component/Admin/UpdateRentals/UpdateRentals';
 import UpdateSales from './Component/Admin/UpdateSales/UpdateSales';
 import NewsLetterManagement from './Component/Admin/NewsLetter/NewsLetterManagement';
+import TermsAndConditions from './TermsAndConditions/TermsAndConditions';
 
 // --- Default Dashboard Redirect ---
 const DefaultDashboardRedirect = () => <Navigate to="/" replace />;
@@ -254,6 +255,7 @@ export const router = createBrowserRouter([
       { path: '/properties/:slug', element: <RentsDetails /> },
       { path: '/sales/:slug', element: <SalesDetails /> },
       { path: '/privacy-policy', element: <PrivacyPolicy /> },
+      { path: '/terms-and-conditions', element: <TermsAndConditions /> }
     ],
   },
 
