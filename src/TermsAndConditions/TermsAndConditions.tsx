@@ -29,7 +29,7 @@ const TermsAndConditions = () => {
 
         <p className="mb-6">
           If you do not agree, you must immediately discontinue all use of the
-          Site.
+          Site
         </p>
 
         {/* 1 */}
