@@ -149,14 +149,16 @@ const Footer = () => {
               <li><a href="/" className="hover:text-teal-400 transition-colors duration-200">Home</a></li>
               <li><a href="/about" className="hover:text-teal-400 transition-colors duration-200">About Us</a></li>
               {/* <li><a href="/list-with-us" className="hover:text-teal-400 transition-colors duration-200">List With Us</a></li> */}
-              <li><a href="/contact" className="hover:text-teal-400 transition-colors duration-200 ">Contact</a></li>
-              <li><Link to="/privacy-policy" className="hover:text-teal-400 transition-colors duration-200 ">Privacy Policy</Link></li>
+             
+              <li><a href="/privacy-policy" className="hover:text-teal-400 transition-colors duration-200 ">Privacy Policy</a></li>
+               <li><a href="/terms-and-conditions" className="hover:text-teal-400 transition-colors duration-200 ">Terms & Conditions</a></li>
               <li>
            
                 <a
                   href="#dashboard"
                   className="hover:text-teal-400 transition-colors duration-200 cursor-pointer"
-                  onClick={handleDashboardClick}
+                  onClick={handleDashboardClick}npm run dev
+                  
                 >
                   Dashboard
                 </a>
