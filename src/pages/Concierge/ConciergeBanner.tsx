@@ -19,9 +19,9 @@ const ConciergeBanner: React.FC = () => {
         <p className="text-gray-200 text-base md:text-lg mb-3 max-w-xl">
          Orchestrating the extraordinary with seamless, intuitively tailored service
         </p>
-        <button className="lg:px-8 lg:py-3 bg-teal-500 text-white text-xl p-2 lg:mb-0 mb-2 font-semibold rounded-lg shadow-md hover:bg-teal-600 transition duration-300 ease-in-out">
+        <a href='' className="lg:px-8 lg:py-3 bg-teal-500 text-white text-xl p-2 lg:mb-0 mb-2 font-semibold rounded-lg shadow-md hover:bg-teal-600 transition duration-300 ease-in-out">
           Begin Your Journey
-        </button>
+        </a>
       </div>
     </div>
   );

@@ -18,12 +18,12 @@ const ListMyVilla: React.FC = () => {
         <p className="text-gray-200 text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-md sm:max-w-lg md:max-w-xl">
           Join our network of premier villa owners and unlock your property's full potential.
         </p>
-        <Link
-          to="/"
+        <a
+          href="/"
           className="px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base md:text-lg bg-teal-500 text-white font-semibold rounded-lg shadow-md hover:bg-teal-600 transition duration-300 ease-in-out"
         >
           List My Villa
-        </Link>
+        </a>
       </div>
     </div>
   );

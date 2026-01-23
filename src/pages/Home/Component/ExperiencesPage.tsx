@@ -41,7 +41,7 @@ const ExperiencesPage = () => {
         </p>
 
         {/* Button */}
-        <button
+        <a href='/concierge'
           className="inline-flex items-center lg:px-8 px-6 lg:py-4 py-2 bg-teal-600 hover:bg-teal-700
                                    text-white text-lg font-semibold rounded-lg shadow-lg
                                    transition duration-300 ease-in-out mt-3"
@@ -50,7 +50,7 @@ const ExperiencesPage = () => {
             <ExploreIcon />
           </div>
           Explore Experiences
-        </button>
+        </a>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 
 import { Swiper, SwiperSlide } from "swiper/react";
 
+import {star} from "../../../assets/star copy.svg"
+
 
 import "swiper/css";
 import "swiper/css/free-mode";
@@ -93,7 +95,7 @@ const TestimonialCard = ({ testimonial }) => {
                 {testimonial.rating && (
                     <div className="flex items-center bg-teal-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
                         <span>{testimonial.rating}</span>
-                        <img src="/public/images/star.svg" alt="" className="w-4 h-4 ml-1" />
+                        <img src={star} alt="" className="w-4 h-4 ml-1" />
                     </div>
                 )}
             </div>

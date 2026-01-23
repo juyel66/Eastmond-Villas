@@ -201,9 +201,9 @@ const LuxuryCardGrid = () => {
           <p className="text-lg sm:text-xl text-gray-600 font-medium mb-10">
             Every detail perfected before you even think to ask.
           </p>
-          <button className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 md:py-4 md:px-10 shadow-lg transition duration-300 ease-in-out">
+          <a href='/contact' className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 md:py-4 md:px-10 shadow-lg transition duration-300 ease-in-out">
             Get In Touch
-          </button>
+          </a>
         </div>
       </section>
     </section>
