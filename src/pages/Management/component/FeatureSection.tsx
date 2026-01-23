@@ -99,7 +99,7 @@ const FeatureSection: React.FC<FeatureSectionProps> = ({
                 className="rounded-xl text-lg font-bold px-5 text-[#009689] border-[#009689] hover:bg-[#009689] hover:text-white hover:border-[#009689]  shadow-lg"
                 onClick={onCtaClick}
               >
-                <Link to="/contact">Contact Our Team</Link>
+                <a href="/contact">Contact Our Team</a>
               </Button>
             </div>
           </div>

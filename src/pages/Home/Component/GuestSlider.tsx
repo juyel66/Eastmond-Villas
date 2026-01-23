@@ -1,7 +1,7 @@
 
 import { Swiper, SwiperSlide } from "swiper/react";
 
-import {star} from "../../../assets/star copy.svg"
+import star from "../../../assets/star.svg"
 
 
 import "swiper/css";

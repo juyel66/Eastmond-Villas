@@ -8,7 +8,7 @@ const Management = () => {
     >
       <HeroSection className=" "
         title="Property Management, Perfected!"
-        subtitle="Emphasize luxury villas as assets, sanctuaries, reflections of taste."
+        subtitle="Stewardship Defined by Precision, Discretion, and Care."
         ctaLabel="Contact Our Team"
         onCtaClick={() => {
           /* route to contact, open modal, etc. */

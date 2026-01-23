@@ -14,7 +14,7 @@ const About = () => {
         <AboutCard />
 
        <div className="mt-10">
-         <EstateExperience />
+         {/* <EstateExperience /> */}
        </div>
 
        <div className="mt-10"><Affiliates /></div>
