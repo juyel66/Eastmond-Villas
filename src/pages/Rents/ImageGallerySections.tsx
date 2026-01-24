@@ -2018,6 +2018,8 @@ const ImageGallerySection = ({ villa }) => {
               </button>
             )}
 
+            <BedRoomsSliders bedrooms_images={bedrooms_images}/>
+
             <VideoExperience videos={videos} villa={villa} />
 
             <Description
@@ -2106,7 +2108,7 @@ const ImageGallerySection = ({ villa }) => {
 
           {/* Bedrooms slider ALWAYS shown */}
           <div className="mt-8">
-            <BedRoomsSliders bedrooms_images={bedrooms_images} />
+            {/* <BedRoomsSliders bedrooms_images={bedrooms_images} /> */}
           </div>
 
           {isRentType && (

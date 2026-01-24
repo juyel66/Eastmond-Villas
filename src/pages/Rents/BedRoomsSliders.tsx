@@ -150,7 +150,7 @@ const BedRoomsSliders: React.FC<BedRoomsSlidersProps> = ({
             </button>
 
             {/* SHOW TITLE + DESC IN LIGHTBOX TOO */}
-            <div className="text-center text-white mb-3">
+            <div className="text-start text-white mb-3">
               {images[currentIndex].name && (
                 <p className="font-semibold text-lg">
                   {images[currentIndex].name}
