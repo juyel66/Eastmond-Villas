@@ -126,11 +126,11 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
   return (
     <div className="mt-20 flex flex-col items-center py-12 px-4 font-sans">
       <div className="w-full">
-        <h1 className="lg:text-4xl md:text-5xl text-2xl font-semibold text-center text-[#111827] mb-2">
-          Rates & Booking Information
+        <h1 className="lg:text-4xl md:text-5xl  text-2xl font-semibold text-left text-[#111827] m">
+          Nightly Rates
         </h1>
 
-        <p className="text-gray-500 text-start mt-15 mb-5 text-lg flex items-center">
+        <p className="text-gray-500 text-start mt-5 mb-5 text-lg flex items-center">
           All rental rates are subject to 10% government tax & 2.5% booking fee.
           <InfoTooltip />
         </p>

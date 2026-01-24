@@ -2091,18 +2091,31 @@ const ImageGallerySection = ({ villa }) => {
               ) : (
                 <p>Check-Out: —</p>
               )}
+              
               {check_in_out_time.description ? (
                 <p>{check_in_out_time.description}</p>
               ) : null}
 
               <h3 className="text-2xl font-bold mt-10 mb-4">
-                Staff
+                Staff Complement
               </h3>
-              <ul>
-                {staffArray.map((s, i) => (
-                  <StaffItem key={i} name={s.name} details={s.details} />
-                ))}
-              </ul>
+             <ul>
+  {(showAll ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
+    <StaffItem key={i} name={s.name} details={s.details} />
+  ))}
+
+  {staffArray.length > 2 && (
+    <li className="mt-3">
+      <button
+        onClick={() => setShowAll(!showAll)}
+        className="text-sm font-semibold text-teal-600 hover:underline"
+      >
+        {showAll ? "Show Less" : "Show More"}
+      </button>
+    </li>
+  )}
+</ul>
+
             </>
           )}
 

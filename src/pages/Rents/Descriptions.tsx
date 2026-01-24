@@ -33,7 +33,7 @@ const Description: React.FC<DescriptionProps> = ({
             onClick={toggleShow}
             className="text-teal-600 hover:text-teal-800 font-medium transition-colors duration-200"
           >
-            {showFull ? "See Less" : "See More"}
+            {showFull ? "Show Less" : "Show More"}
           </button>
         </div>
       </div>
