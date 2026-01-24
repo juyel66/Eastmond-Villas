@@ -359,17 +359,29 @@ const Login: React.FC = () => {
           </form>
 
           {/* Signup link */}
-          <div className="mt-6 text-center text-sm pt-4 border-t border-gray-200">
-            <p className="text-gray-600">
-              Don’t have an account?{" "}
-              <Link
-                to="/register"
-                className="font-semibold text-[#00A597] hover:text-[#008f82] transition duration-150"
-              >
-                Sign up
-              </Link>
-            </p>
-          </div>
+    {/* Signup link */}
+<div className="mt-6 text-center text-sm pt-4 border-t border-gray-200">
+  <p className="text-gray-600">
+    Don’t have an account?{" "}
+    <Link
+      to="/register"
+      className="font-semibold text-[#00A597] hover:text-[#008f82]"
+    >
+      Sign up
+    </Link>
+  </p>
+</div>
+
+{/* Back to Home */}
+<div className="mt-4 text-center">
+  <Link
+    to="/"
+    className="text-sm font-medium text-gray-600 hover:text-[#00A597] transition"
+  >
+     Back to Home
+  </Link>
+</div>
+
 
           {/* Note */}
           <p className="mt-4 text-center text-xs text-gray-500">

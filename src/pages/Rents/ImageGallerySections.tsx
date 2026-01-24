@@ -2069,17 +2069,10 @@ const ImageGallerySection = ({ villa }) => {
           {/* Rules & Check-in/out & Staff: render only for rent-type */}
           {isRentType && (
             <>
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Rules & Etiquette
-              </h3>
-              <ul>
-                {rules_and_etiquette.map((item, i) => (
-                  <AmenityItem key={i} name={item} />
-                ))}
-              </ul>
 
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Check-in/out
+
+                          <h3 className="text-2xl font-bold mt-10 mb-4">
+                Check-In / Out Policy & Information
               </h3>
               {check_in_out_time.check_in ? (
                 <p>Check-In: {check_in_out_time.check_in}</p>
@@ -2094,6 +2087,19 @@ const ImageGallerySection = ({ villa }) => {
               {check_in_out_time.description ? (
                 <p>{check_in_out_time.description}</p>
               ) : null}
+
+
+
+
+              <h3 className="text-2xl font-bold mt-10 mb-4">
+                Rules & Etiquette
+              </h3>
+              <ul>
+                {rules_and_etiquette.map((item, i) => (
+                  <AmenityItem key={i} name={item} />
+                ))}
+              </ul>
+
 
               <h3 className="text-2xl font-bold mt-10 mb-4">
                 Staff Complemeent

@@ -251,6 +251,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { register, selectAuth } from "@/features/Auth/authSlice";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import { ArrowLeftIcon } from "lucide-react";
 
 // Reusable logo component
 const EastmondVillasLogo = () => (
@@ -468,13 +469,27 @@ const Register: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center text-sm pt-4 border-t border-gray-200">
-            <p className="text-gray-600">
-              Already have an account?{" "}
-              <Link to="/login" className="font-semibold text-[#00A597] hover:text-[#008f82] transition duration-150">
-                Login here
-              </Link>
-            </p>
-          </div>
+  <p className="text-gray-600">
+    Already have an account?{" "}
+    <Link
+      to="/login"
+      className="font-semibold text-[#00A597] hover:text-[#008f82] transition duration-150"
+    >
+      Login here
+    </Link>
+  </p>
+</div>
+
+{/* Back to Home */}
+<div className="mt-4 text-center">
+  <Link
+    to="/"
+    className="text-sm font-medium text-gray-600 hover:text-[#00A597] transition"
+  >
+    <div className="flex items-center  text-center justify-center"> <div className=""><ArrowLeftIcon /></div> <p className="text-[17px]">Back to Home</p></div> 
+  </Link>
+</div>
+
         </div>
       </div>
     </div>
