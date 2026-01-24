@@ -401,7 +401,16 @@ const Calendar: React.FC<Props> = ({ villaId, initialDate }) => {
  
   return (
     <div className="py-8">
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 md:p-8">
+
+      <div className='lg:text-4xl md:text-5xl text-2xl  font-semibold text-left text-[#111827] mb-2'>
+        Availability 
+      </div>
+      <div className="bg-white border mt-10 border-gray-200 rounded-2xl shadow-sm p-6 md:p-8">
+
+
+        <div>
+          
+        </div>
         <div className="flex items-center justify-between mb-4 gap-3">
           <button
             onClick={handlePrev}

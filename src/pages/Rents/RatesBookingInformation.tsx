@@ -22,12 +22,21 @@ interface RatesBookingInformationProps {
   booking_rate_start?: Rate[];
   booking_rate?: (string | number)[];
   price?: string | number;
+  security_deposit?: string | number;
+  damage_deposit?: string | number;
 }
 
 const FALLBACK_IMAGE =
   "https://res.cloudinary.com/dqkczdjjs/image/upload/v1761084681/img_6_wyf01m.png";
 
 const TAX_RATE = 0.125;
+
+const toNumber = (value: unknown) => {
+  const cleaned =
+    typeof value === "string" ? value.replace(/,/g, "").trim() : value;
+  const num = Number(cleaned);
+  return Number.isFinite(num) ? num : 0;
+};
 
 /* ================= TOOLTIP ================= */
 
@@ -106,6 +115,8 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
   booking_rate_start = [],
   booking_rate = [],
   price,
+  security_deposit,
+  damage_deposit,
 }) => {
   const rows = useMemo(() => {
     if (booking_rate.length > 0) {
@@ -126,7 +137,7 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
   return (
     <div className="mt-20 flex flex-col items-center py-12 px-4 font-sans">
       <div className="w-full">
-        <h1 className="lg:text-4xl md:text-5xl  text-2xl font-semibold text-left text-[#111827] m">
+        <h1 className="lg:text-4xl md:text-5xl text-2xl  font-semibold text-left text-[#111827] mb-2">
           Nightly Rates
         </h1>
 
@@ -167,6 +178,42 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
               style={{ minHeight: "300px" }}
             />
           </div>
+        </div>
+
+        <div className="mt-10 bg-[#f8fafc] border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Security &amp;/Or Damages Deposit
+            </h3>
+            <span className="inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-medium text-slate-600">
+              Refundable per property terms
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_5px_18px_-12px_rgba(0,0,0,0.35)]">
+              <p className="text-sm text-slate-500 mb-1">Security Deposit</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {security_deposit !== undefined && security_deposit !== null
+                  ? formatCurrency(toNumber(security_deposit))
+                  : "Not provided"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_5px_18px_-12px_rgba(0,0,0,0.35)]">
+              <p className="text-sm text-slate-500 mb-1">Damage Deposit</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {damage_deposit !== undefined && damage_deposit !== null
+                  ? formatCurrency(toNumber(damage_deposit))
+                  : "Not provided"}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-slate-600 text-sm mt-4">
+            Collected prior to stay to cover potential damages or incidentals; fully refundable per
+            property terms.
+          </p>
         </div>
       </div>
     </div>
