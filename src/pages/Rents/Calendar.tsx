@@ -424,7 +424,7 @@ const Calendar: React.FC<Props> = ({ villaId, initialDate }) => {
             onClick={handleNext}
             className="w-9 h-9 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
             aria-label="Next month"
-          >
+          > 
             &gt;
           </button>
         </div>
