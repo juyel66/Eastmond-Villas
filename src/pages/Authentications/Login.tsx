@@ -186,8 +186,6 @@
 
 
 
-
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -213,13 +211,34 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const auth = useSelector(selectAuth);
 
-  // Redirect to home if already authenticated
+  // Redirect to appropriate page if already authenticated
   useEffect(() => {
     if (auth?.access && auth?.user) {
-      // User is logged in — don't allow visiting /login, send to home
-      navigate("/", { replace: true });
+      const userRole = auth.user.role || auth.user.role_type || '';
+      redirectBasedOnRole(userRole);
     }
   }, [auth, navigate]);
+
+  // Function to redirect based on user role
+  const redirectBasedOnRole = (role: string) => {
+    role = role.toLowerCase();
+    
+    switch(role) {
+      case 'admin':
+        navigate("/dashboard/admin-dashboard", { replace: true });
+        break;
+      case 'agent':
+        navigate("/dashboard/agent-properties-rentals", { replace: true });
+        break;
+      case 'customer':
+      case 'user':
+        navigate("/", { replace: true });
+        break;
+      default:
+        // If role not recognized, redirect to home
+        navigate("/", { replace: true });
+    }
+  };
 
   // form state
   const [email, setEmail] = useState("");
@@ -251,13 +270,21 @@ const Login: React.FC = () => {
       if (login.fulfilled.match(resultAction)) {
         // login succeeded
         console.log("Login success:", resultAction.payload.user);
+        
+        // Get user role from response
+        const userRole = resultAction.payload.user.role || 
+                        resultAction.payload.user.role_type || 
+                        '';
+        
         Swal.fire({
           icon: "success",
           title: "Success",
           text: "Login successful!",
         });
-        // After successful login, navigate to home (or you may choose role-based)
-        navigate("/", { replace: true });
+        
+        // Redirect based on role
+        redirectBasedOnRole(userRole);
+        
       } else {
         // login failed (show API error)
         console.error("Login failed:", resultAction.payload || resultAction.error);
@@ -360,29 +387,32 @@ const Login: React.FC = () => {
           </form>
 
           {/* Signup link */}
-    {/* Signup link */}
-<div className="mt-6 text-center text-sm pt-4 border-t border-gray-200">
-  <p className="text-gray-600">
-    Don’t have an account?{" "}
-    <Link
-      to="/register"
-      className="font-semibold text-[#00A597] hover:text-[#008f82]"
-    >
-      Sign up
-    </Link>
-  </p>
-</div>
+          <div className="mt-6 text-center text-sm pt-4 border-t border-gray-200">
+            <p className="text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="font-semibold text-[#00A597] hover:text-[#008f82]"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
 
-{/* Back to Home */}
-<div className="mt-4 text-center">
-  <Link
-    to="/"
-    className="text-sm font-medium text-gray-600 hover:text-[#00A597] transition"
-  >
-     <div className="flex items-center  text-center justify-center"> <div className=""><ArrowLeftIcon /></div> <p className="text-[17px]">Back to Home</p></div> 
-  </Link>
-</div>
-
+          {/* Back to Home */}
+          <div className="mt-4 text-center">
+            <Link
+              to="/"
+              className="text-sm font-medium text-gray-600 hover:text-[#00A597] transition"
+            >
+              <div className="flex items-center text-center justify-center">
+                <div className="">
+                  <ArrowLeftIcon />
+                </div>
+                <p className="text-[17px]">Back to Home</p>
+              </div>
+            </Link>
+          </div>
 
           {/* Note */}
           <p className="mt-4 text-center text-xs text-gray-500">
