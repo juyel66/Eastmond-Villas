@@ -2120,7 +2120,7 @@ const toggleStaffView = () => {
 {staffArray.length > 2 && (
   <button
     onClick={toggleStaffView}
-    className="mt-2 text-sm text-blue-600 "
+    className="mt-2 text-sm text-teal-600 "
   >
     {showAllStaff ? "Show Less" : "Show More"}
   </button>
