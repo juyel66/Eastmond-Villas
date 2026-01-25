@@ -199,6 +199,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [staffRows, setStaffRows] = useState([{ name: '', details: '' }]);
+  const [spotlightRows, setSpotlightRows] = useState([{ title: '', description: '' }]);
   const [bookingRateRows, setBookingRateRows] = useState([
     { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
   ]);
@@ -212,6 +213,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
   const rulesRefs = useRef([]);
   const signatureRefs = useRef([]);
   const staffNameRefs = useRef([]);
+  const spotlightTitleRefs = useRef([]);
   const conciergeRefs = useRef([]);
 
   // Function to ensure URL is absolute
@@ -368,6 +370,21 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
       setStaffRows(staffData.length > 0 ? staffData : [{ name: '', details: '' }]);
     } else {
       setStaffRows([{ name: '', details: '' }]);
+    }
+
+    // Spotlight details - ensure at least one empty row
+    if (
+      propertyData.spotlight_details &&
+      Array.isArray(propertyData.spotlight_details) &&
+      propertyData.spotlight_details.length > 0
+    ) {
+      const spotlightData = propertyData.spotlight_details.map((s) => ({
+        title: s.title || '',
+        description: s.description || '',
+      }));
+      setSpotlightRows(spotlightData.length > 0 ? spotlightData : [{ title: '', description: '' }]);
+    } else {
+      setSpotlightRows([{ title: '', description: '' }]);
     }
 
     // Booking rate - ensure at least one empty row
@@ -650,6 +667,34 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
     setStaffRows((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const updateSpotlightRow = (idx, key, value) => {
+    setSpotlightRows((prev) => {
+      const copy = prev.map((r) => ({ ...r }));
+      copy[idx][key] = value;
+      return copy;
+    });
+  };
+
+  const addSpotlightRow = () => {
+    setSpotlightRows((prev) => {
+      const next = [...prev, { title: '', description: '' }];
+      setTimeout(() => {
+        const i = next.length - 1;
+        if (spotlightTitleRefs.current[i]) spotlightTitleRefs.current[i].focus();
+      }, 60);
+      return next;
+    });
+  };
+
+  const removeSpotlightRow = (idx) => {
+    if (spotlightRows.length === 1) {
+      // If only one row remains, clear it but keep the fields
+      setSpotlightRows([{ title: '', description: '' }]);
+      return;
+    }
+    setSpotlightRows((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const buildStaffArray = (rows) =>
     rows
       .filter(
@@ -658,6 +703,16 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
       .map((r) => ({
         name: r.name?.trim() || '',
         details: r.details?.trim() || '',
+      }));
+
+  const buildSpotlightArray = (rows) =>
+    rows
+      .filter(
+        (r) => (r.title && r.title.trim()) || (r.description && r.description.trim())
+      )
+      .map((r) => ({
+        title: r.title?.trim() || '',
+        description: r.description?.trim() || '',
       }));
 
   const handleBookingRateChange = (idx, key, value) => {
@@ -748,6 +803,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         check_in: checkIn || '',
         check_out: checkOut || '',
         staff: buildStaffArray(staffRows),
+        spotlight_details: buildSpotlightArray(spotlightRows),
         booking_rate: buildBookingRateArray(bookingRateRows),
         calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
@@ -1794,6 +1850,55 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
           </div>
           <p className="text-sm text-gray-500 mt-2">
             Add staff information. At least one row will always be available.
+          </p>
+        </div>
+
+        {/* Spotlight Details Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Spotlight Details (add rows: title + description)
+          </label>
+          <div className="space-y-2">
+            {spotlightRows.map((r, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <input
+                  ref={(el) => (spotlightTitleRefs.current[idx] = el)}
+                  value={r.title}
+                  onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
+                  placeholder="Spotlight Title"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <input
+                  value={r.description}
+                  onChange={(e) =>
+                    updateSpotlightRow(idx, 'description', e.target.value)
+                  }
+                  placeholder="Spotlight Description"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={addSpotlightRow}
+                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+                  >
+                    Add
+                  </button>
+                  {spotlightRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSpotlightRow(idx)}
+                      className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Add spotlight details. At least one row will always be available.
           </p>
         </div>
 

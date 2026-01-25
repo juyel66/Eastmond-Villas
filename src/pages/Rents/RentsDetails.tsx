@@ -25,13 +25,6 @@ import ImageGallerySections from './ImageGallerySections';
 import RentsDetailsBanner from './RentsDetailsBanner';
 import SpotlightDetails from './SpotlingtDetails';
 
-
-
-
-
-
-
-
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
 
@@ -119,91 +112,79 @@ const RentsDetails = () => {
 
   if (loading) {
     return (
-
       <div>
         <div className="py-10 flex justify-center">
-  <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
-    {/* Shimmer wave */}
-    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
+          <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
+            {/* Shimmer wave */}
+            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* LEFT IMAGE */}
-      <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* LEFT IMAGE */}
+              <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
 
-      {/* RIGHT CONTENT */}
-      <div className="flex flex-col justify-between">
-        <div>
-          {/* Title */}
-          <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
+              {/* RIGHT CONTENT */}
+              <div className="flex flex-col justify-between">
+                <div>
+                  {/* Title */}
+                  <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
 
-          {/* Location */}
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
+                  {/* Location */}
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
 
-          {/* Price */}
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
+                  {/* Price */}
+                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
 
-          {/* Stats */}
-          <div className="flex gap-6 mb-8">
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  {/* Stats */}
+                  <div className="flex gap-6 mb-8">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </div>
+
+                {/* Button */}
+                <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Button */}
-        <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
-      </div>
-    </div>
-  </div>
-</div>
+        <div className="py-10 flex justify-center">
+          <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
+            {/* Shimmer wave */}
+            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* LEFT IMAGE */}
+              <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
 
-<div className="py-10 flex justify-center">
-  <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-md p-6 overflow-hidden">
-    {/* Shimmer wave */}
-    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
+              {/* RIGHT CONTENT */}
+              <div className="flex flex-col justify-between">
+                <div>
+                  {/* Title */}
+                  <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* LEFT IMAGE */}
-      <div className="h-[320px] w-full bg-gray-200 rounded-xl"></div>
+                  {/* Location */}
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
 
-      {/* RIGHT CONTENT */}
-      <div className="flex flex-col justify-between">
-        <div>
-          {/* Title */}
-          <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
+                  {/* Price */}
+                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
 
-          {/* Location */}
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
+                  {/* Stats */}
+                  <div className="flex gap-6 mb-8">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </div>
 
-          {/* Price */}
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
-
-          {/* Stats */}
-          <div className="flex gap-6 mb-8">
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
+                {/* Button */}
+                <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Button */}
-        <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
       </div>
-    </div>
-  </div>
-</div>
-
-
-
-      </div>
-
-
-
-   
-
-
-
     );
   }
 

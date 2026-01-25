@@ -176,6 +176,7 @@ const CreatePropertyRentals = ({
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [staffRows, setStaffRows] = useState([{ name: '', details: '' }]);
+  const [spotlightRows, setSpotlightRows] = useState([{ title: '', description: '' }]);
   const [bookingRateRows, setBookingRateRows] = useState([
     { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
   ]);
@@ -188,6 +189,7 @@ const CreatePropertyRentals = ({
   const rulesRefs = useRef([]);
   const signatureRefs = useRef([]);
   const staffNameRefs = useRef([]);
+  const spotlightTitleRefs = useRef([]);
   const conciergeRefs = useRef([]);
 
   // Function to ensure URL is absolute
@@ -291,6 +293,22 @@ const CreatePropertyRentals = ({
         );
       } else {
         setStaffRows([{ name: '', details: '' }]);
+      }
+
+      // Spotlight details
+      if (
+        editData.spotlight_details &&
+        Array.isArray(editData.spotlight_details) &&
+        editData.spotlight_details.length > 0
+      ) {
+        setSpotlightRows(
+          editData.spotlight_details.map((s) => ({
+            title: s.title || '',
+            description: s.description || '',
+          }))
+        );
+      } else {
+        setSpotlightRows([{ title: '', description: '' }]);
       }
 
       // Booking rate
@@ -428,6 +446,7 @@ const CreatePropertyRentals = ({
       setCheckIn('');
       setCheckOut('');
       setStaffRows([{ name: '', details: '' }]);
+      setSpotlightRows([{ title: '', description: '' }]);
       setBookingRateRows([
         { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
       ]);
@@ -588,6 +607,33 @@ const CreatePropertyRentals = ({
     setStaffRows((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const updateSpotlightRow = (idx, key, value) => {
+    setSpotlightRows((prev) => {
+      const copy = prev.map((r) => ({ ...r }));
+      copy[idx][key] = value;
+      return copy;
+    });
+  };
+
+  const addSpotlightRow = () => {
+    setSpotlightRows((prev) => {
+      const next = [...prev, { title: '', description: '' }];
+      setTimeout(() => {
+        const i = next.length - 1;
+        if (spotlightTitleRefs.current[i]) spotlightTitleRefs.current[i].focus();
+      }, 60);
+      return next;
+    });
+  };
+
+  const removeSpotlightRow = (idx) => {
+    if (spotlightRows.length === 1) {
+      setSpotlightRows([{ title: '', description: '' }]);
+      return;
+    }
+    setSpotlightRows((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const buildStaffArray = (rows) =>
     rows
       .filter(
@@ -596,6 +642,16 @@ const CreatePropertyRentals = ({
       .map((r) => ({
         name: r.name?.trim() || '',
         details: r.details?.trim() || '',
+      }));
+
+  const buildSpotlightArray = (rows) =>
+    rows
+      .filter(
+        (r) => (r.title && r.title.trim()) || (r.description && r.description.trim())
+      )
+      .map((r) => ({
+        title: r.title?.trim() || '',
+        description: r.description?.trim() || '',
       }));
 
   const handleBookingRateChange = (idx, key, value) => {
@@ -687,6 +743,7 @@ const CreatePropertyRentals = ({
         check_in: checkIn || '',
         check_out: checkOut || '',
         staff: buildStaffArray(staffRows),
+        spotlight_details: buildSpotlightArray(spotlightRows),
         booking_rate: buildBookingRateArray(bookingRateRows),
         calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
@@ -749,6 +806,7 @@ const CreatePropertyRentals = ({
       append('check_in', processed.check_in);
       append('check_out', processed.check_out);
       append('staff', processed.staff);
+      append('spotlight_details', processed.spotlight_details);
       append('calendar_link', processed.calendar_link);
       append('seo_title', processed.seo_title);
       append('seo_description', processed.seo_description);
@@ -858,6 +916,7 @@ const CreatePropertyRentals = ({
         setCheckIn('');
         setCheckOut('');
         setStaffRows([{ name: '', details: '' }]);
+        setSpotlightRows([{ title: '', description: '' }]);
         setConciergeRows(['']);
         setBookingRateRows([
           { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
@@ -1455,7 +1514,7 @@ const CreatePropertyRentals = ({
                       className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                     >
                       Remove
-                    </button>
+                  </button>
                   </div>
                 </div>
               ))}
@@ -1698,6 +1757,55 @@ const CreatePropertyRentals = ({
             {staffRows.length === 0 && (
               <p className="text-sm text-gray-500 italic">
                 No staff members added yet. Click "Add" to add one.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Spotlight Details Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Spotlight Details (add rows: title + description)
+          </label>
+          <div className="space-y-2">
+            {spotlightRows.map((r, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <input
+                  ref={(el) => (spotlightTitleRefs.current[idx] = el)}
+                  value={r.title}
+                  onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
+                  placeholder="Spotlight Title"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <input
+                  value={r.description}
+                  onChange={(e) =>
+                    updateSpotlightRow(idx, 'description', e.target.value)
+                  }
+                  placeholder="Spotlight Description"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={addSpotlightRow}
+                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSpotlightRow(idx)}
+                    className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+            {spotlightRows.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No spotlight details added yet. Click "Add" to add one.
               </p>
             )}
           </div>

@@ -169,6 +169,7 @@ const CreatePropertySales = ({
   const [signatureList, setSignatureList] = useState(['']);
   const [interiorAmenities, setInteriorAmenities] = useState(['']);
   const [outdoorAmenities, setOutdoorAmenities] = useState(['']);
+  const [spotlightRows, setSpotlightRows] = useState([{ title: '', description: '' }]);
 
   const [submitting, setSubmitting] = useState(false);
   const [mediaError, setMediaError] = useState('');
@@ -176,6 +177,7 @@ const CreatePropertySales = ({
   const interiorRefs = useRef([]);
   const outdoorRefs = useRef([]);
   const signatureRefs = useRef([]);
+  const spotlightTitleRefs = useRef([]);
 
   // Function to ensure URL is absolute
   const getAbsoluteUrl = (url) => {
@@ -248,6 +250,22 @@ const CreatePropertySales = ({
           ? editData.outdoor_amenities
           : ['']
       );
+
+      // Spotlight details
+      if (
+        editData.spotlight_details &&
+        Array.isArray(editData.spotlight_details) &&
+        editData.spotlight_details.length > 0
+      ) {
+        setSpotlightRows(
+          editData.spotlight_details.map((s) => ({
+            title: s.title || '',
+            description: s.description || '',
+          }))
+        );
+      } else {
+        setSpotlightRows([{ title: '', description: '' }]);
+      }
 
       // Handle media images
       const processMediaImages = () => {
@@ -360,6 +378,7 @@ const CreatePropertySales = ({
       setSignatureList(['']);
       setInteriorAmenities(['']);
       setOutdoorAmenities(['']);
+      setSpotlightRows([{ title: '', description: '' }]);
       setMediaImages([]);
       setBedroomImages([]);
       setVideos([]);
@@ -490,6 +509,43 @@ const CreatePropertySales = ({
     setter((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const updateSpotlightRow = (idx, key, value) => {
+    setSpotlightRows((prev) => {
+      const copy = prev.map((r) => ({ ...r }));
+      copy[idx][key] = value;
+      return copy;
+    });
+  };
+
+  const addSpotlightRow = () => {
+    setSpotlightRows((prev) => {
+      const next = [...prev, { title: '', description: '' }];
+      setTimeout(() => {
+        const i = next.length - 1;
+        if (spotlightTitleRefs.current[i]) spotlightTitleRefs.current[i].focus();
+      }, 60);
+      return next;
+    });
+  };
+
+  const removeSpotlightRow = (idx) => {
+    if (spotlightRows.length === 1) {
+      setSpotlightRows([{ title: '', description: '' }]);
+      return;
+    }
+    setSpotlightRows((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const buildSpotlightArray = (rows) =>
+    rows
+      .filter(
+        (r) => (r.title && r.title.trim()) || (r.description && r.description.trim())
+      )
+      .map((r) => ({
+        title: r.title?.trim() || '',
+        description: r.description?.trim() || '',
+      }));
+
   const buildMediaMetadata = (imgs, category, startOrder = 0) =>
     imgs.map((img, idx) => ({
       category,
@@ -535,6 +591,7 @@ const CreatePropertySales = ({
         signature_distinctions: signatureList.filter(Boolean),
         interior_amenities: interiorAmenities.filter(Boolean),
         outdoor_amenities: outdoorAmenities.filter(Boolean),
+        spotlight_details: buildSpotlightArray(spotlightRows),
         calendar_link: values.calendar_link || '',
         seo_title: values.seo_title || '',
         seo_description: values.seo_description || '',
@@ -578,6 +635,7 @@ const CreatePropertySales = ({
       append('signature_distinctions', processed.signature_distinctions);
       append('interior_amenities', processed.interior_amenities);
       append('outdoor_amenities', processed.outdoor_amenities);
+      append('spotlight_details', processed.spotlight_details);
       append('calendar_link', processed.calendar_link);
       append('seo_title', processed.seo_title);
       append('seo_description', processed.seo_description);
@@ -680,6 +738,7 @@ const CreatePropertySales = ({
         setSignatureList(['']);
         setInteriorAmenities(['']);
         setOutdoorAmenities(['']);
+        setSpotlightRows([{ title: '', description: '' }]);
       }
       setSubmitting(false);
       if (onClose) onClose();
@@ -1287,6 +1346,55 @@ const CreatePropertySales = ({
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Spotlight Details Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Spotlight Details (add rows: title + description)
+          </label>
+          <div className="space-y-2">
+            {spotlightRows.map((r, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <input
+                  ref={(el) => (spotlightTitleRefs.current[idx] = el)}
+                  value={r.title}
+                  onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
+                  placeholder="Spotlight Title"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <input
+                  value={r.description}
+                  onChange={(e) =>
+                    updateSpotlightRow(idx, 'description', e.target.value)
+                  }
+                  placeholder="Spotlight Description"
+                  className="flex-1 border rounded-lg p-2 bg-gray-50"
+                />
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={addSpotlightRow}
+                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSpotlightRow(idx)}
+                    className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+            {spotlightRows.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No spotlight details added yet. Click "Add" to add one.
+              </p>
+            )}
           </div>
         </div>
 

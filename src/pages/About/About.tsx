@@ -13,11 +13,11 @@ const About = () => {
 
         <AboutCard />
 
-       <div className="mt-10">
-         {/* <EstateExperience /> */}
+       <div className="mt-5">
+         <EstateExperience />
        </div>
 
-       <div className="mt-10"><Affiliates /></div>
+       <div className="mt-0"><Affiliates /></div>
 
  
 

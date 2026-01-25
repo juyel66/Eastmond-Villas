@@ -17,9 +17,9 @@ const ConciergeBanner: React.FC = () => {
           Beyond Anticipation – The Art of <br className="hidden md:block" /> Bespoke Luxury
         </h1>
         <p className="text-gray-200 text-base md:text-lg mb-3 max-w-xl">
-         Orchestrating the extraordinary with seamless, intuitively tailored service
+         Orchestrating the extraordinary with seamless, intuitively tailored service.
         </p>
-        <a href='/contact' className="lg:px-8 lg:py-3 bg-teal-500 text-white text-xl p-2 lg:mb-0 mb-2 font-semibold rounded-lg shadow-md hover:bg-teal-600 transition duration-300 ease-in-out">
+        <a href='/list-with-us' className="lg:px-8 lg:py-3 bg-teal-500 text-white text-xl p-2 lg:mb-0 mb-2 font-semibold rounded-lg shadow-md hover:bg-teal-600 transition duration-300 ease-in-out">
           Begin Your Journey
         </a>
       </div>

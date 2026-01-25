@@ -195,6 +195,7 @@ import type { AppDispatch } from "@/store";
 import { login, selectAuth } from "@/features/Auth/authSlice";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import { ArrowLeftIcon } from "lucide-react";
 
 // Logo Component (same as before)
 const EastmondVillasLogo = () => (
@@ -378,7 +379,7 @@ const Login: React.FC = () => {
     to="/"
     className="text-sm font-medium text-gray-600 hover:text-[#00A597] transition"
   >
-     Back to Home
+     <div className="flex items-center  text-center justify-center"> <div className=""><ArrowLeftIcon /></div> <p className="text-[17px]">Back to Home</p></div> 
   </Link>
 </div>
 

@@ -1365,6 +1365,13 @@ const ImageGallerySection = ({ villa }) => {
   });
 
   const [showAll, setShowAll] = useState(false);
+
+const [showAllStaff, setShowAllStaff] = useState(false);
+
+const toggleStaffView = () => {
+  setShowAllStaff((prev) => !prev);
+};
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   // Image Modal functions
@@ -2100,26 +2107,29 @@ const ImageGallerySection = ({ villa }) => {
                 ))}
               </ul>
 
+<h3 className="text-2xl font-bold mt-10 mb-4">
+  Staff Complement
+</h3>
 
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Staff Complemeent
-              </h3>
-              <ul>
-  {(showAll ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
+<ul>
+  {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
     <StaffItem key={i} name={s.name} details={s.details} />
   ))}
-
-  {staffArray.length > 2 && (
-    <li className="mt-3">
-      <button
-        onClick={() => setShowAll(!showAll)}
-        className="text-sm font-semibold text-teal-600 hover:underline"
-      >
-        {showAll ? "Show Less" : "Show More"}
-      </button>
-    </li>
-  )}
 </ul>
+
+{staffArray.length > 2 && (
+  <button
+    onClick={toggleStaffView}
+    className="mt-2 text-sm text-blue-600 "
+  >
+    {showAllStaff ? "Show Less" : "Show More"}
+  </button>
+)}
+
+
+
+
+
 
             </>
           )}
