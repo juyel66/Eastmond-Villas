@@ -132,7 +132,7 @@ const Rents: React.FC = () => {
         const rentals = items.filter(
           (it) => String(it.listing_type || '').toLowerCase() === 'rent'
         );
-
+        
         // map server item to VillaType used by RentsCard
         const mapped: VillaType[] = rentals.map((it) => {
           const firstImage =
@@ -181,8 +181,8 @@ const Rents: React.FC = () => {
               it.address ||
               'Unknown location',
             price: Number(it.price) || 0,
-            rating: Number(it.property_stats?.average_rating) || 0,
-            reviewCount: Number(it.property_stats?.total_bookings) || 0,
+            rating: Number(it.average_rating) || 0,
+            reviewCount: Number(it.total_reviews) || 0,
             beds: Number(it.bedrooms) || 0,
             baths: Number(it.bathrooms) || 0,
             pool: Number(it.pool) || 0,

@@ -169,8 +169,8 @@ const Sales: React.FC = () => {
                 String(it.price_display || '0').replace(/[^0-9.-]/g, '')
               ) ||
               0,
-            rating: Number(it.property_stats?.average_rating) || 0,
-            reviewCount: Number(it.property_stats?.total_bookings) || 0,
+            rating: Number(it.average_rating) || 0,
+            reviewCount: Number(it.total_reviews) || 0,
             beds: Number(it.bedrooms) || 0,
             baths: Number(it.bathrooms) || 0,
             pool: Number(it.pool) || 0,
