@@ -815,7 +815,7 @@ Description: ${property.description.substring(0, 200)}...
                 </div>
                 <div className="flex items-center gap-2">
                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />
-                  <span>100% Calendar accuracy</span>
+                  <span>90% Calendar accuracy</span>
                 </div>
               </div>
             </div>
