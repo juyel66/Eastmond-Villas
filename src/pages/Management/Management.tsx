@@ -13,7 +13,7 @@ const Management = () => {
         onCtaClick={() => {
           /* route to contact, open modal, etc. */
         }}
-        imageUrl="/images/managementHeroSection.png" // place your image in /public/assets
+        imageUrl="/images/managementHeroSection.webp" // place your image in /public/assets
       />
    <div className="lg:p-0 p-2 mb-[920px] " > <PropertyManagementSection/></div>
 

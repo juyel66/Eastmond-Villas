@@ -39,7 +39,7 @@ const PropertyManagementSection = () => {
             "Experience the Eastmond Villas Difference",
             "Exclusive Owner Benefits",
           ]}
-          imageUrl="/images/managementFeatureImage1.png"
+          imageUrl="/images/managementFeatureImage1.webp"
           imageAlt="Poolside dining at sunset"
           imageSide="right"
           onCtaClick={() => {
@@ -60,7 +60,7 @@ const PropertyManagementSection = () => {
             "Guest Vetting & Seamless Stays - Discerning clientele, 24/7 concierge, and impeccable service standards.",
             "Dynamic Pricing Strategy - Data-driven adjustments to ensure optimal returns.",
           ]}
-          imageUrl="/images/managementFeatureImage2.png"
+          imageUrl="/images/managementFeatureImage2.webp"
           imageAlt="Premium Rental Management"
           imageSide="left"
           onCtaClick={() => {}}
@@ -73,7 +73,7 @@ const PropertyManagementSection = () => {
             "Competitive vendor pricing through preferred partnerships.",
             "Optimized revenue strategies for rental properties.",
           ]}
-          imageUrl="/images/managementFeatureImage3.png"
+          imageUrl="/images/managementFeatureImage3.webp"
           imageAlt="Financial Transparency"
           imageSide="right"
           onCtaClick={() => {}}
@@ -86,7 +86,7 @@ const PropertyManagementSection = () => {
             "Regular security audits to mitigate risks.",
             "Discreet, professional oversight to ensure your villa remains undisturbed when vacant.",
           ]}
-          imageUrl="/images/managementFeatureImage4.png"
+          imageUrl="/images/managementFeatureImage4.webp"
           imageAlt="Security & Peace of Mind"
           imageSide="left"
           onCtaClick={() => {}}
@@ -99,7 +99,7 @@ const PropertyManagementSection = () => {
             "Dedicated account management - a single point of contact for all needs.",
             "Invitations to exclusive owner events and networking opportunities.",
           ]}
-          imageUrl="/images/managementFeatureImage5.png"
+          imageUrl="/images/managementFeatureImage5.webp"
           imageAlt="Exclusive Owner Benefits"
           imageSide="right"
           onCtaClick={() => {}}
