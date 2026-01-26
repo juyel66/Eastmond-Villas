@@ -80,7 +80,7 @@ const AdminDashboard = () => {
 
   // visible counts for progressive load
   const [propertiesVisibleCount, setPropertiesVisibleCount] = useState(5); // collapsed initial
-  const [activityVisibleCount, setActivityVisibleCount] = useState(4); // collapsed initial
+  const [activityVisibleCount, setActivityVisibleCount] = useState(5); // collapsed initial
 
   // handlers for toggles
   const handleViewAllProperties = () => {
@@ -98,7 +98,7 @@ const AdminDashboard = () => {
       setActivityVisibleCount(30); // initial expansion to 30
     } else {
       setShowAllActivity(false);
-      setActivityVisibleCount(4); // collapse
+      setActivityVisibleCount(5); // collapse
     }
   };
 
@@ -117,7 +117,7 @@ const AdminDashboard = () => {
   };
   const collapseActivity = () => {
     setShowAllActivity(false);
-    setActivityVisibleCount(4);
+    setActivityVisibleCount(5);
   };
 
   // Redux state
@@ -378,7 +378,7 @@ const AdminDashboard = () => {
     if (showAllActivity) {
       setActivityVisibleCount((cur) => Math.min(Math.max(cur, 30), total));
     } else {
-      setActivityVisibleCount(4);
+      setActivityVisibleCount(5);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAllActivity, recentActivity.length]);
