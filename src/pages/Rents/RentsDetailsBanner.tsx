@@ -44,7 +44,6 @@ const pluralize = (
   return n === 1 ? singular : (plural ?? singular + 's');
 };
 
-
 interface FormData {
   name: string;
   email: string;
@@ -83,7 +82,26 @@ const BookingModal: React.FC<BookingModalProps> = ({
     phone: '',
     message: '', // Added for sale inquiries
   });
+  
   const [loading, setLoading] = useState(false);
+  const [dateError, setDateError] = useState<string>(''); // New state for date validation error
+
+  // Validate dates whenever they change
+  useEffect(() => {
+    if (formData.check_in_data && formData.check_out_data && !isSaleType) {
+      const checkInDate = new Date(formData.check_in_data);
+      const checkOutDate = new Date(formData.check_out_data);
+      
+      // Reset error if dates are valid
+      if (checkOutDate <= checkInDate) {
+        setDateError('Check-out date must be after check-in date');
+      } else {
+        setDateError('');
+      }
+    } else {
+      setDateError('');
+    }
+  }, [formData.check_in_data, formData.check_out_data, isSaleType]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -99,6 +117,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
       if (!formData.check_in_data || !formData.check_out_data) return '0.00';
       const inDate = new Date(formData.check_in_data);
       const outDate = new Date(formData.check_out_data);
+      
+      // Check if check-out is before check-in
+      if (outDate <= inDate) {
+        return '0.00';
+      }
+      
       const diffMs = outDate.getTime() - inDate.getTime();
       const nights = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
       const perNight = Number(villaPrice) || 0;
@@ -111,6 +135,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate dates for rent properties
+    if (!isSaleType && formData.check_in_data && formData.check_out_data) {
+      const checkInDate = new Date(formData.check_in_data);
+      const checkOutDate = new Date(formData.check_out_data);
+      
+      if (checkOutDate <= checkInDate) {
+        toast.error('Check-out date must be after check-in date');
+        return;
+      }
+    }
 
     // If not logged in, redirect to login immediately
     const token = getAccessToken();
@@ -151,12 +186,33 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
         if (!res.ok) {
           console.error('Sale inquiry POST failed:', data);
+          
+          // Extract detailed error message
+          let errorMessage = 'Inquiry failed';
+          if (data?.detail) {
+            errorMessage = data.detail;
+          } else if (data?.message) {
+            errorMessage = data.message;
+          } else if (typeof data === 'object') {
+            // Try to extract first field error
+            const firstError = Object.values(data)[0];
+            if (Array.isArray(firstError)) {
+              errorMessage = firstError[0] || res.statusText;
+            } else if (typeof firstError === 'string') {
+              errorMessage = firstError;
+            } else {
+              errorMessage = res.statusText || 'Inquiry failed';
+            }
+          } else if (typeof data === 'string') {
+            errorMessage = data;
+          }
+          
           Swal.fire({
             icon: 'error',
             title: 'Inquiry failed',
-            text: data?.detail || data?.message || res.statusText,
+            text: errorMessage,
           });
-          toast.error(data?.detail || data?.message || res.statusText || 'Inquiry failed');
+          toast.error(errorMessage);
           setLoading(false);
           return;
         }
@@ -181,7 +237,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
         if (onSuccess) onSuccess(data);
       } catch (err) {
         console.error('Sale inquiry error:', err);
-        toast.error('Inquiry failed — please try again later.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Please check your connection and try again.',
+        });
+        toast.error('Network error — please try again later.');
       } finally {
         setLoading(false);
       }
@@ -213,12 +274,33 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
         if (!res.ok) {
           console.error('Booking POST failed:', data);
+          
+          // Extract detailed error message
+          let errorMessage = 'Booking failed';
+          if (data?.detail) {
+            errorMessage = data.detail;
+          } else if (data?.message) {
+            errorMessage = data.message;
+          } else if (typeof data === 'object') {
+            // Try to extract first field error
+            const firstError = Object.values(data)[0];
+            if (Array.isArray(firstError)) {
+              errorMessage = firstError[0] || res.statusText;
+            } else if (typeof firstError === 'string') {
+              errorMessage = firstError;
+            } else {
+              errorMessage = res.statusText || 'Booking failed';
+            }
+          } else if (typeof data === 'string') {
+            errorMessage = data;
+          }
+          
           Swal.fire({
             icon: 'error',
             title: 'Booking failed',
-            text: data?.detail || res.statusText,
+            text: errorMessage,
           });
-          toast.error(data?.detail || res.statusText || 'Booking failed');
+          toast.error(errorMessage);
           setLoading(false);
           return;
         }
@@ -226,6 +308,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         console.log('Booking created successfully:', data);
         Swal.fire({
           title: 'Booking created successfully!',
+          text: 'Your booking request has been submitted. We will contact you shortly.',
           icon: 'success',
         });
         setFormData({
@@ -242,7 +325,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
         if (onSuccess) onSuccess(data);
       } catch (err) {
         console.error('Booking error:', err);
-        toast.error('Booking failed — see console.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Please check your connection and try again.',
+        });
+        toast.error('Network error — please try again.');
       } finally {
         setLoading(false);
       }
@@ -319,38 +407,60 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
             {/* Only show date fields for rent properties */}
             {!isSaleType && (
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Check-In
-                  </label>
-                  <input
-                    name="check_in_data"
-                    type="date"
-                    value={formData.check_in_data}
-                    onChange={handleChange}
-                    required={!isSaleType}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  />
+              <>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Check-In
+                    </label>
+                    <input
+                      name="check_in_data"
+                      type="date"
+                      value={formData.check_in_data}
+                      onChange={handleChange}
+                      required={!isSaleType}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Check-Out
+                    </label>
+                    <input
+                      name="check_out_data"
+                      type="date"
+                      value={formData.check_out_data}
+                      onChange={handleChange}
+                      required={!isSaleType}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Check-Out
-                  </label>
-                  <input
-                    name="check_out_data"
-                    type="date"
-                    value={formData.check_out_data}
-                    onChange={handleChange}
-                    required={!isSaleType}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  />
-                </div>
-              </div>
+                
+                {/* Date validation error message */}
+                {dateError && (
+                  <div className="text-red-600 text-sm font-medium p-2 bg-red-50 rounded border border-red-200">
+                    ⚠️ {dateError}
+                  </div>
+                )}
+                
+                {/* Show calculated total price */}
+                {formData.check_in_data && formData.check_out_data && !dateError && (
+                  // <div className="p-2 bg-teal-50 rounded border border-teal-200">
+                  //   <p className="text-teal-700 font-medium">
+                  //     Total price: ${calcTotalPrice()} for {
+                  //       Math.round(
+                  //         (new Date(formData.check_out_data).getTime() - 
+                  //          new Date(formData.check_in_data).getTime()) / 
+                  //         (1000 * 60 * 60 * 24)
+                  //       )
+                  //     } nights
+                  //   </p>
+                  // </div>
+                  <div></div>
+                )}
+              </>
             )}
-
-            {/* Show guests field only for rent properties */}
-          
 
             {/* Show message field for sale properties */}
             {isSaleType && (
@@ -368,19 +478,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 />
               </div>
             )}
-
-            {!isSaleType && (
-              <div className="">
-                {/* <strong>Total price (calculated):</strong> ${calcTotalPrice()} */}
-              </div>
-            )}
           </div>
 
           <div className="mt-6">
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded disabled:opacity-60 font-medium"
+              disabled={loading || (!isSaleType && dateError !== '')}
+              className={`w-full py-3 rounded font-medium ${
+                loading || (!isSaleType && dateError !== '')
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-teal-600 hover:bg-teal-700 text-white'
+              }`}
             >
               {loading 
                 ? (isSaleType ? 'Sending Inquiry...' : 'Booking...') 
@@ -642,7 +750,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
               />
               <span className="text-sm mt-1">
                 {bedsCount} {pluralize(bedsCount, 'Bed')}
-              </span>
+                </span>
             </div>
 
             {/* Baths */}
