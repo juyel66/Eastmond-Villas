@@ -180,7 +180,7 @@ const AdminPropertiesSales: React.FC = () => {
       html: `<div>Delete property <strong>${found?.title ?? `#${id}`}</strong>?</div>`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
+      confirmButtonColor: '#319795',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!',
       reverseButtons: true,
