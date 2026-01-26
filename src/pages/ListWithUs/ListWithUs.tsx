@@ -11,7 +11,10 @@ const ListWithUs = () => {
   const submitFormRef = useRef<HTMLDivElement>(null);
 
   const handleScrollToForm = () => {
-    submitFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    submitFormRef.current?.scrollIntoView({ 
+      behavior: "smooth", 
+      block: "start" 
+    });
   };
 
   return (
@@ -19,8 +22,7 @@ const ListWithUs = () => {
       <div
         className="pb-10 rounded-xl shadow-lg border border-gray-200 mx-auto bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage:
-            "url('/images/bg_shape.svg')",
+          backgroundImage: "url('/images/bg_shape.svg')",
         }}
       >
         <div>
@@ -48,7 +50,8 @@ const ListWithUs = () => {
         <SubmitPropertyForm />
       </div>
 
-      <ListMyVilla />
+      {/* Pass the scroll handler to ListMyVilla */}
+      <ListMyVilla onSubmitClick={handleScrollToForm} />
     </div>
   );
 };
