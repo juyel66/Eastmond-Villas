@@ -36,6 +36,9 @@ export default function FilterSystem({
   const [minBaths, setMinBaths] = useState("Any");
   const [guests, setGuests] = useState("Any");
 
+  // Determine if we're in For Sale section
+  const isForSaleSection = allowedType?.toLowerCase() === "sale";
+  
   // When data changes, push initial results (filtered by allowedType if provided)
   useEffect(() => {
     const initial = (data || []).filter((it) => {
@@ -90,8 +93,8 @@ export default function FilterSystem({
         if (Number.isNaN(b) || b < minBathsNum) return false;
       }
 
-      // guests
-      if (!Number.isNaN(guestsNum)) {
+      // guests (only for rentals, not for sale)
+      if (!isForSaleSection && !Number.isNaN(guestsNum)) {
         const g = Number(p.add_guest ?? p.guests ?? 0);
         if (Number.isNaN(g) || g < guestsNum) return false;
       }
@@ -137,41 +140,9 @@ export default function FilterSystem({
     <div className="pt-6 px-4">
       <div className="bg-white/60 container p-8 rounded-2xl shadow-xl border border-[#135E76] mx-auto mt-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {/* Check-In */}
-          <div>
-            <label htmlFor="check-in" className="block text-sm font-semibold text-gray-800 mb-2">
-              Check-In
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                id="check-in"
-                name="check-in"
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Check-Out */}
-          <div>
-            <label htmlFor="check-out" className="block text-sm font-semibold text-gray-800 mb-2">
-              Check-Out
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                id="check-out"
-                name="check-out"
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Villa Name */}
+          {/* Common Fields that always show */}
+          
+          {/* Villa Name - Always show at position 1 */}
           <div>
             <label htmlFor="villa-name" className="block text-sm font-semibold text-gray-800 mb-2">
               Villa Name
@@ -187,7 +158,7 @@ export default function FilterSystem({
             />
           </div>
 
-          {/* Min Beds */}
+          {/* Min Beds - Always show at position 2 */}
           <div>
             <label htmlFor="min-beds" className="block text-sm font-semibold text-gray-800 mb-2">
               Min Beds
@@ -206,7 +177,7 @@ export default function FilterSystem({
             </select>
           </div>
 
-          {/* Min Baths */}
+          {/* Min Baths - Always show at position 3 */}
           <div>
             <label htmlFor="min-baths" className="block text-sm font-semibold text-gray-800 mb-2">
               Min Baths
@@ -225,83 +196,202 @@ export default function FilterSystem({
             </select>
           </div>
 
-          {/* Guests */}
-          <div>
-            <label htmlFor="guests" className="block text-sm font-semibold text-gray-800 mb-2">
-              Guests
-            </label>
-            <select
-              id="guests"
-              name="guests"
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-            >
-              <option>Any</option>
-              <option>1</option>
-              <option>2</option>
-              <option>3</option>
-              <option>4+</option>
-            </select>
-          </div>
+          {/* Conditionally render Check-In or Min Price */}
+          {isForSaleSection ? (
+            // For Sale: Min Price at position 4
+            <div>
+              <label htmlFor="min-price" className="block text-sm font-semibold text-gray-800 mb-2">
+                Min Price (USD)
+              </label>
+              <input
+                type="text"
+                id="min-price"
+                name="min-price"
+                value={minPrice}
+                onChange={(e) => handlePriceChange(e, setMinPrice)}
+                placeholder="e.g., 1,000"
+                className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+            </div>
+          ) : (
+            // Rentals: Check-In at position 4
+            <div>
+              <label htmlFor="check-in" className="block text-sm font-semibold text-gray-800 mb-2">
+                Check-In
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  id="check-in"
+                  name="check-in"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Min Price */}
-          <div>
-            <label htmlFor="min-price" className="block text-sm font-semibold text-gray-800 mb-2">
-              Min Price (USD)
-            </label>
-            <input
-              type="text"
-              id="min-price"
-              name="min-price"
-              value={minPrice}
-              onChange={(e) => handlePriceChange(e, setMinPrice)}
-              placeholder="e.g., 1,000"
-              className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-            />
-          </div>
+          {/* Conditionally render Max Price or Check-Out */}
+          {isForSaleSection ? (
+            // For Sale: Max Price at position 5
+            <div>
+              <label htmlFor="max-price" className="block text-sm font-semibold text-gray-800 mb-2">
+                Max Price (USD)
+              </label>
+              <input
+                type="text"
+                id="max-price"
+                name="max-price"
+                value={maxPrice}
+                onChange={(e) => handlePriceChange(e, setMaxPrice)}
+                placeholder="e.g., 10,000"
+                className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+            </div>
+          ) : (
+            // Rentals: Check-Out at position 5
+            <div>
+              <label htmlFor="check-out" className="block text-sm font-semibold text-gray-800 mb-2">
+                Check-Out
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  id="check-out"
+                  name="check-out"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Max Price */}
-          <div>
-            <label htmlFor="max-price" className="block text-sm font-semibold text-gray-800 mb-2">
-              Max Price (USD)
-            </label>
-            <input
-              type="text"
-              id="max-price"
-              name="max-price"
-              value={maxPrice}
-              onChange={(e) => handlePriceChange(e, setMaxPrice)}
-              placeholder="e.g., 10,000"
-              className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-            />
-          </div>
+          {/* Row 2: Starting from position 6 */}
 
-          {/* Search Button */}
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={() => runFilters()}
-              className="flex items-center border-[#135E76] justify-center w-full px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 h-[42px]"
-            >
-              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Search
-            </button>
-          </div>
+          {/* For Sale: Search Button at position 6 */}
+          {isForSaleSection ? (
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => runFilters()}
+                className="flex items-center border-[#135E76] justify-center w-full px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 h-[42px]"
+              >
+                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search
+              </button>
+            </div>
+          ) : (
+            // Rentals: Guests at position 6
+            <div>
+              <label htmlFor="guests" className="block text-sm font-semibold text-gray-800 mb-2">
+                Guests
+              </label>
+              <select
+                id="guests"
+                name="guests"
+                value={guests}
+                onChange={(e) => setGuests(e.target.value)}
+                className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              >
+                <option>Any</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4+</option>
+              </select>
+            </div>
+          )}
 
-          {/* Reset Button */}
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex items-center justify-center w-full px-4 py-2 border border-[#009689] rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-200 h-[42px]"
-            >
-              <img className={`mr-2 h-5 w-5 ${isSpinning ? "animate-spin" : ""}`} src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760830343/Vector_fpsm2o.png" alt="reset-icon" />
-              Reset
-            </button>
-          </div>
+          {/* For Sale: Reset Button at position 7 */}
+          {isForSaleSection ? (
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="flex items-center justify-center w-full px-4 py-2 border border-[#009689] rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-200 h-[42px]"
+              >
+                <img className={`mr-2 h-5 w-5 ${isSpinning ? "animate-spin" : ""}`} src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760830343/Vector_fpsm2o.png" alt="reset-icon" />
+                Reset
+              </button>
+            </div>
+          ) : (
+            // Rentals: Min Price at position 7
+            <div>
+              <label htmlFor="min-price" className="block text-sm font-semibold text-gray-800 mb-2">
+                Min Price (USD)
+              </label>
+              <input
+                type="text"
+                id="min-price"
+                name="min-price"
+                value={minPrice}
+                onChange={(e) => handlePriceChange(e, setMinPrice)}
+                placeholder="e.g., 1,000"
+                className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+            </div>
+          )}
+
+          {/* Rentals: Max Price at position 8 */}
+          {!isForSaleSection && (
+            <div>
+              <label htmlFor="max-price" className="block text-sm font-semibold text-gray-800 mb-2">
+                Max Price (USD)
+              </label>
+              <input
+                type="text"
+                id="max-price"
+                name="max-price"
+                value={maxPrice}
+                onChange={(e) => handlePriceChange(e, setMaxPrice)}
+                placeholder="e.g., 10,000"
+                className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+            </div>
+          )}
+
+          {/* Rentals: Search Button at position 9 */}
+          {!isForSaleSection && (
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => runFilters()}
+                className="flex items-center border-[#135E76] justify-center w-full px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 h-[42px]"
+              >
+                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search
+              </button>
+            </div>
+          )}
+
+          {/* Rentals: Reset Button at position 10 */}
+          {!isForSaleSection && (
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="flex items-center justify-center w-full px-4 py-2 border border-[#009689] rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-200 h-[42px]"
+              >
+                <img className={`mr-2 h-5 w-5 ${isSpinning ? "animate-spin" : ""}`} src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760830343/Vector_fpsm2o.png" alt="reset-icon" />
+                Reset
+              </button>
+            </div>
+          )}
+
+          {/* Empty divs for Rentals to fill positions 11-13 */}
+          {!isForSaleSection && (
+            <>
+              <div className="hidden lg:block"></div>
+              <div className="hidden lg:block"></div>
+              <div className="hidden lg:block"></div>
+            </>
+          )}
         </div>
       </div>
     </div>
