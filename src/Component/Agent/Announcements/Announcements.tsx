@@ -9,6 +9,8 @@ import {
   Plus,
   X,
   UploadCloud,
+  Trash2,
+  Search, // Search icon যোগ করেছি
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../../store"; // adjust path to your store types if available
@@ -19,6 +21,9 @@ import {
 import { unwrapResult } from "@reduxjs/toolkit";
 // Import API_BASE only for file URL transformation
 import { API_BASE } from "../../../features/Auth/authSlice";
+
+// SweetAlert2 add করেছি
+import Swal from "sweetalert2";
 
 /* ----------------------
   Helper: auth header (used only for legacy behavior; not used now but kept)
@@ -66,8 +71,6 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
   }
   return (
     <span className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor} ${textColor}`}>
-      {/* {priority} priority */}
-
       {priority.charAt(0).toUpperCase() + priority.slice(1)} priority
     </span>
   );
@@ -109,7 +112,6 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (err) {
       // If fetch fails (CORS, network, HTML response, etc.), fallback to opening the URL in a new tab
-      // which allows the user to manually save the image/file.
       window.open(url, "_blank", "noopener,noreferrer");
     }
   };
@@ -124,7 +126,6 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
         </div>
       </div>
 
-      {/* Keep visual exactly same — replace anchor with button that triggers download logic */}
       <button
         onClick={handleDownload}
         className="flex items-center text-sm font-medium text-white bg-teal-500 rounded-lg px-3 py-1.5 hover:bg-teal-600 transition"
@@ -138,11 +139,17 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
 };
 
 /* ----------------------
-  Update Card
+  Update Card - শুধু এইটাতে পরিবর্তন করেছি
 ------------------------*/
-const UpdateCard = ({ update }: { update: any }) => {
+const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const attachmentCount = update.attachments?.length ?? 0;
+
+  // Delete handle function add করেছি
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Important: Prevent card toggle
+    onDelete(update.id);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all overflow-hidden">
@@ -169,6 +176,17 @@ const UpdateCard = ({ update }: { update: any }) => {
 
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
+          
+          {/* Delete button add করেছি এখানে */}
+          <button
+            onClick={handleDeleteClick}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+            aria-label={`Delete announcement: ${update.title}`}
+            type="button"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+          
           {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
         </div>
       </div>
@@ -252,10 +270,8 @@ const AnnouncementModal = ({
       // unwrap to get the created object or throw
       const created: any = await (action as any).unwrap();
 
-      // Modal will close; Redux already updated state via reducer (createAnnouncement.fulfilled pushes)
       // Optionally notify parent (local update), though Redux contains the new item
       if (onAddLocal) {
-        // map created to UI-friendly shape (like before)
         const mapped = {
           id: created.id,
           title: created.title,
@@ -288,7 +304,7 @@ const AnnouncementModal = ({
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Add Announcement</h2>
+        <h2 className="text-lg font-semibold  text-gray-800 mb-4">Add Announcement</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -366,7 +382,7 @@ const AnnouncementModal = ({
 
           {error && <div className="text-sm text-red-600">{error}</div>}
 
-          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-md text-sm font-semibold disabled:opacity-60">
+          <button type="submit" disabled={loading} className="w-full  bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-md text-sm font-semibold disabled:opacity-60">
             {loading ? "Adding..." : "Add Announcement"}
           </button>
         </form>
@@ -376,14 +392,16 @@ const AnnouncementModal = ({
 };
 
 /* ----------------------
-  Main component (reads from Redux)
+  Main component (reads from Redux) - শুধু এইটাতে কিছু add করেছি
 ------------------------*/
 const AdminAnnouncements = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements);
+  const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements) ?? [];
   const loading = useSelector((s: RootState) => s.propertyBooking.loading);
   const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // Search term state যোগ করেছি
 
   useEffect(() => {
     // dispatch fetchAnnouncements on mount
@@ -392,11 +410,11 @@ const AdminAnnouncements = () => {
   }, []);
 
   // Map backend announcement objects to UI-shape used by UpdateCard (details/attachments)
-  const mappedAnnouncements = (Array.isArray(announcementsFromStore) ? announcementsFromStore : []).map((item: any) => ({
+  const mappedAnnouncements = (announcementsFromStore || []).map((item: any) => ({
     id: item.id,
     title: item.title,
-    date: item.date,
-    priority: item.priority,
+    date: item.date ?? item.created_at ?? "",
+    priority: item.priority ?? "low",
     details: item.description ?? item.details ?? "",
     created_at: item.created_at,
     updated_at: item.updated_at,
@@ -408,9 +426,81 @@ const AdminAnnouncements = () => {
     })),
   }));
 
+  // Filter announcements based on search term
+  const filteredAnnouncements = mappedAnnouncements.filter((announcement) => {
+    if (!searchTerm.trim()) return true;
+    
+    const term = searchTerm.toLowerCase();
+    return (
+      announcement.title.toLowerCase().includes(term) ||
+      announcement.details.toLowerCase().includes(term) ||
+      announcement.priority.toLowerCase().includes(term) ||
+      announcement.date.toLowerCase().includes(term)
+    );
+  });
+
+  // Delete function add করেছি - সরাসরি API call করবে
+  const handleDeleteAnnouncement = async (id: number) => {
+    // SweetAlert confirmation dialog
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "Do you really want to delete this announcement?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      setDeleting(true);
+      try {
+        // Direct API call
+        const authToken = getAuthToken();
+        const apiUrl = `${API_BASE}/announcements/announcement/${id}/`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to delete announcement`);
+        }
+
+        // Success message
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'Announcement has been deleted successfully.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        
+        // Refresh the announcements list
+        dispatch(fetchAnnouncements());
+        
+      } catch (err: any) {
+        Swal.fire({
+          title: 'Error!',
+          text: err?.message ? String(err.message) : 'Failed to delete announcement',
+          icon: 'error',
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'OK'
+        });
+      } finally {
+        setDeleting(false);
+      }
+    }
+  };
+
   // Optional local add callback (not strictly necessary since Redux will update)
   const handleAddAnnouncementLocal = (createdMapped: any) => {
-    // no-op: Redux will already have the created item in state
+    // no-op: Redux will already have the created item in state via thunk reducer
   };
 
   return (
@@ -427,49 +517,85 @@ const AdminAnnouncements = () => {
           </button>
         </div>
 
-        <main>
-          {/* Loading — centered in the content area (shows first, then data) */}
+        {/* Search field - center e top e add করেছি */}
+        <div className="flex justify-center mb-8">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search announcements by title, details, priority or date..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <main className="relative">
+          {/* Deleting overlay add করেছি */}
+          {deleting && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/20">
+              <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+                <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <div className="text-sm text-gray-700">Deleting announcement…</div>
+              </div>
+            </div>
+          )}
+
+          {/* Centered loading overlay while (re)loading */}
           {loading && (
-            <div className="min-h-[40vh] flex items-center justify-center">
+            <div className="absolute inset-0 z-30 flex items-center justify-center">
+              <div className="bg-white/90 p-6 rounded-lg shadow-lg flex flex-col items-center">
+                <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <div className="text-sm text-gray-700">Loading announcements…</div>
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {fetchError && <div className="text-sm text-red-600 mb-3">{String(fetchError)}</div>}
+
+          {/* Search results info */}
+          {searchTerm && (
+            <div className="mb-4 text-sm text-gray-600">
+              Found {filteredAnnouncements.length} announcement(s) matching "{searchTerm}"
+            </div>
+          )}
+
+          {/* When not loading, show announcements or empty state */}
+          {!loading && filteredAnnouncements.length === 0 && (
+            <div className="flex items-center justify-center p-12">
               <div className="text-center text-gray-500">
-                <span className="loading loading-spinner loading-xl" />
+                <p className="text-lg font-medium">
+                  {searchTerm ? "No announcements found for your search." : "No announcements found."}
+                </p>
+                <p className="text-sm mt-2">
+                  {searchTerm ? "Try a different search term." : "Create one using the 'Add Announcement' button."}
+                </p>
               </div>
             </div>
           )}
 
-          {/* show fetchError as a small inline message but keep UI usable */}
-          {!loading && fetchError && (
-            <div className="text-sm text-red-600 mb-3">{String(fetchError)}</div>
-          )}
-
-          {/* If not loading and there are no announcements, show friendly empty card */}
-          {!loading && mappedAnnouncements.length === 0 && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">No announcements</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                There are no announcements available right now. Check back later or add a new announcement.
-              </p>
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  onClick={() => dispatch(fetchAnnouncements())}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
-                >
-                  Retry
-                </button>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
-                >
-                  Add Announcement
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Render announcements only after loading finished */}
-          {!loading && mappedAnnouncements.map((update: any) => (
-            <UpdateCard key={update.id} update={update} />
-          ))}
+          {/* Announcements list - এখানে onDelete prop pass করেছি */}
+          <div className="space-y-4">
+            {filteredAnnouncements.map((update: any) => (
+              <UpdateCard key={update.id} update={update} onDelete={handleDeleteAnnouncement} />
+            ))}
+          </div>
         </main>
 
         {isModalOpen && (

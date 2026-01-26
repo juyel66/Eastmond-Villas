@@ -1,11 +1,10 @@
-
 import { MdEmail } from "react-icons/md";
 
 const TermsAndConditions = () => {
   return (
     <div>
       <div className="container relative mb-[920px] mx-auto px-4 py-6 text-gray-800">
-        {/* Top Green Header (SAME AS PRIVACY POLICY) */}
+        {/* Top Green Header */}
         <div className="bg-teal-600 text-white text-center py-2 rounded-md mb-4 font-semibold">
           Terms & Conditions
         </div>
@@ -32,160 +31,192 @@ const TermsAndConditions = () => {
           all use of the Site.
         </p>
 
-        {/* 1 */}
+        {/* 1. About Eastmond Villas */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
           1. About Eastmond Villas
         </div>
         <p className="mb-4">
           This Site is owned and operated by Eastmond Villas Ltd., trading as
-          Eastmond Villas (“Eastmond Villas”, “we”, “our” or “us”), a luxury villa
-          rental, real estate sales, and lifestyle services provider based in
+          Eastmond Villas (“Eastmond”, “we”, “our”, or “us”), a luxury villa
+          rental, property sales and lifestyle services provider based in
           Barbados.
         </p>
-
-        <p className="mb-2">All correspondence should be directed to:</p>
+        <p className="mb-2">All correspondence relating to these Terms should be directed to:</p>
         <div className="flex items-center space-x-2 mb-6">
           <MdEmail />
           <span>info@eastmondvillas.com</span>
         </div>
 
-        {/* 2 */}
+        {/* 2. Acceptance of Terms & User Eligibility */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          2. Acceptance of Terms & Eligibility
+          2. Acceptance of Terms & User Eligibility
         </div>
+        <p className="mb-4">
+          By accessing or using this Site, you represent and warrant that:
+        </p>
         <ul className="list-disc pl-6 space-y-1 mb-4">
-          <li>You are at least sixteen (16) years of age</li>
-          <li>You have legal capacity to enter binding agreements</li>
+          <li>You are at least sixteen (16) years of age; and</li>
+          <li>You possess the legal capacity to enter into binding agreements under applicable law.</li>
         </ul>
+        <p className="mb-4">
+          If you are using this Site on behalf of a minor, you confirm that you are the minor’s parent or legal guardian, that you consent to the minor’s use of the Site, and that you assume full responsibility and liability for the minor’s actions, omissions, and compliance with these Terms.
+        </p>
         <p className="mb-6">
-          If you permit a minor to use this Site, you accept full responsibility
-          for that individual’s actions and compliance with these Terms.
+          Any use of the Site under your supervision constitutes your agreement to these Terms on behalf of that user.
         </p>
 
-        {/* 3 */}
+        {/* 3. Privacy & Data Protection */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
           3. Privacy & Data Protection
         </div>
+        <p className="mb-4">
+          Your use of this Site is subject to our Privacy Policy, which forms part of these Terms. By using the Site, you consent to the collection, use, and processing of information as described therein.
+        </p>
         <p className="mb-6">
-          Your use of the Site is subject to our Privacy Policy. By using the
-          Site, you consent to the collection and processing of personal
-          information as outlined therein.
+          While Eastmond Villas implements reasonable safeguards, you acknowledge that no system is entirely secure, and Eastmond Villas disclaims all liability arising from unauthorized access, interception, or misuse beyond its reasonable control.
         </p>
 
-        {/* 4 */}
+        {/* 4. Changes to These Terms */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          4. Amendments to Terms
+          4. Changes to These Terms
         </div>
+        <p className="mb-4">
+          Eastmond Villas reserves the absolute and unilateral right to amend, revise, replace, or update these Terms at any time, for any reason, and without prior notice.
+        </p>
         <p className="mb-6">
-          Eastmond Villas reserves the right to amend or update these Terms at
-          any time without prior notice. Continued use of the Site constitutes
-          acceptance of the revised Terms.
+          Changes take effect immediately upon posting. Your continued use of the Site constitutes your binding acceptance of the revised Terms. Eastmond Villas has no obligation to notify users individually.
         </p>
 
-        {/* 5 */}
+        {/* 5. Website Availability & Functionality */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          5. Website Availability
+          5. Website Availability & Functionality
         </div>
+        <p className="mb-4">
+          The Site is provided on an “AS AVAILABLE” basis. Eastmond Villas does not warrant or guarantee that the Site will be uninterrupted, error-free, secure, or continuously accessible.
+        </p>
         <p className="mb-6">
-          The Site is provided on an “AS AVAILABLE” basis. We do not guarantee
-          uninterrupted or error-free access and may suspend functionality at
-          any time.
+          We reserve the right to suspend, withdraw, modify, or restrict access to the Site — in whole or in part — at any time, without liability, including for maintenance, operational, legal, or business reasons.
         </p>
 
-        {/* 6 */}
+        {/* 6. Permitted Use & User Conduct */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          6. Permitted Use & Conduct
+          6. Permitted Use & User Conduct
         </div>
-        <ul className="list-disc pl-6 space-y-1 mb-6">
-          <li>Attempt unauthorized system access</li>
-          <li>Disrupt or interfere with website functionality</li>
-          <li>Transmit harmful, fraudulent, or unlawful material</li>
-          <li>Misrepresent identity or intent</li>
+        <p className="mb-4">
+          You agree to use the Site only for lawful purposes and in a manner that does not infringe upon the rights of others or impair their use of the Site.
+        </p>
+        <p className="mb-4">You must not:</p>
+        <ul className="list-disc pl-6 space-y-1 mb-4">
+          <li>misuse or interfere with Site functionality;</li>
+          <li>attempt unauthorized access to systems or data;</li>
+          <li>upload or transmit malicious code, viruses, or harmful material;</li>
+          <li>use the Site for misleading, fraudulent, or unlawful activity.</li>
         </ul>
-
-        {/* 7 */}
-        <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          7. Intellectual Property
-        </div>
         <p className="mb-6">
-          All content, trademarks, imagery, and materials are owned by or
-          licensed to Eastmond Villas. Unauthorized use is strictly prohibited.
+          Any breach may result in immediate suspension or termination of access without notice.
         </p>
 
-        {/* 8 */}
+        {/* 7. Intellectual Property Rights */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          8. Third-Party Links
+          7. Intellectual Property Rights
         </div>
+        <p className="mb-4">
+          All content on this Site — including text, images, branding, layouts, trademarks, and proprietary materials — is owned by or licensed to Eastmond Villas and protected by intellectual property laws.
+        </p>
         <p className="mb-6">
-          The Site may include links to third-party websites. Eastmond Villas is
-          not responsible for external content or privacy practices.
+          You are granted a limited, revocable, non-exclusive, non-transferable license to view the Site for personal, non-commercial use only. Any unauthorized use, reproduction, or distribution is strictly prohibited.
         </p>
 
-        {/* 9 */}
+        {/* 8. Third-Party Links & External Content */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          9. Communications
+          8. Third-Party Links & External Content
         </div>
+        <p className="mb-4">
+          This Site may contain links to third-party websites or services for convenience only. Eastmond Villas does not control, endorse, or assume responsibility for third-party content, availability, or practices.
+        </p>
         <p className="mb-6">
-          All formal communications must be submitted in writing to:
-           <div className="flex items-center space-x-2 mb-6">
+          Access to third-party sites is undertaken entirely at your own risk, and Eastmond Villas disclaims all liability arising therefrom.
+        </p>
+
+        {/* 9. Communications With Eastmond Villas */}
+        <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
+          9. Communications With Eastmond Villas
+        </div>
+        <p className="mb-4">
+          Any compliments, complaints, questions, feedback, or other communications relating to Eastmond Villas, the Site, or its content must be submitted exclusively in writing to:
+        </p>
+        <div className="flex items-center space-x-2 mb-4">
           <MdEmail />
           <span>info@eastmondvillas.com</span>
         </div>
+        <p className="mb-4">
+          Eastmond Villas is under no obligation to respond to any communication or to do so within any particular timeframe. Any response provided is made without prejudice, without admission of liability, and does not constitute a waiver of any rights, remedies, or defenses.
+        </p>
+        <p className="mb-4">You acknowledge and agree that:</p>
+        <ul className="list-disc pl-6 space-y-1 mb-4">
+          <li>Submission of a communication does not create any contractual, fiduciary, or advisory relationship;</li>
+          <li>Eastmond Villas assumes no responsibility or liability for actions taken or not taken in response;</li>
+          <li>Any response is provided for general informational purposes only and may not be relied upon as advice, confirmation, or assurance.</li>
+        </ul>
+        <p className="mb-6">
+          Eastmond Villas reserves the right to retain, review, disregard, or delete any communication received, without liability of any kind.
         </p>
 
-        {/* 10 */}
+        {/* 10. Disclaimers */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
           10. Disclaimers
         </div>
+        <p className="mb-4 font-medium">General Disclaimer</p>
+        <p className="mb-4">
+          All content on this Site is provided “AS IS” and “AS AVAILABLE”, without warranties of any kind — express or implied — including accuracy, completeness, reliability, merchantability, or fitness for a particular purpose.
+        </p>
+        <p className="mb-4 font-medium">No Professional Advice</p>
         <p className="mb-6">
-          All information on this Site is provided “AS IS” without warranties of
-          any kind. Nothing constitutes legal, financial, or professional
-          advice.
+          Nothing on this Site constitutes legal, financial, investment, travel, or professional advice. Any reliance placed on Site content is done entirely at your own risk.
         </p>
 
-        {/* 11 */}
+        {/* 11. Limitation of Liability */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
           11. Limitation of Liability
         </div>
         <p className="mb-6">
-          To the fullest extent permitted by law, Eastmond Villas shall not be
-          liable for any loss, damages, or claims arising from use of this Site.
+          TO THE MAXIMUM EXTENT PERMITTED BY LAW, Eastmond Villas shall not be liable for any loss or damage — whether direct, indirect, incidental, consequential, special, exemplary, or punitive — arising out of or related to: use of or inability to use the Site; reliance on Site content; errors, omissions, delays, or interruptions; security breaches or unauthorized access.
+          <br /><br />
+          This limitation applies regardless of legal theory, including negligence, contract, tort, or strict liability.
         </p>
 
-        {/* 12 */}
+        {/* 12. User Indemnification */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          12. Indemnification
+          12. User Indemnification
         </div>
         <p className="mb-6">
-          You agree to indemnify and hold harmless Eastmond Villas from any
-          claims, losses, or liabilities resulting from your misuse of the Site.
+          By using this Site, you irrevocably agree to indemnify, defend, and hold harmless Eastmond Villas, its directors, officers, employees, agents, affiliates, and successors from any and all claims, liabilities, losses, damages, costs, and expenses, including legal fees, arising out of or relating to: your use or misuse of the Site; your breach of these Terms; your violation of any law or third-party rights; any claim attributable to your actions or omissions.
+          <br /><br />
+          This obligation survives termination of Site use.
         </p>
 
-        {/* 13 */}
+        {/* 13. Governing Law & Jurisdiction */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          13. Governing Law
+          13. Governing Law & Jurisdiction
         </div>
         <p className="mb-6">
-          These Terms are governed by and interpreted in accordance with the
-          laws of Barbados.
+          These Terms are governed by the laws of Barbados. You irrevocably submit to the exclusive jurisdiction of the courts of Barbados for any dispute arising from or related to these Terms or the Site.
         </p>
 
-        {/* 14 */}
+        {/* 14. Severability */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
           14. Severability
         </div>
         <p className="mb-6">
-          If any provision is found invalid, the remaining provisions shall
-          continue in full force and effect.
+          If any provision of these Terms is held to be invalid or unenforceable, the remaining provisions shall remain in full force and effect.
         </p>
 
-        {/* 15 */}
+        {/* 15. Termination of Access */}
         <div className="bg-gray-300 inline-block px-3 py-1 rounded-md font-semibold mb-2">
-          15. Termination
+          15. Termination of Access
         </div>
         <p className="mb-6">
-          Eastmond Villas reserves the right to suspend or terminate access to
-          the Site at any time without notice.
+          Eastmond Villas may suspend or terminate access to the Site at its sole discretion, at any time, for any reason or no reason, without notice and without liability.
         </p>
       </div>
     </div>

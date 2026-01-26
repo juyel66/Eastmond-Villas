@@ -9,7 +9,8 @@ import {
   Plus,
   X,
   UploadCloud,
-  Trash2, // এইটা add করেছি
+  Trash2,
+  Search, // Search icon যোগ করেছি
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../../store"; // adjust path to your store types if available
@@ -399,7 +400,8 @@ const AdminAnnouncements = () => {
   const loading = useSelector((s: RootState) => s.propertyBooking.loading);
   const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false); // এইটা add করেছি
+  const [deleting, setDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // Search term state যোগ করেছি
 
   useEffect(() => {
     // dispatch fetchAnnouncements on mount
@@ -423,6 +425,19 @@ const AdminAnnouncements = () => {
       downloadUrl: getFileUrl(f.file),
     })),
   }));
+
+  // Filter announcements based on search term
+  const filteredAnnouncements = mappedAnnouncements.filter((announcement) => {
+    if (!searchTerm.trim()) return true;
+    
+    const term = searchTerm.toLowerCase();
+    return (
+      announcement.title.toLowerCase().includes(term) ||
+      announcement.details.toLowerCase().includes(term) ||
+      announcement.priority.toLowerCase().includes(term) ||
+      announcement.date.toLowerCase().includes(term)
+    );
+  });
 
   // Delete function add করেছি - সরাসরি API call করবে
   const handleDeleteAnnouncement = async (id: number) => {
@@ -502,6 +517,28 @@ const AdminAnnouncements = () => {
           </button>
         </div>
 
+        {/* Search field - center e top e add করেছি */}
+        <div className="flex justify-center mb-8">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search announcements by title, details, priority or date..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
         <main className="relative">
           {/* Deleting overlay add করেছি */}
           {deleting && (
@@ -532,19 +569,30 @@ const AdminAnnouncements = () => {
           {/* Error */}
           {fetchError && <div className="text-sm text-red-600 mb-3">{String(fetchError)}</div>}
 
+          {/* Search results info */}
+          {searchTerm && (
+            <div className="mb-4 text-sm text-gray-600">
+              Found {filteredAnnouncements.length} announcement(s) matching "{searchTerm}"
+            </div>
+          )}
+
           {/* When not loading, show announcements or empty state */}
-          {!loading && mappedAnnouncements.length === 0 && (
+          {!loading && filteredAnnouncements.length === 0 && (
             <div className="flex items-center justify-center p-12">
               <div className="text-center text-gray-500">
-                <p className="text-lg font-medium">No announcements found.</p>
-                <p className="text-sm mt-2">Create one using the "Add Announcement" button.</p>
+                <p className="text-lg font-medium">
+                  {searchTerm ? "No announcements found for your search." : "No announcements found."}
+                </p>
+                <p className="text-sm mt-2">
+                  {searchTerm ? "Try a different search term." : "Create one using the 'Add Announcement' button."}
+                </p>
               </div>
             </div>
           )}
 
           {/* Announcements list - এখানে onDelete prop pass করেছি */}
           <div className="space-y-4">
-            {mappedAnnouncements.map((update: any) => (
+            {filteredAnnouncements.map((update: any) => (
               <UpdateCard key={update.id} update={update} onDelete={handleDeleteAnnouncement} />
             ))}
           </div>
