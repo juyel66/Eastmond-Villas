@@ -184,8 +184,6 @@
 
 
 
-
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -243,9 +241,15 @@ const Login: React.FC = () => {
   // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const primaryColor = "bg-[#00A597] hover:bg-[#008f82]";
+
+  // Password visibility toggle
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   // --- handle submit ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -350,22 +354,44 @@ const Login: React.FC = () => {
               />
             </div>
 
-            {/* Password */}
-            <div>
+            {/* Password with eye icon */}
+            <div className="relative">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-gray-700 text-sm"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-gray-700 text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 pt-3"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <img
+                      src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1768420182/Vector_7_peacpf.png"
+                      alt="Hide password"
+                      className="h-5 w-5 mb-2 text-gray-500"
+                    />
+                  ) : (
+                    <img
+                      src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1768420130/Icon_28_zew7xb.png"
+                      alt="Show password"
+                      className="h-5 w-5 mb-2 text-gray-500"
+                    />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Error */}
