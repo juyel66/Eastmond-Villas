@@ -1,8 +1,12 @@
-import { Link } from "react-router-dom";
+import React from "react";
 
-const ListMyVilla: React.FC = () => {
+interface Props {
+  onSubmitClick?: () => void;
+}
+
+const ListMyVilla: React.FC<Props> = ({ onSubmitClick }) => {
   return (
-    <div className="relative mb-[920px] mt-14 mx-auto overflow-hidden  shadow-lg">
+    <div className="relative mb-[920px] mt-14 mx-auto overflow-hidden shadow-lg">
       {/* Banner Image */}
       <img
         src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760212482/Properties_Container_4_ou2czf.png"
@@ -18,12 +22,14 @@ const ListMyVilla: React.FC = () => {
         <p className="text-gray-200 text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-md sm:max-w-lg md:max-w-xl">
           Join our network of premier villa owners and unlock your property's full potential.
         </p>
-        <a
-          href="/"
+        
+        {/* Updated button to use the onSubmitClick handler */}
+        <button
+          onClick={onSubmitClick}
           className="px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base md:text-lg bg-teal-500 text-white font-semibold rounded-lg shadow-md hover:bg-teal-600 transition duration-300 ease-in-out"
         >
           List My Villa
-        </a>
+        </button>
       </div>
     </div>
   );
