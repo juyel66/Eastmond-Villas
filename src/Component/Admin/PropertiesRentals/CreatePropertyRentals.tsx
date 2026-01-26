@@ -183,6 +183,8 @@ const CreatePropertyRentals = ({
 
   const [submitting, setSubmitting] = useState(false);
   const [mediaError, setMediaError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(null); // New state for upload progress
+  const [uploadStatus, setUploadStatus] = useState(''); // New state for status messages
 
   const interiorRefs = useRef([]);
   const outdoorRefs = useRef([]);
@@ -710,6 +712,33 @@ const CreatePropertyRentals = ({
     return true;
   };
 
+  // Function to simulate smooth progress with intervals
+  const simulateSmoothProgress = (targetProgress, duration = 1000) => {
+    return new Promise((resolve) => {
+      const startProgress = uploadProgress || 0;
+      const startTime = Date.now();
+      
+      const updateProgress = () => {
+        const elapsedTime = Date.now() - startTime;
+        const progress = Math.min(
+          startProgress + (targetProgress - startProgress) * (elapsedTime / duration),
+          targetProgress
+        );
+        
+        setUploadProgress(Math.round(progress));
+        
+        if (elapsedTime < duration) {
+          requestAnimationFrame(updateProgress);
+        } else {
+          setUploadProgress(targetProgress);
+          resolve();
+        }
+      };
+      
+      requestAnimationFrame(updateProgress);
+    });
+  };
+
   const onSubmit = async (values, isDraft = false) => {
     // শুধু errors clear করুন, কোন validation নেই
     clearErrors();
@@ -719,7 +748,16 @@ const CreatePropertyRentals = ({
     if (!validateBeforeSubmit()) return;
 
     setSubmitting(true);
+    
+    // Start with smooth progress
+    setUploadStatus('Processing form data...');
+    setUploadProgress(0);
+    
     try {
+      // Step 1: Smooth progress to 10%
+      await simulateSmoothProgress(10, 500);
+      setUploadStatus('Preparing property details...');
+      
       const processed = {
         title: values.title || '',
         description: values.description || '',
@@ -771,6 +809,10 @@ const CreatePropertyRentals = ({
       console.log('--- Processed payload to send ---');
       console.log(JSON.stringify(processed, null, 2));
 
+      // Step 2: Smooth progress to 25%
+      await simulateSmoothProgress(25, 500);
+      setUploadStatus('Preparing upload data...');
+      
       const fd = new FormData();
       const append = (k, v) => {
         if (v === undefined || v === null) return;
@@ -831,36 +873,64 @@ const CreatePropertyRentals = ({
       }));
       append('bedrooms_meta', bedroomsMeta);
 
+      // Step 3: Smooth progress to 40%
+      await simulateSmoothProgress(40, 500);
+      
       // Only append new files, not existing URLs
-      mediaImages.forEach((img) => {
-        if (img.file) {
-          fd.append('media_images', img.file);
-        }
+      const newMediaFiles = mediaImages.filter(img => img.file);
+      const newBedroomFiles = bedroomImages.filter(img => img.file);
+      const totalFiles = newMediaFiles.length + newBedroomFiles.length + videos.length;
+      
+      let uploadedFiles = 0;
+      
+      // Upload media images
+      newMediaFiles.forEach((img) => {
+        fd.append('media_images', img.file);
+        uploadedFiles++;
       });
 
-      bedroomImages.forEach((img) => {
-        if (img.file) {
-          fd.append('bedrooms_images', img.file);
-        }
+      // Upload bedroom images
+      newBedroomFiles.forEach((img) => {
+        fd.append('bedrooms_images', img.file);
+        uploadedFiles++;
       });
 
+      // Upload videos
       videos.forEach((file) => {
         fd.append('videos', file);
+        uploadedFiles++;
       });
 
-      console.log('--- FormData entries ---');
-      for (const [k, v] of fd.entries()) {
-        if (v instanceof File) {
-          console.log(k, 'File:', v.name);
-        } else {
-          console.log(
-            k,
-            typeof v === 'string' && v.length > 200
-              ? v.slice(0, 200) + '...'
-              : v
-          );
-        }
+      // Step 4: File upload simulation
+      if (totalFiles > 0) {
+        setUploadStatus(`Uploading files... (${uploadedFiles}/${totalFiles})`);
+        
+        // Simulate file upload progress
+        const uploadDuration = totalFiles * 300; // 300ms per file
+        const uploadStartTime = Date.now();
+        
+        const uploadInterval = setInterval(() => {
+          const elapsed = Date.now() - uploadStartTime;
+          const uploadProgress = Math.min(40 + (elapsed / uploadDuration) * 40, 80);
+          setUploadProgress(Math.round(uploadProgress));
+          
+          if (elapsed >= uploadDuration) {
+            clearInterval(uploadInterval);
+            setUploadProgress(80);
+            setUploadStatus('Files uploaded successfully!');
+          }
+        }, 100);
+        
+        // Wait for simulated upload
+        await new Promise(resolve => setTimeout(resolve, uploadDuration));
+      } else {
+        // No files to upload, jump to 80%
+        await simulateSmoothProgress(80, 300);
       }
+
+      // Step 5: Smooth progress to 90%
+      await simulateSmoothProgress(90, 400);
+      setUploadStatus('Finalizing property details...');
 
       const access = (() => {
         try {
@@ -872,6 +942,9 @@ const CreatePropertyRentals = ({
       const headers = {};
       if (access) headers['Authorization'] = `Bearer ${access}`;
 
+      // Step 6: Send request
+      setUploadStatus('Saving property to database...');
+      
       const res = await fetch(
         isEdit
           ? `${API_BASE}/villas/properties/${editData.id}/`
@@ -882,6 +955,7 @@ const CreatePropertyRentals = ({
           body: fd,
         }
       );
+      
       const body = await res.json().catch(() => null);
 
       if (!res.ok) {
@@ -890,12 +964,23 @@ const CreatePropertyRentals = ({
           body && (body.error || JSON.stringify(body))
             ? body.error || JSON.stringify(body)
             : `HTTP ${res.status}`;
+        
+        // Reset progress
+        setUploadProgress(null);
+        setUploadStatus('');
+        
         Swal.fire({ title: 'Error!', text: message, icon: 'error' });
         setSubmitting(false);
         return;
       }
 
+      // Success - Smooth progress to 100%
+      await simulateSmoothProgress(100, 500);
+      setUploadStatus('Property created successfully!');
+      
       console.log('Created property response:', body);
+      
+      // Show success message
       Swal.fire({
         title: isEdit ? 'Updated!' : 'Created!',
         text: isEdit
@@ -922,10 +1007,27 @@ const CreatePropertyRentals = ({
           { rentalPeriod: '', minimumStay: '', ratePerNight: '' },
         ]);
       }
-      setSubmitting(false);
-      if (onClose) onClose();
+      
+      // Clear progress after 2 seconds
+      setTimeout(() => {
+        setUploadProgress(null);
+        setUploadStatus('');
+        setSubmitting(false);
+        if (onClose) onClose();
+      }, 2000);
+      
     } catch (err) {
       console.error('Submission error', err);
+      
+      // Reset progress on error
+      setUploadProgress(null);
+      setUploadStatus('');
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'Please check your connection and try again.',
+      });
       toast.error('Submission error — check console.');
       setSubmitting(false);
     }
@@ -1900,8 +2002,40 @@ const CreatePropertyRentals = ({
           </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col gap-3 mt-6 w-full mb-10">
+        {/* Buttons Section with Progress Card Above */}
+        <div className="flex flex-col gap-3 mt-6 w-full mb-10 relative">
+          {/* Progress Card - Small and positioned above buttons */}
+          {uploadProgress !== null && (
+            <div className="mb-4 p-4 bg-white rounded-lg shadow-md border border-gray-200 animate-fade-in">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Progress:</span>
+                  <span className="text-sm font-bold text-teal-600">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                {videos.length > 0 && (
+                  <span className="text-xs text-amber-600">
+                    ⏳ Video upload may take time
+                  </span>
+                )}
+              </div>
+              
+              {/* Progress Bar - Small and smooth */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div 
+                  className="bg-teal-600 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              
+              {/* Status Message */}
+              <div className="text-xs text-gray-600 truncate">
+                {uploadStatus}
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={submitting}
@@ -1929,7 +2063,7 @@ const CreatePropertyRentals = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {isEdit ? 'Updating...' : 'Creating...'}
+                {uploadStatus || (isEdit ? 'Updating...' : 'Creating...')}
               </>
             ) : (
               <>
