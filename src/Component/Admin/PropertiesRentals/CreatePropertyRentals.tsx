@@ -238,6 +238,7 @@ const CreatePropertyRentals = ({
         damage_deposit: editData.damage_deposit || '',
         commission_rate: editData.commission_rate || '',
         tbc_by: editData.tbc_by || '',
+        calendar_accuracy: editData.calendar_accuracy || '',
         youtube_link: editData.youtube_link || '',
       };
       reset(formData);
@@ -437,6 +438,7 @@ const CreatePropertyRentals = ({
         damage_deposit: '',
         commission_rate: '',
         tbc_by: '',
+        calendar_accuracy: '',
         youtube_link: '',
       });
 
@@ -800,6 +802,9 @@ const CreatePropertyRentals = ({
         tbc_by: values.tbc_by
           ? String(values.tbc_by)
           : '',
+        calendar_accuracy: values.calendar_accuracy
+          ? String(values.calendar_accuracy)
+          : '',
         concierge_services: conciergeRows
           .map((s) => s.trim())
           .filter((s) => s.length > 0),
@@ -858,6 +863,7 @@ const CreatePropertyRentals = ({
       append('damage_deposit', processed.damage_deposit);
       append('commission_rate', processed.commission_rate);
       append('tbc_by', processed.tbc_by);
+      append('calendar_accuracy', processed.calendar_accuracy);
       append('concierge_services', processed.concierge_services);
       append('youtube_link', processed.youtube_link);
 
@@ -943,7 +949,7 @@ const CreatePropertyRentals = ({
       if (access) headers['Authorization'] = `Bearer ${access}`;
 
       // Step 6: Send request
-      setUploadStatus('Saving property to database...');
+      setUploadStatus('Creating property...');
       
       const res = await fetch(
         isEdit
@@ -1743,14 +1749,27 @@ const CreatePropertyRentals = ({
           
           <div className="col-span-12 ">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Booking TBC
+              Booking Approval Process
             </label>
             <input
               name="tbc_by"
               type="text"
               step="0.01"
               {...register('tbc_by')}
-              placeholder="add booking TBC information"
+              placeholder="add booking details"
+              className=" border w-full rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+          <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+             Calendar Accuracy
+            </label>
+            <input
+              name="calendar_accuracy"
+              type="text"
+              step="0.01"
+              {...register('calendar_accuracy')}
+              placeholder="add calendar accuracy"
               className=" border w-full rounded-lg p-3 bg-gray-50"
             />
           </div>
