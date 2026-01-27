@@ -10,7 +10,7 @@ const LUXURY_CARD_DATA = [
     // Using original image URL, as requested to use "default ja img use kora ache segulai use korba"
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760215908/ImageWithFallback_1_ho2re6.png', 
     brandName: 'The Unspoken Itinerary', // Matches card title in the image
-    tagline: 'True luxury anticipates your needs before they arise', // Matches the main bold text in the image
+    tagline: 'True luxury anticipates your needs before they arise.', // Matches the main bold text in the image
     description: null, // Set to null for the Feature List Card variant
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833071/Container_wsqj7b.png',
     // New data for the Feature List Card:
@@ -26,7 +26,7 @@ const LUXURY_CARD_DATA = [
     id: 2,
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216052/ImageWithFallback_2_ucygoa.png',
     brandName: 'VIP Access',
-    tagline: 'Beyond the Velvet Rope',
+    tagline: 'Beyond the Velvet Rope.',
     description: 'Unlock experiences that are simply beyond ordinary reach.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833740/Frame_1000004285_fehjjw.png',
         features: [ 
@@ -41,7 +41,7 @@ const LUXURY_CARD_DATA = [
     id: 3,
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216117/ImageWithFallback_3_cjzwkc.png',
     brandName: 'Absolute Discretion',
-    tagline: 'The Invisible Hand of Protection',
+    tagline: 'The Invisible Hand of Protection.',
     description: 'Guaranteed privacy and impeccable professional oversight.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833778/Container_1_unumym.png',
         features: [ 
@@ -56,7 +56,7 @@ const LUXURY_CARD_DATA = [
     id: 4,
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216147/ImageWithFallback_4_bqamcw.png',
     brandName: 'Bespoke Events',
-    tagline: 'The Alchemy of the Exceptional',
+    tagline: 'The Alchemy of the Exceptional.',
     description: 'Customized luxury crafted from your unique vision.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833829/Container_2_cdh1jr.png',
         features: [ 

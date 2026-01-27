@@ -314,7 +314,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
   const populateFormWithData = (propertyData) => {
     console.log('Populating form with data:', propertyData);
     
-    // Populate form fields including youtube_link
+    // Populate form fields including youtube_link and calendar_accuracy
     const formData = {
       title: propertyData.title || '',
       description: propertyData.description || '',
@@ -335,6 +335,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
       commission_rate: propertyData.commission_rate || '',
       tbc_by: propertyData.tbc_by || '',
       youtube_link: propertyData.youtube_link || '',
+      calendar_accuracy: propertyData.calendar_accuracy || '',
     };
     reset(formData);
 
@@ -824,6 +825,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
           : '',
         concierge_services: conciergeRows.filter(Boolean),
         youtube_link: values.youtube_link || '',
+        calendar_accuracy: values.calendar_accuracy || '',
       };
 
       console.log('--- Update payload for ID:', propertyId, '---');
@@ -843,7 +845,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         }
       };
 
-      // Append all processed data including youtube_link
+      // Append all processed data including youtube_link and calendar_accuracy
       Object.entries(processed).forEach(([key, value]) => {
         append(key, value);
       });
@@ -1439,6 +1441,19 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             {...register('calendar_link')}
             className="w-full border rounded-lg p-3 bg-gray-50"
             placeholder="https://calendly.com/..."
+          />
+        </div>
+
+        {/* Calendar Accuracy Field - Added below Calendar Link */}
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Calendar Accuracy
+          </label>
+          <input
+            name="calendar_accuracy"
+            {...register('calendar_accuracy')}
+            className="w-full border rounded-lg p-3 bg-gray-50"
+            placeholder="Enter calendar accuracy information"
           />
         </div>
 

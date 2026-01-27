@@ -446,17 +446,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 
                 {/* Show calculated total price */}
                 {formData.check_in_data && formData.check_out_data && !dateError && (
-                  // <div className="p-2 bg-teal-50 rounded border border-teal-200">
-                  //   <p className="text-teal-700 font-medium">
-                  //     Total price: ${calcTotalPrice()} for {
-                  //       Math.round(
-                  //         (new Date(formData.check_out_data).getTime() - 
-                  //          new Date(formData.check_in_data).getTime()) / 
-                  //         (1000 * 60 * 60 * 24)
-                  //       )
-                  //     } nights
-                  //   </p>
-                  // </div>
                   <div></div>
                 )}
               </>
@@ -502,13 +491,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
   );
 };
 
-// ------------------------- ShareModal (only platform buttons, no long link under each) -------------------------
+
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   propertyId?: number | string;
   propertyTitle?: string;
   previewImageUrl?: string;
+  propertySlug?: string; 
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({
@@ -517,12 +507,23 @@ const ShareModal: React.FC<ShareModalProps> = ({
   propertyId = 42,
   propertyTitle = 'Property',
   previewImageUrl = LOCAL_PREVIEW,
+  propertySlug, 
 }) => {
   const origin =
     typeof window !== 'undefined'
       ? window.location.origin
       : 'https://example.com';
-  const propertyUrl = `${origin}/property/${propertyId}`;
+  
+
+  const propertyUrl = propertySlug 
+    ? `${origin}/property/${propertySlug}` 
+    : `${origin}/property/${propertyId}`;
+  
+  
+  const displayUrl = propertyUrl.length > 13
+    ? `${propertyUrl.substring(0, 13)}...` 
+    : propertyUrl;
+  
   const encoded = encodeURIComponent(propertyUrl);
   const encodedTitle = encodeURIComponent(propertyTitle);
 
@@ -545,6 +546,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
     } catch {
       prompt('Copy this link:', propertyUrl);
     }
+        Swal.fire({
+          icon: 'success',
+          title: 'Link copied to clipboard!',
+          showConfirmButton: false,
+          timer: 1200,
+        });
   };
 
   const platforms = [
@@ -621,11 +628,11 @@ const ShareModal: React.FC<ShareModalProps> = ({
           />
           <div className="flex-1">
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
-            <div className="text-sm text-gray-500 truncate">{propertyUrl}</div>
+            <div className="text-sm text-gray-500 truncate">{displayUrl}</div> 
           </div>
           <button
             onClick={copyLink}
-            className="bg-gray-100 border px-3 py-2 rounded hover:bg-gray-200"
+            className="bg-gray-100 cursor-pointer border px-3 py-2 rounded hover:bg-gray-200"
           >
             {' '}
             <FaRegCopy />{' '}
@@ -649,13 +656,13 @@ const ShareModal: React.FC<ShareModalProps> = ({
   );
 };
 
-// ------------------------- Main Component: RentsDetailsBanner -------------------------
+
 interface RentsDetailsBannerProps {
-  villa?: any; // pass the API object here (or rely on redux slice fallback)
+  villa?: any;
 }
 
 const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
-  // If parent didn't pass villa, try to read currentProperty from redux slice
+
   const currentProperty = useSelector(
     (state: any) => state.propertyBooking?.currentProperty
   );
@@ -683,13 +690,16 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
       effectiveVilla.media_images[0]?.image) ||
     LOCAL_PREVIEW;
 
-  // Determine listing type (be forgiving: 'rent', 'rental', 'sale', 'sales')
+
   const listingType = String(effectiveVilla?.listing_type ?? '').toLowerCase();
   const isRentType =
     listingType === 'rent' ||
     listingType === 'rental' ||
     listingType === 'rentals';
   const isSaleType = listingType === 'sale' || listingType === 'sales';
+
+ 
+  const propertySlug = effectiveVilla?.slug ?? null;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -727,7 +737,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
 
         <div className="bg-white absolute bottom-0 md:top-[60%]  z-20 mt-10 text-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto transform translate-y-1/2">
           <div className="flex justify-around items-center text-center border-b pb-4 mb-4 flex-wrap gap-4">
-            {/* Guests: only show for rent-type properties */}
+         
             {isRentType && (
               <div className="flex flex-col items-center">
                 <img
@@ -788,17 +798,17 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
                   });
 
                 if (effectiveVilla?.price_display) {
-                  // ✅ Sale type এর জন্য "For sale at" দেখাবে
+                  
                   if (isSaleType) {
                     return `For sale at USD$${formatPrice(effectiveVilla.price_display)}`;
                   }
-                  // ✅ Rent type এর জন্য "From" দেখাবে
+               
                   return `From USD$${formatPrice(effectiveVilla.price_display)}${
                     isRentType ? "/night" : ""
                   }`;
                 }
 
-                // Default fallback
+ 
                 return isSaleType
                   ? `For sale at USD$${formatPrice(850000)}`
                   : isRentType
@@ -821,7 +831,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
               <span>Share</span>
             </button>
 
-            {/* Book Now/Inquire Now: visible for both rent and sale properties */}
+           
             <button
               onClick={() => {
                 // if not logged in, redirect to login right away
@@ -869,12 +879,14 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
         }}
       />
 
+  
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         propertyId={propertyId}
         propertyTitle={title}
         previewImageUrl={previewImage}
+        propertySlug={propertySlug} 
       />
     </div>
   );

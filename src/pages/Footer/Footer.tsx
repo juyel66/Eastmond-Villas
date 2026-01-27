@@ -133,7 +133,7 @@ const Footer = () => {
                 <img
                   src={logoSrc}
                   alt="Eastmond Villas Logo"
-                  className="rounded-full "
+                  className="rounded-full w-50 md:w-60 lg:w-72"
                 />
               </div>
               <div className="flex justify-center md:justify-start">
@@ -189,7 +189,7 @@ const Footer = () => {
           </div>
 
           {/* Address - For tablet: second row, first column */}
-          <div className="text-center md:text-left md:mt-4 lg:mt-0">
+          <div className="text-center md:text-left md:mt-4  lg:mt-0">
             <h4 className="text-base md:text-lg lg:text-xl font-semibold mb-3 md:mb-4">Address</h4>
             <div className="flex flex-col md:flex-row items-center md:items-start justify-center md:justify-start space-y-1 md:space-y-0 md:space-x-3">
               <div className="flex-shrink-0">

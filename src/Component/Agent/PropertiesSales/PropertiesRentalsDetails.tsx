@@ -52,6 +52,9 @@ interface Property {
   staff_name?: string;
   concierge_services: string[];
 
+  // calendar accuracy field
+  calendar_accuracy?: string;
+
   _raw?: any;
 }
 
@@ -310,6 +313,7 @@ const PropertiesRentalsDetails: FC = () => {
         const interiorAmenities = normalizeStringArray(p.interior_amenities);
         const signatureDistinctions = normalizeStringArray(p.signature_distinctions);
         const conciergeServices = normalizeStringArray(p.concierge_services);
+        
         // staff might be object or array
         let staffName: string | undefined;
         if (Array.isArray(p.staff) && p.staff.length > 0) {
@@ -317,6 +321,9 @@ const PropertiesRentalsDetails: FC = () => {
         } else if (p.staff && typeof p.staff === 'object') {
           staffName = p.staff.name ?? '';
         }
+
+        // Extract calendar_accuracy from API response
+        const calendarAccuracy = p.calendar_accuracy || p.calendar_accuracy_percentage || '';
 
         // Determine main image for display
         let mainImage = images.find(img => img.is_main)?.image || 
@@ -375,6 +382,10 @@ const PropertiesRentalsDetails: FC = () => {
           viewing_link: p.calendar_link ?? p.viewing_link ?? p.calendar_url ?? '',
           staff_name: staffName,
           concierge_services: conciergeServices,
+          
+          // Add calendar_accuracy field
+          calendar_accuracy: calendarAccuracy,
+          
           _raw: p,
         };
 
@@ -658,6 +669,8 @@ Description: ${property.description.substring(0, 200)}...
   // Get the dynamic calendar link
   const dynamicCalendarLink = generateCalendarLink();
 
+  console.log('all data ', property);
+
   return (
     <div className="min-h-screen p-4 bg-gray-50 font-sans">
       <div className="">
@@ -815,7 +828,11 @@ Description: ${property.description.substring(0, 200)}...
                 </div>
                 <div className="flex items-center gap-2">
                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />
-                  <span>90% Calendar accuracy</span>
+                  <span>
+                    {property.calendar_accuracy 
+                      ? `${property.calendar_accuracy}% Calendar accuracy`
+                      : 'Calendar accuracy not set'}
+                  </span>
                 </div>
               </div>
             </div>

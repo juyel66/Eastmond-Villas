@@ -278,7 +278,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
   const populateFormWithData = (propertyData) => {
     console.log('Populating form with data:', propertyData);
     
-    // Populate form fields including youtube_link, tbc_by, and commission_rate
+    // Populate form fields including youtube_link, tbc_by, commission_rate, and calendar_accuracy
     const formData = {
       title: propertyData.title || '',
       description: propertyData.description || '',
@@ -294,8 +294,9 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       seo_title: propertyData.seo_title || '',
       seo_description: propertyData.seo_description || '',
       youtube_link: propertyData.youtube_link || '',
-      tbc_by: propertyData.tbc_by || '', // Added field
-      commission_rate: propertyData.commission_rate || '', // Added field
+      tbc_by: propertyData.tbc_by || '',
+      commission_rate: propertyData.commission_rate || '',
+      calendar_accuracy: propertyData.calendar_accuracy || '',
     };
     reset(formData);
 
@@ -671,8 +672,9 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         latitude: location.lat ?? null,
         longitude: location.lng ?? null,
         youtube_link: values.youtube_link || '',
-        tbc_by: values.tbc_by || '', // Added field
-        commission_rate: values.commission_rate || '', // Added field
+        tbc_by: values.tbc_by || '',
+        commission_rate: values.commission_rate || '',
+        calendar_accuracy: values.calendar_accuracy || '',
       };
 
       console.log('--- Update payload for Sales ID:', propertyId, '---');
@@ -692,7 +694,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         }
       };
 
-      // Append all processed data including youtube_link, tbc_by, and commission_rate
+      // Append all processed data including youtube_link, tbc_by, commission_rate, and calendar_accuracy
       Object.entries(processed).forEach(([key, value]) => {
         append(key, value);
       });
@@ -1266,7 +1268,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
           />
         </div>
 
-        {/* New Fields: Booking TBC and Commission Rate */}
+        {/* New Fields: Booking TBC, Commission Rate, and Calendar Accuracy */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1291,6 +1293,19 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
               {...register('commission_rate')}
               className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Enter commission rate percentage"
+            />
+          </div>
+
+          {/* Calendar Accuracy Field */}
+          <div className="col-span-12 mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Calendar Accuracy
+            </label>
+            <input
+              name="calendar_accuracy"
+              {...register('calendar_accuracy')}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter calendar accuracy information"
             />
           </div>
         </div>

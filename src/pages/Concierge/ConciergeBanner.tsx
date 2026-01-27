@@ -14,7 +14,7 @@ const ConciergeBanner: React.FC = () => {
       <div className="absolute inset-0  bg-opacity-50 flex flex-col items-center justify-center pl-2 pr-2 text-center">
         <h1 className="text-white lg:mt-0 mt-1  lg:text-5xl md:text-5xl font-bold leading-tight mb-4">
         
-          Beyond Anticipation – The Art of <br className="hidden md:block" /> Bespoke Luxury
+          Beyond Anticipation – The Art of <br className="hidden md:block" /> Bespoke Luxury.
         </h1>
         <p className="text-gray-200 text-base md:text-lg mb-3 max-w-xl">
          Orchestrating the extraordinary with seamless, intuitively tailored service.

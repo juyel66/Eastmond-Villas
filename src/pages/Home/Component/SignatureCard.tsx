@@ -236,7 +236,16 @@ const ShareModal: React.FC<ShareModalProps> = ({
       toast.success('Link copied to clipboard!');
     } catch {
       prompt('Copy this link:', propertyUrl);
+      
     }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Link copied to clipboard!',
+      showConfirmButton: false,
+      timer: 1200,
+    });
+   
   };
 
   const platforms = [
@@ -342,14 +351,14 @@ const ShareModal: React.FC<ShareModalProps> = ({
           <div className="flex-1">
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
             <div className="text-sm text-gray-500">
-              {propertyUrl.length > 25
-                ? propertyUrl.substring(0, 25) + '...'
+              {propertyUrl.length > 12
+                ? propertyUrl.substring(0, 12) + '...'
                 : propertyUrl}
             </div>
           </div>
           <button
             onClick={copyLink}
-            className="flex items-center gap-1 bg-gray-100 border px-3 py-2 rounded text-sm"
+            className="flex items-center gap-1 cursor-pointer bg-gray-100 border px-3 py-2 rounded text-sm"
           >
             <FaRegCopy /> Copy
           </button>

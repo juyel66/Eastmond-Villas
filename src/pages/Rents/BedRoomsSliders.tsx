@@ -60,7 +60,7 @@ const BedRoomsSliders: React.FC<BedRoomsSlidersProps> = ({
 
   return (
     <div className="mb-10 pt-4 border-top border-gray-200">
-      <h3 className="text-2xl font-bold mb-4 mt-10 flex justify-between items-center">
+      <h3 className="text-xl font-bold mb-4 mt-10 flex justify-between items-center">
         Bedroom Configurations And Accommodation Overview
         <div className="flex space-x-2 text-gray-400">
           <button
