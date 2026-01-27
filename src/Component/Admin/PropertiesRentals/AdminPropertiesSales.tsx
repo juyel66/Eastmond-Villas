@@ -52,13 +52,12 @@ function toArray(payload: any): any[] {
 }
 
 const availableStatuses = [
-  { label: "All Status", value: "All Status" },
-  { label: "Published", value: "published" },
-  { label: "Pending Review", value: "pending_review" },
-  { label: "Draft", value: "draft" },
-  { label: "Archived", value: "archived" },
+  { label: 'All Status', value: 'All Status' },
+  { label: 'Published', value: 'published' },
+  { label: 'Pending Review', value: 'pending_review' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Archived', value: 'archived' },
 ];
-
 
 /* ---------- helper to decide if property is a "sale" listing ---------- */
 function isSaleProperty(p: any): boolean {
@@ -79,14 +78,14 @@ function isSaleProperty(p: any): boolean {
 /* ---------- helper to format status display ---------- */
 function formatStatusDisplay(status: string): string {
   if (!status) return 'Draft';
-  
+
   const statusStr = String(status).toLowerCase();
-  
+
   // Handle different status formats
   if (statusStr === 'pending_review' || statusStr === 'pending-review') {
     return 'Pending Review';
   }
-  
+
   // For other statuses, capitalize first letter
   return statusStr.charAt(0).toUpperCase() + statusStr.slice(1);
 }
@@ -180,8 +179,8 @@ const AdminPropertiesSales: React.FC = () => {
       html: `<div>Delete property <strong>${found?.title ?? `#${id}`}</strong>?</div>`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#319795',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#319795',
       confirmButtonText: 'Yes, delete it!',
       reverseButtons: true,
     }).then(async (result) => {
@@ -189,18 +188,14 @@ const AdminPropertiesSales: React.FC = () => {
         try {
           setDeletingId(id);
 
-          // dispatch thunk to delete on server
-          // @ts-ignore unwrap
           await dispatch(deleteProperty(id)).unwrap();
 
-          // remove locally
           setLocalProperties((prev) =>
             prev.filter((x) => Number(x.id) !== Number(id))
           );
 
           showToast(`Property ${id} deleted successfully!`, 'success');
 
-          // refresh redux list to be safe/in-sync
           dispatch(fetchProperties());
         } catch (err: any) {
           console.error('Delete property error:', err);
@@ -257,17 +252,16 @@ const AdminPropertiesSales: React.FC = () => {
     if (pageNumber >= 1 && pageNumber <= totalPages) setCurrentPage(pageNumber);
   };
 
-
   const formatUSD = (amount?: number | string) => {
-  if (amount === null || amount === undefined || amount === "") return "-";
+    if (amount === null || amount === undefined || amount === '') return '-';
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(amount));
-};
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(amount));
+  };
 
   return (
     <div>
@@ -309,22 +303,20 @@ const AdminPropertiesSales: React.FC = () => {
           </div>
 
           <div className="relative w-full sm:w-48">
-
-           <select
-  value={statusFilter}
-  onChange={(e) => {
-    setStatusFilter(e.target.value);
-    console.log("Status filter changed to:", e.target.value);
-  }}
-  className="appearance-none block w-full p-3 text-sm border border-gray-300 rounded-lg bg-white shadow-sm pr-10 focus:ring-blue-500 cursor-pointer"
->
-  {availableStatuses.map((status) => (
-    <option key={status.value} value={status.value}>
-      {status.label}
-    </option>
-  ))}
-</select>
-
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                console.log('Status filter changed to:', e.target.value);
+              }}
+              className="appearance-none block w-full p-3 text-sm border border-gray-300 rounded-lg bg-white shadow-sm pr-10 focus:ring-blue-500 cursor-pointer"
+            >
+              {availableStatuses.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
 
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
@@ -393,26 +385,27 @@ const AdminPropertiesSales: React.FC = () => {
                       {item.location ?? item.city ?? item.address}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-  {formatUSD(
-    item.price_display ??
-      item.price ??
-      item.total_price
-  )}
-</td>
-                 <td className="px-6 py-4 text-sm text-gray-500">
-  {(() => {
-    const value =
-      item.listing_type ??
-      item.rateType ??
-      item.property_type ??
-      item.type ??
-      "-";
+                      {formatUSD(
+                        item.price_display ?? item.price ?? item.total_price
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {(() => {
+                        const value =
+                          item.listing_type ??
+                          item.rateType ??
+                          item.property_type ??
+                          item.type ??
+                          '-';
 
-    const str = String(value);
+                        const str = String(value);
 
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  })()}
-</td>
+                        return (
+                          str.charAt(0).toUpperCase() +
+                          str.slice(1).toLowerCase()
+                        );
+                      })()}
+                    </td>
 
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {item.updated_at ?? item.updateDate ?? '-'}
@@ -423,7 +416,9 @@ const AdminPropertiesSales: React.FC = () => {
                           (item.status ?? 'draft').toLowerCase() === 'published'
                             ? 'bg-blue-100 text-blue-700'
                             : (item.status ?? 'draft').toLowerCase() ===
-                                'pending_review' || (item.status ?? 'draft').toLowerCase() === 'pending-review'
+                                  'pending_review' ||
+                                (item.status ?? 'draft').toLowerCase() ===
+                                  'pending-review'
                               ? 'bg-orange-100 text-orange-700'
                               : 'bg-gray-100 text-gray-700'
                         }`}
@@ -433,7 +428,8 @@ const AdminPropertiesSales: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-start gap-3">
-                        <Link to={`/dashboard/admin-update-property-sales/${item.id}`}
+                        <Link
+                          to={`/dashboard/admin-update-property-sales/${item.id}`}
                           onClick={() => handleEdit(item.id)}
                           className="p-2  text-green-500 bg-white hover:bg-gray-100 flex items-center justify-center"
                         >
@@ -510,8 +506,6 @@ const AdminPropertiesSales: React.FC = () => {
           )}
         </div>
       </div>
-
-
     </div>
   );
 };
