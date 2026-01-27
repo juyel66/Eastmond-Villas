@@ -1,7 +1,8 @@
 // src/components/LuxuryCardGrid.jsx
 
-import React from 'react';
 
+import React from 'react';
+import clock from "../../assets/clock.svg"
 // --- Feature Card Data (One icon per card) ---
 const LUXURY_CARD_DATA = [
   {
@@ -19,7 +20,7 @@ const LUXURY_CARD_DATA = [
         'Discreet relocation & logistics mastery',
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
-    featureIconUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1761166814/Icon_45_jcnhwd.png' 
+    featureIconUrl: clock
   },
   {
     id: 2,
@@ -34,7 +35,7 @@ const LUXURY_CARD_DATA = [
         'Discreet relocation & logistics mastery',
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
-    featureIconUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1761166814/Icon_45_jcnhwd.png' 
+    featureIconUrl: clock
   },
   {
     id: 3,
@@ -49,7 +50,7 @@ const LUXURY_CARD_DATA = [
         'Discreet relocation & logistics mastery',
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
-    featureIconUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1761166814/Icon_45_jcnhwd.png' 
+    featureIconUrl: clock
   },
   {
     id: 4,
@@ -64,7 +65,7 @@ const LUXURY_CARD_DATA = [
       
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
-    featureIconUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1761166814/Icon_45_jcnhwd.png' 
+    featureIconUrl: clock
   },
 ];
 
@@ -136,12 +137,12 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({
         {isFeatureListCard && (
             <ul className="space-y-4 pt-6 mt-6 border-t border-gray-100 flex-grow">
                 {features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
+                    <li key={index} className="flex items-center gap-1">
                         {/* Use the requested feature icon */}
                         <img 
                             src={itemIcon} 
                             alt="feature icon" 
-                            className="w-5 h-5 object-contain mt-1 text-teal-600 flex-shrink-0"
+                            className="w-8 h-8 mb-1 object-contain mt-1 text-teal-600 flex-shrink-0"
                         />
                         <span className="text-gray-600 text-base font-medium">
                             {feature}
