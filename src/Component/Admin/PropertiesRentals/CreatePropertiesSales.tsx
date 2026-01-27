@@ -222,7 +222,8 @@ const CreatePropertySales = ({
         seo_title: editData.seo_title || '',
         seo_description: editData.seo_description || '',
         youtube_link: editData.youtube_link || '',
-        tbc_by: editData.tbc_by || '', // Added field
+        tbc_by: editData.tbc_by || '',
+        calendar_accuracy: editData.calendar_accuracy || '',
         commission_rate: editData.commission_rate || '', // Added field
       };
       reset(formData);
@@ -373,7 +374,8 @@ const CreatePropertySales = ({
         seo_title: '',
         seo_description: '',
         youtube_link: '',
-        tbc_by: '', // Added field
+        tbc_by: '', 
+        calendar_accuracy: '', 
         commission_rate: '', // Added field
       });
 
@@ -636,7 +638,8 @@ const CreatePropertySales = ({
         latitude: location.lat ?? null,
         longitude: location.lng ?? null,
         youtube_link: values.youtube_link || '',
-        tbc_by: values.tbc_by || '', // Added field
+        tbc_by: values.tbc_by || '',
+        calendar_accuracy: values.calendar_accuracy || '',
         commission_rate: values.commission_rate || '', // Added field
       };
 
@@ -684,7 +687,8 @@ const CreatePropertySales = ({
       append('latitude', processed.latitude);
       append('longitude', processed.longitude);
       append('youtube_link', processed.youtube_link);
-      append('tbc_by', processed.tbc_by); // Added field
+      append('tbc_by', processed.tbc_by); 
+      append('calendar_accuracy', processed.calendar_accuracy); 
       append('commission_rate', processed.commission_rate); // Added field
 
       const mediaMeta = buildMediaMetadata(mediaImages, 'media', 0);
@@ -1251,6 +1255,17 @@ const CreatePropertySales = ({
             <input
               name="tbc_by"
               {...register('tbc_by')}
+              className="w-full border rounded-lg p-3 bg-gray-50"
+              placeholder="Enter booking TBC details"
+            />
+          </div>
+          <div className="col-span-12 md:col-span-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Calendar Accuracy
+            </label>
+            <input
+              name="calendar_accuracy"
+              {...register('calendar_accuracy')}
               className="w-full border rounded-lg p-3 bg-gray-50"
               placeholder="Enter booking TBC details"
             />
