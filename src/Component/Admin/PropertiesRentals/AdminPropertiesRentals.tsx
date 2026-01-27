@@ -151,7 +151,7 @@ const AdminPropertiesRentals: React.FC = () => {
     }).catch((err: any) => {
       console.error('[fetchProperties] dispatch error:', err);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, []);
 
   useEffect(() => {
@@ -185,8 +185,8 @@ const AdminPropertiesRentals: React.FC = () => {
       html: `<div>Delete property <strong>${found?.title ?? `#${id}`}</strong>?</div>`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#319795',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#319795',
       confirmButtonText: 'Yes, delete it!',
       reverseButtons: true,
     }).then(async (result) => {
@@ -194,18 +194,16 @@ const AdminPropertiesRentals: React.FC = () => {
         try {
           setDeletingId(id);
 
-          // dispatch thunk to delete on server
-          // @ts-ignore unwrap
+          
           await dispatch(deleteProperty(id)).unwrap();
 
-          // remove locally
           setLocalProperties((prev) =>
             prev.filter((x) => Number(x.id) !== Number(id))
           );
 
           showToast(`Property ${id} deleted successfully!`, 'success');
 
-          // refresh redux list to be safe/in-sync
+        
           dispatch(fetchProperties());
         } catch (err: any) {
           console.error('Delete property error:', err);
