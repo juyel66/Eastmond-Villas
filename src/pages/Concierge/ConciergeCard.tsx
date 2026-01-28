@@ -41,7 +41,7 @@ const LUXURY_CARD_DATA = [
     id: 3,
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216117/ImageWithFallback_3_cjzwkc.png',
     brandName: 'Absolute Discretion',
-    tagline: 'The Invisible Hand of Protection.',
+    tagline: 'The Invisible Hand of Protection',
     description: 'Guaranteed privacy and impeccable professional oversight.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833778/Container_1_unumym.png',
         features: [ 
@@ -56,7 +56,7 @@ const LUXURY_CARD_DATA = [
     id: 4,
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216147/ImageWithFallback_4_bqamcw.png',
     brandName: 'Bespoke Events',
-    tagline: 'The Alchemy of the Exceptional.',
+    tagline: 'The Alchemy of the Exceptional',
     description: 'Customized luxury crafted from your unique vision.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833829/Container_2_cdh1jr.png',
         features: [ 

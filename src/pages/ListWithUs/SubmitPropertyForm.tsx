@@ -3,31 +3,25 @@ import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 
-// Define the shape of your form data for React Hook Form
+
 interface Inputs {
-  name?: string;
-  email?: string;
-  phone?: string;
-  property_name?: string;
-  property_brief?: string;
-  confirm_accuracy?: boolean;
+  name: string;
+  email: string;
+  phone: string;
+  property_name: string;
+  property_brief: string;
+  confirm_accuracy: boolean;
 }
 
-// File interface for better type safety
-interface UploadedFile {
-  id: string;
-  file: File;
-  preview: string | null;
-}
 
-// API Base URL
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com';
 
 const SubmitPropertyForm: React.FC = () => {
-  // React Hook Form methods - NO validation rules
+
   const {
     register,
     handleSubmit,
+    formState: { errors },
     reset,
   } = useForm<Inputs>({
     defaultValues: {
@@ -40,18 +34,32 @@ const SubmitPropertyForm: React.FC = () => {
     },
   });
 
-  const [photos, setPhotos] = useState<UploadedFile[]>([]);
-  const [documents, setDocuments] = useState<UploadedFile[]>([]);
+  const [files, setFiles] = useState({
+    property_photo: null as File | null,
+    property_document: null as File | null, 
+  });
+
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<string | null>(null);
   const [isPhotoDragActive, setIsPhotoDragActive] = useState(false);
   const [isDocumentDragActive, setIsDocumentDragActive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle form submission with API call
+
   const onSubmit = async (data: Inputs) => {
     try {
+
+      if (!files.property_photo) {
+        Swal.fire({
+          title: "Missing Photo",
+          text: "Please upload a property photo",
+          icon: "warning",
+        });
+        return;
+      }
+
       setIsSubmitting(true);
-      
-      // Check if user is authenticated
+
       const accessToken = localStorage.getItem('auth_access');
       if (!accessToken) {
         Swal.fire({
@@ -59,45 +67,33 @@ const SubmitPropertyForm: React.FC = () => {
           text: "Please log in to submit a property",
           icon: "warning",
         });
-        // Redirect to login or show login modal
+
         window.location.assign('/login');
         return;
       }
 
-      // Create FormData object for multipart/form-data
+
       const formData = new FormData();
       
-      // Add form fields - সব fields optional
-      if (data.name) formData.append('name', data.name);
-      if (data.email) formData.append('email', data.email);
-      if (data.phone) formData.append('phone', data.phone);
-      if (data.property_name) formData.append('property_name', data.property_name);
-      if (data.property_brief) formData.append('property_brief', data.property_brief);
-      if (data.confirm_accuracy !== undefined) {
-        formData.append('confirm_accuracy', data.confirm_accuracy.toString());
+
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('phone', data.phone);
+      formData.append('property_name', data.property_name);
+      formData.append('property_brief', data.property_brief);
+      formData.append('confirm_accuracy', data.confirm_accuracy.toString());
+
+
+      if (files.property_photo) {
+        formData.append('property_photo', files.property_photo);
       }
 
-      // Add multiple photos
-      photos.forEach((photo) => {
-        formData.append('property_photo', photo.file);
-      });
-
-      // Add multiple documents
-      documents.forEach((doc) => {
-        formData.append('property_document', doc.file);
-      });
+      if (files.property_document) {
+        formData.append('property_document', files.property_document);
+      }
 
       // Log form data for debugging
-      console.log("--- Form Submission Data (All fields optional) ---");
-      console.log("Name:", data.name || "(empty)");
-      console.log("Email:", data.email || "(empty)");
-      console.log("Phone:", data.phone || "(empty)");
-      console.log("Property Name:", data.property_name || "(empty)");
-      console.log("Property Brief:", data.property_brief || "(empty)");
-      console.log("Confirm Accuracy:", data.confirm_accuracy || "(empty)");
-      console.log("Total photos:", photos.length);
-      console.log("Total documents:", documents.length);
-      
+      console.log("--- Form Submission Data ---");
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           console.log(key, 'File:', value.name);
@@ -111,6 +107,7 @@ const SubmitPropertyForm: React.FC = () => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
+      
         },
         body: formData,
       });
@@ -128,13 +125,13 @@ const SubmitPropertyForm: React.FC = () => {
           // Extract field errors
           const errors = [];
           if (errorData.property_photo) {
-            errors.push(`Photos: ${errorData.property_photo[0]}`);
+            errors.push(`Photo: ${errorData.property_photo[0]}`);
           }
           if (errorData.property_brief) {
             errors.push(`Description: ${errorData.property_brief[0]}`);
           }
           if (errorData.property_document) {
-            errors.push(`Documents: ${errorData.property_document[0]}`);
+            errors.push(`Document: ${errorData.property_document[0]}`);
           }
           if (errors.length > 0) {
             errorMessage = errors.join(', ');
@@ -157,18 +154,19 @@ const SubmitPropertyForm: React.FC = () => {
       // Show success message
       Swal.fire({
         title: "Success!",
-        text: `Your property has been submitted successfully with ${photos.length} photo(s) and ${documents.length} document(s).`,
+        text: "Your property has been submitted successfully. Our team will review it and contact you soon.",
         icon: "success",
         confirmButtonText: "OK",
       });
 
       // Reset form
       reset();
-      setPhotos([]);
-      setDocuments([]);
+      setFiles({ property_photo: null, property_document: null });
+      setPhotoPreview(null);
+      setDocumentPreview(null);
       
       // Show toast notification
-      toast.success(`Property submitted successfully!`);
+      toast.success('Property submitted successfully!');
 
     } catch (error: any) {
       console.error('Submission error:', error);
@@ -186,38 +184,70 @@ const SubmitPropertyForm: React.FC = () => {
     }
   };
 
-  // Handle file selection
-  const handleFileSelection = (files: FileList | null, type: 'photo' | 'document') => {
-    if (!files || files.length === 0) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, files: selectedFiles } = e.target;
 
-    const newFiles: UploadedFile[] = [];
-    
-    Array.from(files).forEach(file => {
-      const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      let preview: string | null = null;
+    if (name === 'uploadPhotos' && selectedFiles && selectedFiles.length > 0) {
+      const file = selectedFiles[0];
+      setFiles(prev => ({ ...prev, property_photo: file }));
       
-      // Create preview for images and videos
+      // Create preview for photo/video
       if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-        preview = URL.createObjectURL(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPhotoPreview(null);
       }
+    } else if (name === 'uploadDocument' && selectedFiles && selectedFiles.length > 0) {
+      const file = selectedFiles[0];
+      setFiles(prev => ({ ...prev, property_document: file })); 
       
-      newFiles.push({ id, file, preview });
-    });
-
-    if (type === 'photo') {
-      setPhotos(prev => [...prev, ...newFiles]);
-    } else {
-      setDocuments(prev => [...prev, ...newFiles]);
+   
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setDocumentPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setDocumentPreview(null);
+      }
     }
   };
 
-  // Handle file input change
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'document') => {
-    handleFileSelection(e.target.files, type);
-    e.target.value = ''; // Reset input to allow selecting same file again
+  const processDroppedFiles = (droppedFiles: FileList | null, targetName: 'uploadPhotos' | 'uploadDocument') => {
+    if (!droppedFiles || droppedFiles.length === 0) return;
+
+    if (targetName === 'uploadPhotos') {
+      const file = droppedFiles[0];
+      setFiles(prev => ({ ...prev, property_photo: file }));
+      
+      // Create preview
+      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } else if (targetName === 'uploadDocument') {
+      const file = droppedFiles[0];
+      setFiles(prev => ({ ...prev, property_document: file })); 
+      
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setDocumentPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
   };
 
-  // Handle drag and drop
   const handleDrag = (e: DragEvent, setActive: (active: boolean) => void) => {
     e.preventDefault();
     e.stopPropagation();
@@ -230,56 +260,22 @@ const SubmitPropertyForm: React.FC = () => {
     setActive(false);
   };
 
-  const handleDrop = (e: DragEvent, type: 'photo' | 'document', setActive: (active: boolean) => void) => {
+  const handleDrop = (e: DragEvent, targetName: 'uploadPhotos' | 'uploadDocument', setActive: (active: boolean) => void) => {
     e.preventDefault();
     e.stopPropagation();
     setActive(false);
-    handleFileSelection(e.dataTransfer.files, type);
+    const droppedFiles = e.dataTransfer.files;
+    processDroppedFiles(droppedFiles, targetName);
   };
 
-  // Remove a file
-  const removeFile = (id: string, type: 'photo' | 'document') => {
-    if (type === 'photo') {
-      setPhotos(prev => {
-        const fileToRemove = prev.find(f => f.id === id);
-        if (fileToRemove?.preview) {
-          URL.revokeObjectURL(fileToRemove.preview);
-        }
-        return prev.filter(f => f.id !== id);
-      });
-    } else {
-      setDocuments(prev => {
-        const fileToRemove = prev.find(f => f.id === id);
-        if (fileToRemove?.preview) {
-          URL.revokeObjectURL(fileToRemove.preview);
-        }
-        return prev.filter(f => f.id !== id);
-      });
-    }
+  const removePhoto = () => {
+    setFiles(prev => ({ ...prev, property_photo: null }));
+    setPhotoPreview(null);
   };
 
-  // Clear all files
-  const clearAllFiles = (type: 'photo' | 'document') => {
-    if (type === 'photo') {
-      photos.forEach(photo => {
-        if (photo.preview) URL.revokeObjectURL(photo.preview);
-      });
-      setPhotos([]);
-    } else {
-      documents.forEach(doc => {
-        if (doc.preview) URL.revokeObjectURL(doc.preview);
-      });
-      setDocuments([]);
-    }
-  };
-
-  // Format file size
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const removeDocument = () => {
+    setFiles(prev => ({ ...prev, property_document: null }));
+    setDocumentPreview(null);
   };
 
   return (
@@ -292,258 +288,239 @@ const SubmitPropertyForm: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <div className="flex flex-col">
-            <label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1">Name (Optional)</label>
+            <label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
-              {...register("name")} 
+              {...register("name", { required: "Name is required" })}
               type="text"
               id="name"
-              placeholder="e.g. Juyel (Optional)"
+              placeholder="e.g. Juyel"
               className="p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
             />
+            {errors.name && <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>}
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
+            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
-              {...register("email")} 
+              {...register("email", { 
+                required: "Email is required",
+                pattern: {
+                  value: /^\S+@\S+$/i,
+                  message: "Invalid email address"
+                }
+              })}
               type="email"
               id="email"
-              placeholder="e.g. ashik@example.com (Optional)"
+              placeholder="e.g. ashik@example.com"
               className="p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
             />
+            {errors.email && <span className="text-red-500 text-xs mt-1">{errors.email.message}</span>}
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
+            <label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-1">Phone</label>
             <input
-              {...register("phone")} 
+              {...register("phone", { 
+                required: "Phone number is required",
+                minLength: {
+                  value: 10,
+                  message: "Phone must be at least 10 digits"
+                }
+              })}
               type="tel"
               id="phone"
-              placeholder="e.g. 123456789 (Optional)"
+              placeholder="e.g. 123456789"
               className="p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
             />
+            {errors.phone && <span className="text-red-500 text-xs mt-1">{errors.phone.message}</span>}
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="property_name" className="text-sm font-medium text-gray-700 mb-1">Property Name (Optional)</label>
+            <label htmlFor="property_name" className="text-sm font-medium text-gray-700 mb-1">Property Name</label>
             <input
-              {...register("property_name")} 
+              {...register("property_name", { required: "Property Name is required" })}
               type="text"
               id="property_name"
-              placeholder="e.g. Seaclusion (Optional)"
+              placeholder="e.g. Seaclusion"
               className="p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
             />
+            {errors.property_name && <span className="text-red-500 text-xs mt-1">{errors.property_name.message}</span>}
           </div>
         </div>
 
-        {/* --- Multiple Property Photos/Videos Upload (Optional) --- */}
+
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
-              Property Photos/Videos (Optional)
-            </label>
-            {photos.length > 0 && (
-              <button
-                type="button"
-                onClick={() => clearAllFiles('photo')}
-                className="text-sm text-red-500 hover:text-red-700"
-              >
-                Clear All ({photos.length})
-              </button>
-            )}
-          </div>
+          <label className="text-sm font-medium text-gray-700 block mb-1">
+            Property Photo <span className="text-red-500">*</span> (Required)
+          </label>
           
-          {/* Photos Preview Grid */}
-          {photos.length > 0 && (
-            <div className="mb-4 p-4 border border-teal-200 rounded-lg bg-teal-50">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {photos.map((photo) => (
-                  <div key={photo.id} className="relative group">
-                    <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white">
-                      {photo.preview ? (
-                        photo.file.type.startsWith('image/') ? (
-                          <img 
-                            src={photo.preview} 
-                            alt="Preview" 
-                            className="w-full h-24 object-cover"
-                          />
-                        ) : photo.file.type.startsWith('video/') ? (
-                          <div className="relative w-full h-24 bg-gray-800 flex items-center justify-center">
-                            <video className="absolute inset-0 w-full h-full object-cover">
-                              <source src={photo.preview} type={photo.file.type} />
-                            </video>
-                            <div className="relative z-10 text-white">
-                              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                              </svg>
-                            </div>
-                          </div>
-                        ) : null
-                      ) : (
-                        <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeFile(photo.id, 'photo')}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="mt-1 text-xs text-gray-600 truncate">
-                      <div className="font-medium truncate">{photo.file.name}</div>
-                      <div className="text-gray-500">{formatFileSize(photo.file.size)}</div>
-                    </div>
-                  </div>
-                ))}
+          {/* Photo Preview */}
+          {photoPreview && (
+            <div className="mb-3 p-3 border border-teal-200 rounded-lg bg-teal-50">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-teal-700">Photo Preview:</span>
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="text-red-500 hover:text-red-700 text-sm"
+                >
+                  Remove
+                </button>
               </div>
-              <div className="mt-2 text-sm text-gray-600">
-                Total: {photos.length} file(s) selected
-              </div>
+              
+              {files.property_photo?.type.startsWith('image/') ? (
+                <img 
+                  src={photoPreview} 
+                  alt="Property preview" 
+                  className="w-48 h-32 object-cover rounded-md border"
+                />
+              ) : files.property_photo?.type.startsWith('video/') ? (
+                <video 
+                  src={photoPreview} 
+                  controls 
+                  className="w-48 h-32 object-cover rounded-md border"
+                />
+              ) : null}
+              
+              <p className="text-xs text-gray-600 mt-1">
+                {files.property_photo?.name} ({(files.property_photo?.size / 1024).toFixed(2)} KB)
+              </p>
             </div>
           )}
           
-          {/* Upload Area */}
           <label
             htmlFor="uploadPhotos"
             className={`flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg bg-gray-50 transition duration-150 cursor-pointer
                          ${isPhotoDragActive ? 'border-teal-500 bg-teal-50' : 'border-gray-300 hover:bg-gray-100'}`}
             onDragOver={(e) => handleDrag(e, setIsPhotoDragActive)}
             onDragLeave={(e) => handleDragLeave(e, setIsPhotoDragActive)}
-            onDrop={(e) => handleDrop(e, 'photo', setIsPhotoDragActive)}
+            onDrop={(e) => handleDrop(e, 'uploadPhotos', setIsPhotoDragActive)}
           >
             <img className='' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760832355/Component_17_ejh4v8.png" alt="" />
             <p className="text-sm text-gray-500 mt-2">
-              {photos.length > 0 ? 'Click to add more photos/videos' : 'Drop photos/videos here or click to upload (Optional)'}
+              {photoPreview ? 'Click to change photo' : 'Drop photo/video here or click to upload'}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Supports: JPG, PNG, GIF, MP4, AVI, etc.</p>
+            <p className="text-xs text-gray-500 mt-1">Supports: JPG, PNG, GIF, MP4, etc.</p>
             <input
               type="file"
               id="uploadPhotos"
-              multiple
-              onChange={(e) => handleFileChange(e, 'photo')}
+              name="uploadPhotos"
+              onChange={handleFileChange}
               accept="image/*,video/*"
               className="hidden"
             />
           </label>
+          <p className="text-xs text-gray-500 mt-1">
+            <span className="text-red-500">*</span> This field is required by the API
+          </p>
         </div>
 
-        {/* --- Multiple Property Documents Upload (Optional) --- */}
+      
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
-              Property Documents (Optional)
-            </label>
-            {documents.length > 0 && (
-              <button
-                type="button"
-                onClick={() => clearAllFiles('document')}
-                className="text-sm text-red-500 hover:text-red-700"
-              >
-                Clear All ({documents.length})
-              </button>
-            )}
-          </div>
+          <label className="text-sm font-medium text-gray-700 block mb-1">
+            Upload Property Document (Optional)
+          </label>
           
-          {/* Documents Preview List */}
-          {documents.length > 0 && (
-            <div className="mb-4 p-4 border border-teal-200 rounded-lg bg-teal-50">
-              <div className="space-y-2">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 group">
-                    <div className="flex items-center gap-3">
-                      {doc.preview ? (
-                        <img 
-                          src={doc.preview} 
-                          alt="Document preview" 
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-medium text-sm truncate max-w-xs">{doc.file.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {formatFileSize(doc.file.size)} • {doc.file.type.split('/')[1]?.toUpperCase() || 'File'}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(doc.id, 'document')}
-                      className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+          {/* Document Preview */}
+          {documentPreview && (
+            <div className="mb-3 p-3 border border-teal-200 rounded-lg bg-teal-50">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-teal-700">Document Preview:</span>
+                <button
+                  type="button"
+                  onClick={removeDocument}
+                  className="text-red-500 hover:text-red-700 text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+              
+              {files.property_document?.type.startsWith('image/') ? (
+                <img 
+                  src={documentPreview} 
+                  alt="Document preview" 
+                  className="w-48 h-32 object-cover rounded-md border"
+                />
+              ) : (
+                <div className="flex items-center gap-2 p-2 bg-white rounded border">
+                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium">{files.property_document?.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {(files.property_document?.size / 1024).toFixed(2)} KB • {files.property_document?.type}
+                    </p>
                   </div>
-                ))}
-              </div>
-              <div className="mt-2 text-sm text-gray-600">
-                Total: {documents.length} document(s) selected
-              </div>
+                </div>
+              )}
             </div>
           )}
           
-          {/* Upload Area */}
           <label
-            htmlFor="uploadDocuments"
+            htmlFor="uploadDocument"
             className={`flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg bg-gray-50 transition duration-150 cursor-pointer
                          ${isDocumentDragActive ? 'border-teal-500 bg-teal-50' : 'border-gray-300 hover:bg-gray-100'}`}
             onDragOver={(e) => handleDrag(e, setIsDocumentDragActive)}
             onDragLeave={(e) => handleDragLeave(e, setIsDocumentDragActive)}
-            onDrop={(e) => handleDrop(e, 'document', setIsDocumentDragActive)}
+            onDrop={(e) => handleDrop(e, 'uploadDocument', setIsDocumentDragActive)}
           >
             <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760832355/Component_17_ejh4v8.png" alt="" />
             <p className="text-sm text-gray-500 mt-2">
-              {documents.length > 0 ? 'Click to add more documents' : 'Drop any files here or click to upload (Optional)'}
+              {documentPreview ? 'Click to change document' : 'Drop any file here or click to upload'}
             </p>
             <p className="text-xs text-gray-500 mt-1">Supports: PDF, DOC, DOCX, Images, Videos, etc.</p>
             <input
               type="file"
-              id="uploadDocuments"
-              multiple
-              onChange={(e) => handleFileChange(e, 'document')}
+              id="uploadDocument"
+              name="uploadDocument"
+              onChange={handleFileChange}
+            
               className="hidden"
             />
           </label>
+          <p className="text-xs text-gray-500 mt-1">
+            Will be saved as <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">property_document</code> in API
+          </p>
         </div>
 
-        {/* Property Brief Textarea (Optional) */}
+      
         <div className="mb-6">
           <label htmlFor="property_brief" className="text-sm font-medium text-gray-700 block mb-1">
-            Property Brief Description (Optional)
+            Property Brief Description <span className="text-red-500">*</span> (Required)
           </label>
           <textarea
-            {...register("property_brief")} 
+            {...register("property_brief", { 
+              required: "Property brief description is required",
+              minLength: {
+                value: 10,
+                message: "Please provide at least 10 characters"
+              }
+            })}
             id="property_brief"
             rows={4}
-            placeholder="Describe your property (Optional)..."
+            placeholder="Describe your property (e.g., location, features, amenities, etc.)..."
             className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
           ></textarea>
+          {errors.property_brief && <span className="text-red-500 text-xs mt-1">{errors.property_brief.message}</span>}
+          <p className="text-xs text-gray-500 mt-1">
+            <span className="text-red-500">*</span> This field is required by the API as "property_brief"
+          </p>
         </div>
 
-        {/* Checkbox (Optional) */}
+        {/* Checkbox and Submit Button */}
         <div className="flex flex-col space-y-4">
           <label className="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
             <input
-              {...register("confirm_accuracy")}
+              {...register("confirm_accuracy", { 
+                required: "You must confirm accuracy to submit" 
+              })}
               type="checkbox"
               className="form-checkbox h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
             />
-            <span className="ml-2">I confirm the information is accurate. (Optional)</span>
+            <span className="ml-2">I confirm the information is accurate.</span>
           </label>
+          {errors.confirm_accuracy && <span className="text-red-500 text-xs mt-1">{errors.confirm_accuracy.message}</span>}
 
           <button
             type="submit"
