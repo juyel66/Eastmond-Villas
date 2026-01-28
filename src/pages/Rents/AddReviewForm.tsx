@@ -336,6 +336,66 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
             )}
           </div>
 
+
+      {/* <div className='md:flex  gap-5'>
+              <div className="mb-6 flex-1">
+            <label
+              htmlFor="reviewText"
+              className="block text-base font-semibold text-gray-800 mb-1"
+            >
+              Location <span className="text-red-500">*</span>
+            </label>
+
+            <input
+              {...register('reviewText', {
+                required: 'Review is required',
+                minLength: {
+                  value: 20,
+                  message: 'Minimum 20 characters required',
+                },
+              })}
+              id="reviewText"
+              rows={5}
+              placeholder="Write your review"
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
+            />
+            {errors.reviewText && (
+              <span className="text-red-500 text-xs mt-1 block">
+                {errors.reviewText.message}
+              </span>
+            )}
+          </div >
+          <div className="mb-6 flex-1">
+            <label
+              htmlFor="reviewText"
+              className="block text-base font-semibold text-gray-800 mb-1"
+            >
+              Profession <span className="text-red-500">*</span>
+            </label>
+            <input
+              {...register('reviewText', {
+                required: 'Review is required',
+                minLength: {
+                  value: 20,
+                  message: 'Minimum 20 characters required',
+                },
+              })}
+              id="reviewText"
+              rows={5}
+              placeholder="Write your review"
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
+            />
+            {errors.reviewText && (
+              <span className="text-red-500 text-xs mt-1 block">
+                {errors.reviewText.message}
+              </span>
+            )}
+          </div>
+      </div> */}
+
+          
+        
+
           {/* File Upload */}
           <div className="mb-6">
             <label className="block text-base font-semibold text-gray-800 mb-1">
