@@ -319,7 +319,7 @@ export default function Agent() {
       <div className="flex justify-between items-center mt-5">
         <div>
           <h1 className="text-3xl font-semibold">Agent</h1>
-          <p className="text-gray-500">Manage agent and admin accounts</p>
+          <p className="text-gray-500">Manage agent and admin accounts.</p>
         </div>
 
         <button

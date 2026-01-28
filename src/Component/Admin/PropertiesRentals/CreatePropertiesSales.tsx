@@ -1259,17 +1259,7 @@ const CreatePropertySales = ({
               placeholder="Enter booking TBC details"
             />
           </div>
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Calendar Accuracy
-            </label>
-            <input
-              name="calendar_accuracy"
-              {...register('calendar_accuracy')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter booking TBC details"
-            />
-          </div>
+        
 
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">

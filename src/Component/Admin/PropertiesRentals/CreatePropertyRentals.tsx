@@ -1455,6 +1455,21 @@ const CreatePropertyRentals = ({
           />
         </div>
 
+
+         <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+             Calendar Accuracy
+            </label>
+            <input
+              name="calendar_accuracy"
+              type="text"
+              step="0.01"
+              {...register('calendar_accuracy')}
+              placeholder="add calendar accuracy"
+              className=" border w-full rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+
         {/* Signature Distinctions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1706,7 +1721,7 @@ const CreatePropertyRentals = ({
             />
           </div>
 
-          <div className="col-span-12 sm:col-span-4">
+          <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Security Deposit
             </label>
@@ -1719,7 +1734,7 @@ const CreatePropertyRentals = ({
             />
           </div>
 
-          <div className="col-span-12 sm:col-span-4">
+          {/* <div className="col-span-12 sm:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Damage Deposit
             </label>
@@ -1730,9 +1745,9 @@ const CreatePropertyRentals = ({
               placeholder="10000.00"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
-          </div>
+          </div> */}
 
-          <div className="col-span-12 sm:col-span-4">
+          <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Commission Rate (%)
             </label>
@@ -1756,23 +1771,11 @@ const CreatePropertyRentals = ({
               type="text"
               step="0.01"
               {...register('tbc_by')}
-              placeholder="add booking details"
+              placeholder="Add booking details"
               className=" border w-full rounded-lg p-3 bg-gray-50"
             />
           </div>
-          <div className="col-span-12 ">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-             Calendar Accuracy
-            </label>
-            <input
-              name="calendar_accuracy"
-              type="text"
-              step="0.01"
-              {...register('calendar_accuracy')}
-              placeholder="add calendar accuracy"
-              className=" border w-full rounded-lg p-3 bg-gray-50"
-            />
-          </div>
+         
 
 
         </div>

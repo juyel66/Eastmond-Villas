@@ -963,7 +963,7 @@ const Analytics = () => {
   const PropertiesByTypeChart = () => (
     <div className="bg-white border lg:mt-0 md:mt-0 mt-10 border-gray-200 rounded-xl shadow-sm p-6 h-full">
       <h2 className="text-xl font-semibold text-gray-800">Properties by Type</h2>
-      <p className="text-gray-500 text-sm mb-4">Distribution across Sales vs Rentals</p>
+      <p className="text-gray-500 text-sm mb-4">Distribution across Sales vs Rentals.</p>
 
       {/* show small loader or error for properties fetch if needed */}
       {(!apiData || (Array.isArray(apiData.properties) && apiData.properties.length === 0)) && propsLoading ? (
@@ -1048,7 +1048,7 @@ const Analytics = () => {
         <div className="flex justify-between items-center mt-5">
           <div>
             <h1 className="text-3xl font-semibold">Analytics Dashboard</h1>
-            <p className="text-gray-500">Track Performance, Insights, and Property Metrics</p>
+            <p className="text-gray-500">Track Performance, Insights, and Property Metrics.</p>
           </div>
 
           <div className="lg:flex items-center gap-4 relative">

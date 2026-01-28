@@ -773,21 +773,21 @@ Description: ${property.description.substring(0, 200)}...
               {/* Guests / beds / baths / pools */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-1">
-                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/user-fill_tqy1wd.png" alt="" />
+                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/user-fill_tqy1wd.png" alt="" />
                   <span>
                     {property.add_guest ?? 0} Guests
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                 <img className='w-6 h-6' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
+                 <img className='w-5 h-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
                   <span>{property.bedrooms ?? 0} Beds</span>
                 </div>
                 <div className="flex items-center gap-1">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
+                 <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
                   <span>{property.bathrooms ?? 0} Baths</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
+                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
                   <span>{property.pool ?? 0} Pools</span>
                 </div>
               </div>
@@ -802,8 +802,8 @@ Description: ${property.description.substring(0, 200)}...
                   />
                   <span>
                     {property.commission_rate
-                      ? `${property.commission_rate}% Commission offered to agent`
-                      : 'Commission rate not set'}
+                      ? `${property.commission_rate}% Commission Offered To Agent`
+                      : 'Commission Rate Not Set'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -812,26 +812,37 @@ Description: ${property.description.substring(0, 200)}...
                     alt="Damage Deposit"
                     className="w-5 h-5"
                   />
-                  <span>
+                  {/* <span>
                     {property.damage_deposit
                       ? `USD$ ${formatMoney(property.damage_deposit)} Damage Deposit`
                       : 'No Damage Deposit'}
+                  </span> */}
+
+
+
+                     <span>
+                    {property.damage_deposit
+                      ? `USD$ ${formatMoney(property.security_deposit)} Security Deposit`
+                      : 'No Damage Deposit'}
                   </span>
+
+
+
                 </div>
               </div>
 
               {/* Booking status + calendar accuracy */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
+                 <img className='h-5 w-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
                   <span>Booking TBC by Owner</span>
                 </div>
                 <div className="flex items-center gap-2">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />
+                 <img className='h-5 w-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />
                   <span>
                     {property.calendar_accuracy 
-                      ? `${property.calendar_accuracy}% Calendar accuracy`
-                      : 'Calendar accuracy not set'}
+                      ? `${property.calendar_accuracy}% Calendar Accuracy`
+                      : 'Calendar Accuracy Not Set'}
                   </span>
                 </div>
               </div>

@@ -193,7 +193,7 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
           {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> */}
           <div className="">
             <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-[0_5px_18px_-12px_rgba(0,0,0,0.35)]">
-              {/* <p className="text-sm text-slate-500 mb-1">Security Deposit</p> */}
+              <p className="text-sm text-slate-500 mb-1">Security Deposit</p>
               <p className="text-lg font-semibold text-slate-900">
                 {security_deposit !== undefined && security_deposit !== null
                   ? formatCurrency(toNumber(security_deposit))

@@ -311,7 +311,7 @@ const FAQs: React.FC = () => {
               Frequently Asked Questions
             </h1>
             <p className="text-gray-600 text-sm">
-              Find answers to common questions about the agent portal
+              Find answers to common questions about the agent portal.
             </p>
           </div>
 

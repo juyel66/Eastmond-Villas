@@ -8,11 +8,11 @@ interface BeforePageProps {
 
 const BeforePage: React.FC<BeforePageProps> = ({ onStartClick }) => {
   const requirements = [
-    "Proof of Ownership.",
-    "Proof of Insurance.",
-    "High Resolution Professional Photos.",
-    "Access To Availability Calendar (API/ICAL).",
-    "Other Pertinent Rental Information (rates & policies).",
+    "Proof of Ownership",
+    "Proof of Insurance",
+    "High Resolution Professional Photos",
+    "Access To Availability Calendar (API/ICAL)",
+    "Other Pertinent Rental Information (rates & policies)",
   ];
 
   return (

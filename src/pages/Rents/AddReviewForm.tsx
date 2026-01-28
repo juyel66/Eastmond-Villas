@@ -270,13 +270,16 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
           <span className="">Required fields are marked.</span>
         </p>
 
-        <p className="mb-4 text-sm font-medium text-red-500">
+        {
+          !isAuthenticated &&
+          <p className="mb-4 text-sm font-medium text-red-500">
           Please{' '}
           <a href="/login" className="text-teal-600 hover:underline">
             login
           </a>{' '}
           to write review!
         </p>
+        }
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Rating */}

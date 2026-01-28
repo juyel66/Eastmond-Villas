@@ -509,7 +509,7 @@ const AdminAnnouncements = () => {
         <div className="flex justify-between mb-8">
           <header>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Announcements</h1>
-            <p className="text-gray-600 text-sm">Stay informed with the latest company updates and news</p>
+            <p className="text-gray-600 text-sm">Stay informed with the latest company updates and news.</p>
           </header>
 
           <button onClick={() => setIsModalOpen(true)} className="flex hidden items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow">

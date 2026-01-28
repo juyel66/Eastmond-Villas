@@ -1708,7 +1708,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
-          <div className="col-span-12 sm:col-span-4">
+          <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Security Deposit
             </label>
@@ -1721,7 +1721,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
-          <div className="col-span-12 sm:col-span-4">
+          {/* <div className="col-span-12 sm:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Damage Deposit
             </label>
@@ -1732,9 +1732,9 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
               placeholder="10000.00"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
-          </div>
+          </div> */}
 
-          <div className="col-span-12 sm:col-span-4">
+          <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Commission Rate (%)
             </label>

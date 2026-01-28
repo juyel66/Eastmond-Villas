@@ -679,15 +679,15 @@ Description: ${property.description.substring(0, 200)}...
               {/* Guests / beds / baths / pools */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-1">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
+                 <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
                   <span>{property.bedrooms ?? 0} Beds</span>
                 </div>
                 <div className="flex items-center gap-1">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
+                 <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
                   <span>{property.bathrooms ?? 0} Baths</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
+                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
                   <span>{property.pool ?? 0} Pools</span>
                 </div>
               </div>
@@ -695,14 +695,14 @@ Description: ${property.description.substring(0, 200)}...
               {/* Commission & Damage deposit */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
-                  <img
+                  <img 
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920561/discount-percent-fill_fc6s5e.png"
                     alt="Commission"
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                   />
                   <span>
                     {property.commission_rate
-                      ? `${property.commission_rate}% Commission offered to agent`
+                      ? `${property.commission_rate}% Commission Offered To Agent`
                       : 'Commission rate not set'}
                   </span>
                 </div>
@@ -711,7 +711,7 @@ Description: ${property.description.substring(0, 200)}...
               {/* Booking status + calendar accuracy */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
+                 <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
                   <span>Booking TBC by {property.tbc_by}</span>
                 </div>
               </div>
