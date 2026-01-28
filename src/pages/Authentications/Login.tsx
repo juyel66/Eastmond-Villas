@@ -331,7 +331,7 @@ const Login: React.FC = () => {
               User Login
             </h2>
             <p className="text-sm text-gray-500">
-              Secure access to your personal Eastmond Villas account
+              Secure access to your personal Eastmond Villas account.
             </p>
           </div>
 
@@ -442,7 +442,7 @@ const Login: React.FC = () => {
 
           {/* Note */}
           <p className="mt-4 text-center text-xs text-gray-500">
-            Register for authorised access to the world of Eastmond Villas
+            Register for authorised access to the world of Eastmond Villas.
           </p>
         </div>
       </div>

@@ -537,7 +537,7 @@ const Register: React.FC = () => {
         <div className="bg-white p-8 rounded-b-xl shadow-lg">
           <div className="mb-6 p-0 rounded">
             <h2 className="text-xl font-semibold text-gray-800 mb-1">User Registration</h2>
-            <p className="text-sm text-gray-500">Create your new account to access the dashboard</p>
+            <p className="text-sm text-gray-500">Create your new account to access the dashboard.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>

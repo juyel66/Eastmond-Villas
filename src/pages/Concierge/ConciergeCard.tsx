@@ -15,9 +15,9 @@ const LUXURY_CARD_DATA = [
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833071/Container_wsqj7b.png',
     // New data for the Feature List Card:
     features: [ 
-        'Private aviation & yacht/catamaran coordination',
-        'Villa pre-stocking (rare vintages & bespoke pantry curation)',
-        'Discreet relocation & logistics mastery',
+        'Private aviation & yacht/catamaran coordination.',
+        'Villa pre-stocking (rare vintages & bespoke pantry curation).',
+        'Discreet relocation & logistics mastery.',
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
     featureIconUrl: clock
@@ -30,9 +30,9 @@ const LUXURY_CARD_DATA = [
     description: 'Unlock experiences that are simply beyond ordinary reach.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833740/Frame_1000004285_fehjjw.png',
         features: [ 
-        'Private aviation & yacht/catamaran coordination',
-        'Villa pre-stocking (rare vintages & bespoke pantry curation)',
-        'Discreet relocation & logistics mastery',
+        'Private aviation & yacht/catamaran coordination.',
+        'Villa pre-stocking (rare vintages & bespoke pantry curation).',
+        'Discreet relocation & logistics mastery.',
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
     featureIconUrl: clock
@@ -45,9 +45,9 @@ const LUXURY_CARD_DATA = [
     description: 'Guaranteed privacy and impeccable professional oversight.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833778/Container_1_unumym.png',
         features: [ 
-        'Private aviation & yacht/catamaran coordination',
-        'Villa pre-stocking (rare vintages & bespoke pantry curation)',
-        'Discreet relocation & logistics mastery',
+        'Private aviation & yacht/catamaran coordination.',
+        'Villa pre-stocking (rare vintages & bespoke pantry curation).',
+        'Discreet relocation & logistics mastery.',
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
     featureIconUrl: clock
@@ -60,8 +60,8 @@ const LUXURY_CARD_DATA = [
     description: 'Customized luxury crafted from your unique vision.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833829/Container_2_cdh1jr.png',
         features: [ 
-        'Private aviation & yacht/catamaran coordination',
-        'Villa pre-stocking (rare vintages & bespoke pantry curation)',
+        'Private aviation & yacht/catamaran coordination.',
+        'Villa pre-stocking (rare vintages & bespoke pantry curation).',
       
     ],
     // The icon you requested to use for the "options" (nicher option gula te)
@@ -186,10 +186,10 @@ const LuxuryCardGrid = () => {
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-4xl font-extrabold text-white leading-tight mb-4">
-            We Do Not Serve – We Enthrall
+            We Do Not Serve – We Enthrall.
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 font-medium">
-            Redefining the limits of luxury concierge
+            Redefining the limits of luxury concierge.
           </p>
         </div>
       </section>
@@ -197,7 +197,7 @@ const LuxuryCardGrid = () => {
       <section className="bg-white mb-[920px] py-20 sm:py-24 lg:py-32 flex items-center justify-center">
         <div className="mx-auto   text-center">
           <h2 className="text-3xl sm:text-5xl lg:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-            Begin the Unwritten Journey
+            Begin the Unwritten Journey.
           </h2>
           <p className="text-lg sm:text-xl text-gray-600 font-medium mb-10">
             Every detail perfected before you even think to ask.

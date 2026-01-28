@@ -10,7 +10,7 @@ const StorySection: React.FC = () => {
           <div className="lg:grid lg:grid-cols-3 lg:gap-16 xl:gap-24 items-center">
             <div className="lg:pr-8 mb-12 lg:mb-0 lg:col-span-2">
               <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
-                Our Story – Born from a Vision
+                Our Story – Born from a Vision.
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
                 Eastmond Villas began as the dream of a visionary accountant with a Master's in
@@ -50,7 +50,7 @@ const StorySection: React.FC = () => {
 
             <div className="lg:col-span-2 lg:pl-8">
               <h2 className="ext-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
-                The Essence of Eastmond Villas
+                The Essence of Eastmond Villas.
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
                 We are more than a real estate company — we are creators of exceptional
@@ -69,7 +69,7 @@ const StorySection: React.FC = () => {
           <div className="lg:grid lg:grid-cols-3 lg:gap-16 xl:gap-24 items-center">
             <div className="lg:pr-8 mb-12 lg:mb-0 lg:col-span-2">
               <h2 className="ext-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
-                Architectural Elegance & Ambience
+                Architectural Elegance & Ambience.
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
                 Every Eastmond villa is a masterpiece — curated interiors, bespoke art, and tranquil outdoor spaces merge to form an oasis of beauty. With turquoise horizons and lush gardens, our properties are sanctuaries where time slows, and peace unfolds effortlessly.
@@ -106,7 +106,7 @@ const StorySection: React.FC = () => {
 
             <div className="lg:col-span-2 lg:pl-8">
               <h2 className="ext-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
-                Crafted Experiences & Personalized Service
+                Crafted Experiences & Personalized Service.
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
                 From the moment you arrive, our dedicated team curates every detail — private chefs, bespoke itineraries, luxury transfers, and local adventures. Every stay is customized, ensuring your holiday is effortless, unforgettable, and uniquely yours.
@@ -122,7 +122,7 @@ const StorySection: React.FC = () => {
           <div className="lg:grid lg:grid-cols-3 lg:gap-16 xl:gap-24 items-center">
             <div className="lg:pr-8 mb-12 lg:mb-0 lg:col-span-2">
               <h2 className="ext-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
-                Discover Barbados – Island of Inspiration
+                Discover Barbados – Island of Inspiration.
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
                 Beyond our villas lies the charm of Barbados — sun-kissed beaches, vibrant culture, and world-class cuisine. Explore coral reefs, dance to calypso rhythms, and indulge in the island’s authentic warmth. Eastmond Villas invites you to experience Barbados like never before.
@@ -159,7 +159,7 @@ const StorySection: React.FC = () => {
 
             <div className="lg:col-span-2 lg:pl-8">
               <h2 className="ext-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
-                Where Luxury Meets Enchantment
+                Where Luxury Meets Enchantment.
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
                 Eastmond Villas is not just a stay — it’s a feeling. A harmony of elegance and emotion. A place where hospitality becomes art, and memories are handcrafted. Welcome to the realm where every moment whispers luxury, and every experience lingers in your heart.

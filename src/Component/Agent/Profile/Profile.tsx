@@ -733,7 +733,7 @@ const Profile = () => {
                   Personal Information
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Update your personal details and contact information
+                  Update your personal details and contact information.
                 </p>
               </div>
               <button

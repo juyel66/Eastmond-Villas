@@ -28,7 +28,7 @@ const EstateExperience = () => {
             
             
             <h2 className="text-3xl md:text-5xl font-extrabold font-serif leading-tight mb-6 sm:whitespace-nowrap md:mb-8">
-              Where Estate Expertise Meets <br /> Aesthetic Excellence
+              Where Estate Expertise Meets <br /> Aesthetic Excellence.
             </h2>
 
        

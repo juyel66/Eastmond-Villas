@@ -267,7 +267,7 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
       <div className=" mx-auto  mt-8 p-8 bg-white  rounded-lg  ">
         <p className="text-gray-500 text-sm mt-2 mb-4">
           Your email address will not be published.{' '}
-          <span className="">Required fields are marked</span>
+          <span className="">Required fields are marked.</span>
         </p>
 
         <p className="mb-4 text-sm font-medium text-red-500">

@@ -175,7 +175,7 @@ const testimonialData = [
         name: "Sarah Johnson",
         location: "UK",
         title: "CEO, TechNova",
-        text: "Great service and amazing properties. I always feel like I'm getting the best deals and the team is always there to help",
+        text: "Great service and amazing properties. I always feel like I'm getting the best deals and the team is always there to help.",
         rating: 5.0,
         image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760389339/Ellipse_1_ttjbzh.png"
     },
@@ -184,7 +184,7 @@ const testimonialData = [
         name: "Joanna Lynch",
         location: "Singapore",
         title: "Venture Capitalist",
-        text: "EV is always super responsive, extremely professional and experienced enough to ensure  ",
+        text: "EV is always super responsive, extremely professional and experienced enough to ensure.  ",
         rating: 4.8,
         image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760389418/Ellipse_1_3_jw2vgn.png"
     },

@@ -676,7 +676,7 @@ Description: ${property.description.substring(0, 200)}...
       <div className="">
         {/* Back */}
         <Link
-          to="/dashboard/agent-properties-sales"
+          to="/dashboard/agent-properties-rentals"
           className="flex w-15 items-center text-gray-500 hover:text-gray-800 transition-colors mb-4"
           aria-label="Back to Agent List"
         >
@@ -779,7 +779,7 @@ Description: ${property.description.substring(0, 200)}...
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                 <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
+                 <img className='w-6 h-6' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
                   <span>{property.bedrooms ?? 0} Beds</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -798,7 +798,7 @@ Description: ${property.description.substring(0, 200)}...
                   <img
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920561/discount-percent-fill_fc6s5e.png"
                     alt="Commission"
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                   />
                   <span>
                     {property.commission_rate
@@ -810,11 +810,11 @@ Description: ${property.description.substring(0, 200)}...
                   <img
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920087/Icon_35_dskkg0.png"
                     alt="Damage Deposit"
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                   />
                   <span>
                     {property.damage_deposit
-                      ? `US$ ${formatMoney(property.damage_deposit)} Damage Deposit`
+                      ? `USD$ ${formatMoney(property.damage_deposit)} Damage Deposit`
                       : 'No Damage Deposit'}
                   </span>
                 </div>

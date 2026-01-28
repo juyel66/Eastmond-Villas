@@ -31,13 +31,13 @@ const PropertyManagementSection = () => {
       >
        <div className="container mx-auto py-5 p-2 ">
          <FeatureSection 
-          title="Tailored, White-Glove Service"
+          title="Tailored, White-Glove Service."
           description="Every villa is distinct, tailored to your needs. Our management plans align with your vision—be it a private getaway, luxury rental, or both."
           bullets={[
-            "Tailored, White-Glove Service",
-            "Elite Maintenance & Upkeep",
-            "Experience the Eastmond Villas Difference",
-            "Exclusive Owner Benefits",
+            "Tailored, White-Glove Service.",
+            "Elite Maintenance & Upkeep.",
+            "Experience the Eastmond Villas Difference.",
+            "Exclusive Owner Benefits.",
           ]}
           imageUrl="/images/managementFeatureImage1.webp"
           imageAlt="Poolside dining at sunset"
@@ -92,7 +92,7 @@ const PropertyManagementSection = () => {
           onCtaClick={() => {}}
         />
         <FeatureSection
-          title="Exclusive Owner Benefits"
+          title="Exclusive Owner Benefits."
           description="As part of the Eastmond Villas family, you gain access to:"
           bullets={[
             "Priority partnerships with luxury service providers (interior designers, chefs, chauffeurs).",
@@ -100,7 +100,7 @@ const PropertyManagementSection = () => {
             "Invitations to exclusive owner events and networking opportunities.",
           ]}
           imageUrl="/images/managementFeatureImage5.webp"
-          imageAlt="Exclusive Owner Benefits"
+          imageAlt="Exclusive Owner Benefits."
           imageSide="right"
           onCtaClick={() => {}}
         />

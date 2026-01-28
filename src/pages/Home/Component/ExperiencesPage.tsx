@@ -40,7 +40,7 @@ const ExperiencesPage = () => {
           exploring hidden gems. */}
 
 
-           Our concierge team craft
+           ...Our concierge team crafts...
         </p>
 
         {/* Button */}
