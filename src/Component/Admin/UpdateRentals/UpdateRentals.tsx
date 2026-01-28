@@ -334,6 +334,8 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
       damage_deposit: propertyData.damage_deposit || '',
       commission_rate: propertyData.commission_rate || '',
       tbc_by: propertyData.tbc_by || '',
+      concierge_description: propertyData.concierge_description || '',
+      check_in_check_out_policy: propertyData.check_in_check_out_policy || '',
       youtube_link: propertyData.youtube_link || '',
       calendar_accuracy: propertyData.calendar_accuracy || '',
     };
@@ -822,6 +824,12 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
           : '',
         tbc_by: values.tbc_by
           ? String(values.tbc_by)
+          : '',
+        concierge_description: values.concierge_description
+          ? String(values.concierge_description)
+          : '',
+        check_in_check_out_policy: values.check_in_check_out_policy
+          ? String(values.check_in_check_out_policy)
           : '',
         concierge_services: conciergeRows.filter(Boolean),
         youtube_link: values.youtube_link || '',
@@ -1708,6 +1716,24 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
+
+
+          <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Check In / Check Out Description
+            </label>
+            <input
+              name="check_in_check_out_policy"
+              type="text"
+              step="0.01"
+              {...register('check_in_check_out_policy')}
+              placeholder="Add Check In / Check Out Description"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+
+          
+
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Security Deposit
@@ -1747,19 +1773,42 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
+
+
           <div className="col-span-12 ">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Booking TBC
+             Booking Approval Process
             </label>
             <input
               name="tbc_by"
               type="text"
               step="0.01"
               {...register('tbc_by')}
-              placeholder="add booking TBC information"
+              placeholder="Add Booking Details"
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
+
+
+          <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Concierge Description
+            </label>
+            <input
+              name="concierge_description"
+              type="text"
+              step="0.01"
+              {...register('concierge_description')}
+              placeholder="Add Concierge Description"
+              className="w-full border rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+          
+
+
+          
+
+
         </div>
 
         {/* Concierge services */}
@@ -2034,7 +2083,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Updating Property ID: {propertyId}...
+                Updating Property...
               </>
             ) : (
               <>
