@@ -47,7 +47,7 @@ const LuxuryFeaturesGrid = () => {
           Luxury Made Effortless
         </h2>
         <p className="text-gray-500">
-          Carefully selected for Elegance, Comfort, And world-class service.
+          Carefully selected for Elegance, Comfort, And World-Class Service.
         </p>
       </div>
 
