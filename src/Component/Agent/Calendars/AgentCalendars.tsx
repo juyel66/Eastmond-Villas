@@ -297,9 +297,7 @@ export default function Calendars() {
           <h2 className="text-xl font-semibold text-gray-800">
             Agent Calendars
           </h2>
-          <p className="text-sm text-gray-500">
-            Booked = red, Available = green (view-only)
-          </p>
+         
           <p className="text-xs text-gray-400 mt-1">
             Showing: {monthNames()[selectedMonth - 1]} {selectedYear}
           </p>
@@ -395,7 +393,7 @@ export default function Calendars() {
           {properties.map((prop) => (
             <div
               key={prop.id}
-              className="flex items-start gap-4 py-2 px-2 rounded-md hover:bg-gray-50"
+              className="flex items-start gap-4 py-2 px-2 rounded-md "
             >
               {/* Property Info - Fixed width */}
               <div className="w-56 min-w-[12rem] pr-2">
@@ -448,10 +446,10 @@ export default function Calendars() {
                           }}
                         >
                           <div
-                            className={`w-full h-full flex items-center justify-center rounded-lg border text-sm font-semibold ${
+                            className={`w-full h-full flex items-center justify-center rounded-lg  text-sm font-semibold ${
                               booked
-                                ? "bg-red-50 text-red-600 border-red-200"
-                                : "bg-green-50 text-green-700 border-green-200"
+                                ? " text-gray-300 line-through border-red-200"
+                                : " text-gray-800  "
                             }`}
                             style={{ padding: 6 }}
                           >
