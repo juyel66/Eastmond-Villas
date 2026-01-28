@@ -2076,9 +2076,7 @@ const toggleStaffView = () => {
           {/* Rules & Check-in/out & Staff: render only for rent-type */}
           {isRentType && (
             <>
-
-
-                          <h3 className="text-2xl font-bold mt-10 mb-4">
+              <h3 className="text-2xl font-bold mt-10 mb-4">
                 Check-In / Out Policy & Information
               </h3>
               {check_in_out_time.check_in ? (
@@ -2094,9 +2092,13 @@ const toggleStaffView = () => {
               {check_in_out_time.description ? (
                 <p>{check_in_out_time.description}</p>
               ) : null}
-
-
-
+              
+              {/* Check-in/out policy description field */}
+              {villa.check_in_check_out_policy && (
+                <div className="mt-3">
+                  <p className="text-gray-700">{villa.check_in_check_out_policy}</p>
+                </div>
+              )}
 
               <h3 className="text-2xl font-bold mt-10 mb-4">
                 Rules & Etiquette
@@ -2107,30 +2109,24 @@ const toggleStaffView = () => {
                 ))}
               </ul>
 
-<h3 className="text-2xl font-bold mt-10 mb-4">
-  Staff Complement
-</h3>
+              <h3 className="text-2xl font-bold mt-10 mb-4">
+                Staff Complement
+              </h3>
 
-<ul>
-  {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
-    <StaffItem key={i} name={s.name} details={s.details} />
-  ))}
-</ul>
+              <ul>
+                {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
+                  <StaffItem key={i} name={s.name} details={s.details} />
+                ))}
+              </ul>
 
-{staffArray.length > 2 && (
-  <button
-    onClick={toggleStaffView}
-    className="mt-2 text-sm text-teal-600 "
-  >
-    {showAllStaff ? "Show Less" : "Show More"}
-  </button>
-)}
-
-
-
-
-
-
+              {staffArray.length > 2 && (
+                <button
+                  onClick={toggleStaffView}
+                  className="mt-2 text-sm text-teal-600 "
+                >
+                  {showAllStaff ? "Show Less" : "Show More"}
+                </button>
+              )}
             </>
           )}
 
@@ -2145,12 +2141,20 @@ const toggleStaffView = () => {
                 Concierge Service
               </h3>
 
-              {/* dynamic concierge items only */}
+                {villa.concierge_description && (
+                <div className=" mb-4">
+                  <p className="text-gray-700">{villa.concierge_description}</p>
+                </div>
+              )}
+
               <ul>
                 {concierge_service.map((item, i) => (
                   <AmenityItem key={i} name={item} />
                 ))}
               </ul>
+              
+              
+            
             </>
           )}
 
