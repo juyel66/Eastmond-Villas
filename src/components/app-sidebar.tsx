@@ -11,9 +11,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/features/Auth/authSlice";
 import { useCallback } from "react";
 
-/* ===========================
-   SIDEBAR MENUS
-=========================== */
+
 
 const ADMIN = [
   { title: "Dashboard", url: "/dashboard/admin-dashboard", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760835665/Icon_5_syy9ka.png" },
@@ -50,9 +48,7 @@ const CUSTOMER = [
   { title: "Profile", url: "/dashboard/customer-profile", img: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760836746/Icon_20_hv1hl4.png" },
 ];
 
-/* ===========================
-   APP SIDEBAR
-=========================== */
+
 
 const AppSidebar = () => {
   const dispatch = useDispatch();
