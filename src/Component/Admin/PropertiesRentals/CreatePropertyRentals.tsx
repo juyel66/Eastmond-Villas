@@ -238,6 +238,8 @@ const CreatePropertyRentals = ({
         damage_deposit: editData.damage_deposit || '',
         commission_rate: editData.commission_rate || '',
         tbc_by: editData.tbc_by || '',
+        concierge_description: editData.concierge_description || '',
+        check_in_check_out_policy: editData.check_in_check_out_policy || '',
         calendar_accuracy: editData.calendar_accuracy || '',
         youtube_link: editData.youtube_link || '',
       };
@@ -438,6 +440,8 @@ const CreatePropertyRentals = ({
         damage_deposit: '',
         commission_rate: '',
         tbc_by: '',
+        concierge_description: '',
+        check_in_check_out_policy: '',
         calendar_accuracy: '',
         youtube_link: '',
       });
@@ -802,6 +806,12 @@ const CreatePropertyRentals = ({
         tbc_by: values.tbc_by
           ? String(values.tbc_by)
           : '',
+        concierge_description: values.concierge_description
+          ? String(values.concierge_description)
+          : '',
+        check_in_check_out_policy: values.check_in_check_out_policy
+          ? String(values.check_in_check_out_policy)
+          : '',
         calendar_accuracy: values.calendar_accuracy
           ? String(values.calendar_accuracy)
           : '',
@@ -863,6 +873,8 @@ const CreatePropertyRentals = ({
       append('damage_deposit', processed.damage_deposit);
       append('commission_rate', processed.commission_rate);
       append('tbc_by', processed.tbc_by);
+      append('concierge_description', processed.concierge_description);
+      append('check_in_check_out_policy', processed.check_in_check_out_policy);
       append('calendar_accuracy', processed.calendar_accuracy);
       append('concierge_services', processed.concierge_services);
       append('youtube_link', processed.youtube_link);
@@ -1721,6 +1733,21 @@ const CreatePropertyRentals = ({
             />
           </div>
 
+
+             <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Check In / Check Out Description
+            </label>
+            <input
+              name="check_in_check_out_policy"
+              type="text"
+              step="0.01"
+              {...register('check_in_check_out_policy')}
+              placeholder="Add Check In / Check Out Description"
+              className=" border w-full rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Security Deposit
@@ -1771,14 +1798,35 @@ const CreatePropertyRentals = ({
               type="text"
               step="0.01"
               {...register('tbc_by')}
-              placeholder="Add booking details"
+              placeholder="Add Booking Details"
               className=" border w-full rounded-lg p-3 bg-gray-50"
             />
           </div>
+
+
+          <div className="col-span-12 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Concierge Description
+            </label>
+            <input
+              name="concierge_description"
+              type="text"
+              step="0.01"
+              {...register('concierge_description')}
+              placeholder="Concierge Descriptions"
+              className=" border w-full rounded-lg p-3 bg-gray-50"
+            />
+          </div>
+       
          
 
 
         </div>
+
+
+
+
+        
 
         {/* Concierge services */}
         <div>
