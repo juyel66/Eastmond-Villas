@@ -1272,13 +1272,13 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Booking TBC
+              Booking Approval Process
             </label>
             <input
               name="tbc_by"
               {...register('tbc_by')}
               className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter booking TBC details"
+              placeholder="Add Booking Details"
             />
           </div>
 
@@ -1596,7 +1596,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Updating Sales Property ID: {propertyId}...
+                Updating Sales Property...
               </>
             ) : (
               <>
