@@ -721,6 +721,12 @@ Description: ${property.description.substring(0, 200)}...
               onClick={downloadAllImagesAsZip}
               disabled={downloading || propertyImages.length === 0}
             />
+            <QuickActionButton
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
+              label={`Download All Videos (${propertyImages.length})`}
+              onClick={downloadAllImagesAsZip}
+              disabled={downloading || propertyImages.length === 0}
+            />
           </div>
           {downloading && (
             <div className="mt-3 text-sm text-blue-600">
