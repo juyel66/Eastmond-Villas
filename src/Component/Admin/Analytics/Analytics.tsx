@@ -542,7 +542,7 @@ const Analytics = () => {
       doc.text('Summary Statistics', margin, yPos);
       yPos += 10;
 
-      // Create summary table
+
       const summaryData = [
         ['Metric', 'Count'],
         ['Total Views', totals.Views !== '—' ? totals.Views.toString() : '0'],
