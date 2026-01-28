@@ -296,9 +296,9 @@ const CreateNewsletterPage: React.FC = () => {
     setInviteEmails(emails);
   };
 
-  /* ---------------- VALIDATE BEFORE SEND ---------------- */
+
   const validateBeforeSend = (): boolean => {
-    // Check properties
+
     if (selectedProperties.length === 0) {
       Swal.fire({
         title: "No Properties Selected",
@@ -309,7 +309,6 @@ const CreateNewsletterPage: React.FC = () => {
       return false;
     }
 
-    // Check property count based on layout
     if (layout === "focus" && selectedProperties.length !== 1) {
       Swal.fire({
         title: "Invalid Selection",
@@ -362,7 +361,7 @@ const CreateNewsletterPage: React.FC = () => {
       return false;
     }
 
-    // Validate email format if emails are provided
+
     if (inviteEmails.trim()) {
       const emailsArray = inviteEmails
         .split(",")
@@ -386,13 +385,13 @@ const CreateNewsletterPage: React.FC = () => {
     return true;
   };
 
-  /* ---------------- SEND NEWSLETTER ---------------- */
+
   const handleSendNewsletter = async () => {
     if (!validateBeforeSend()) {
       return;
     }
 
-    // Confirm before sending
+
     const result = await Swal.fire({
       title: "Send Newsletter?",
       text: "Are you sure you want to send this newsletter?",
@@ -422,18 +421,17 @@ const CreateNewsletterPage: React.FC = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      // Get selected users data to determine roles
+
       const selectedUserObjects = allUsers.filter(user => 
         selectedUsers.includes(user.id)
       );
 
-      // Get all users by role
+
       const allAdmins = allUsers.filter(user => user.role === "admin");
       const allAgents = allUsers.filter(user => user.role === "agent");
       const allCustomers = allUsers.filter(user => user.role === "customer");
 
-      // Check if ALL users of a specific role are selected
-      // Only set to true if ALL users of that role are selected (not just some)
+
       const includeAdmin = allAdmins.length > 0 && 
         selectedUserObjects.filter(u => u.role === "admin").length === allAdmins.length;
       
@@ -443,15 +441,15 @@ const CreateNewsletterPage: React.FC = () => {
       const includeCustomer = allCustomers.length > 0 && 
         selectedUserObjects.filter(u => u.role === "customer").length === allCustomers.length;
 
-      // Combine selected user emails and manually added emails
+
       const manualEmails = inviteEmails
         .split(",")
         .map((e) => e.trim())
         .filter(Boolean);
       
       const allExtraEmails = [
-        ...selectedUserEmails, // User থেকে নির্বাচিত ইমেলগুলো
-        ...manualEmails        // ম্যানুয়ালি যোগ করা ইমেলগুলো
+        ...selectedUserEmails, 
+        ...manualEmails        
       ];
 
       // Remove duplicates
@@ -547,33 +545,33 @@ const CreateNewsletterPage: React.FC = () => {
     }
   };
 
-  /* ---------------- FORMAT NUMBER WITH DECIMAL IF NEEDED ---------------- */
+ 
   const formatNumberWithDecimal = (value: string | number): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     
-    // Check if the number has decimal part
+
     if (Number.isInteger(num)) {
-      return num.toString(); // No decimal places for integers
+      return num.toString(); 
     } else {
-      // For decimals, show with up to 2 decimal places
-      return num.toFixed(2).replace(/\.?0+$/, ''); // Remove trailing zeros
+     
+      return num.toFixed(2).replace(/\.?0+$/, ''); 
     }
   };
 
-  /* ---------------- GET PLURAL FORM ---------------- */
+
   const getPluralForm = (value: string | number, singular: string, plural: string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     
-    // For decimals, always use plural form
+
     if (!Number.isInteger(num)) {
       return plural;
     }
     
-    // For integers, check if it's exactly 1
+
     return Math.abs(num) === 1 ? singular : plural;
   };
 
-  /* ---------------- RENDER PROPERTY ROW ---------------- */
+
   const renderPropertyRow = (property: Property) => {
     const isSelected = selectedProperties.includes(property.id);
     const imageUrl = property.images?.[0]?.image || "https://via.placeholder.com/56";
@@ -799,7 +797,6 @@ const CreateNewsletterPage: React.FC = () => {
         setScheduledTime={setScheduledTime}
       />
 
-      {/* ---------------- TARGET AUDIENCE & SEND BUTTON ---------------- */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 bg-white p-6 rounded-xl shadow-sm border">
         {/* LEFT GROUP */}
         <div className="flex flex-col md:flex-row md:items-center gap-6">
@@ -844,7 +841,7 @@ const CreateNewsletterPage: React.FC = () => {
           )}
         </div>
 
-        {/* RIGHT SIDE – SEND BUTTON */}
+  
         <div className="flex justify-end">
           <button
             onClick={handleSendNewsletter}
@@ -871,7 +868,7 @@ const CreateNewsletterPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ---------------- SELECTION SUMMARY ---------------- */}
+
       {(selectedProperties.length > 0 || selectedUsers.length > 0 || inviteEmails.trim()) && (
         <div className="bg-gray-50 p-4 rounded-lg border">
           <h3 className="font-medium text-gray-900 mb-2">Selection Summary</h3>
@@ -916,7 +913,7 @@ const CreateNewsletterPage: React.FC = () => {
         </div>
       )}
 
-      {/* ---------------- USER MODAL ---------------- */}
+
       <SelectUserModal
         open={openUserModal}
         onClose={() => setOpenUserModal(false)}

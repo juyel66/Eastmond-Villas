@@ -5,16 +5,7 @@ import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import toast from 'react-hot-toast';
 
-/**
- * UserManagement.jsx
- *
- * - Current user is always shown at top (sortUsers).
- * - Current user may edit their NAME only. Other fields are read-only for them.
- * - Any attempt to change other fields for current user shows a meaningful Swal/toast.
- * - Delete/Update use Swal confirmation and dual toast feedback (react-hot-toast + Swal fallback).
- * - Roles available: customer, agent, admin.
- * - Added Password Reset functionality with modal
- */
+
 
 const ROLE_FILTERS = ['all', 'customer', 'agent', 'admin'];
 const ALL_ROLES = ['customer', 'agent', 'admin'];

@@ -7,15 +7,7 @@ import { fetchProperties, fetchActivityLogs } from "../../../features/Properties
 import type { AppDispatch, RootState } from "../../../store";
 import { Link } from "react-router";
 
-/**
- * AdminDashboard
- * - Uses API data only (no fake data).
- * - Shows first image from media_images (or bedrooms_images) for each property.
- * - Formats activity time to human-friendly relative strings (e.g. "5 hours ago").
- *
- * Change: implements progressive "View All" -> show 30 -> "View more" (+10 below list) -> "View Less".
- * Change: fetch agents list from API and compute Active Agents count from agents where is_active === true.
- */
+
 
 const PLACEHOLDER_IMG =
   "data:image/svg+xml;utf8," +
@@ -23,9 +15,7 @@ const PLACEHOLDER_IMG =
     `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23888' font-family='Arial' font-size='18'>No image</text></svg>`
   );
 
-/* ---------------------------
-   Small helpers: timeAgo + agent formatting
-   ---------------------------*/
+
 function timeAgo(isoOrDate) {
   if (!isoOrDate) return "—";
   const date = typeof isoOrDate === "string" || typeof isoOrDate === "number" ? new Date(isoOrDate) : isoOrDate;
@@ -48,11 +38,7 @@ function timeAgo(isoOrDate) {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
-/**
- * Format agent display:
- * - Keep simple: show provided name, or "System" if none.
- * - Also try to extract email if that's present inside details.
- */
+
 function extractEmail(text) {
   if (!text || typeof text !== "string") return null;
   const m = text.match(/[\w.+-]+@[\w-]+\.[\w-.]+/);

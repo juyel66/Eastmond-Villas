@@ -410,19 +410,18 @@ const Analytics = () => {
     };
   }, [apiData, performanceChartData]);
 
-  // ========== Fixed Custom Tooltip Component ==========
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      console.log('Tooltip payload:', payload); // Debug log
-      
-      // Get the actual data point from the payload
+      console.log('Tooltip payload:', payload); 
+  
       const dataPoint = payload[0]?.payload;
       
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-50">
           <p className="font-semibold text-gray-800 mb-2 text-sm">{label}</p>
           
-          {/* Check if we have the data point */}
+         
           {dataPoint ? (
             <>
               <div className="flex items-center justify-between mb-1">
@@ -478,7 +477,7 @@ const Analytics = () => {
     return null;
   };
 
-  // ========== PDF Export Function ==========
+
   const exportToPDF = async () => {
     if (!apiData) {
       Swal.fire({

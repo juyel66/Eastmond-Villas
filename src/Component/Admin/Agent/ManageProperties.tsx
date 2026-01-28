@@ -4,45 +4,38 @@ import { ChevronLeft, Check, Save, Home, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 
-/**
- * ManageProperties.tsx
- * - Reads agent id from prop OR URL query (?agent=4 or ?agentId=4)
- * - Uses effectiveAgentId + viewAgentId for preselecting, optimistic updates and saves
- * - New API integration for property assignments
- * - Now ALL properties can be assigned to ALL agents regardless of current assignment
- */
 
-// ---------- CONFIG ----------
+
+
 const API_BASE = "https://api.eastmondvillas.com";
 const PROPERTY_ASSIGNMENTS_API = (agentId: number | string) => 
   `${API_BASE.replace(/\/+$/, "")}/api/villas/property-assignments/?agent_id=${agentId}`;
 const ASSIGN_PROPERTY_TO_AGENT_API = 
   `${API_BASE.replace(/\/+$/, "")}/api/villas/assign-property-to-agent/`;
 
-// ---------- SMALL TYPES ----------
 type NormalizedProperty = {
   id: number;
   name: string;
   location: string;
   status: string;
-  type: string; // "sales" | "rentals" | any future type
+  type: string;
   imageUrl: string;
   raw: any;
   assigned_agent: number | string | null | undefined;
   assigned_agent_name?: string | null;
-  is_assigned?: boolean; // New field from assignments API
+  is_assigned?: boolean;
 };
 
 type ManagePropertiesProps = {
-  agentId?: number; // optional; URL ?agent=4 will be used if prop not provided
+  agentId?: number; 
   agentName?: string;
 
-  // current logged-in user context (for access control)
+
   currentUserRole?: "admin" | "agent";
   currentUserAgentId?: number | null;
 };
 
-// ---------- SMALL UI HELPERS ----------
+
 const PropertyStatusBadge = ({ status }: { status?: string }) => {
   let classes = "";
   const st = String(status ?? "").toLowerCase();
@@ -128,7 +121,7 @@ const PropertyListItem = ({
             {property.location}
           </p>
 
-          {/* Assigned / Available under name + description */}
+    
           <div className="mt-1 flex flex-col gap-0.5">
             <span
               className={`inline-flex w-fit text-xs font-semibold px-2 py-0.5 rounded-full ${assignmentClasses}`}
@@ -152,7 +145,7 @@ const PropertyListItem = ({
   );
 };
 
-// ---------- MAIN COMPONENT ----------
+
 export default function ManageProperties({
   agentId,
   agentName,

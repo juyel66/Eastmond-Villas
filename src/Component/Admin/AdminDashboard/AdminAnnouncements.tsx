@@ -10,7 +10,7 @@ import {
   X,
   UploadCloud,
   Trash2,
-  Search, // Search icon যোগ করেছি
+  Search, 
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../../store"; // adjust path to your store types if available
@@ -25,9 +25,7 @@ import { API_BASE } from "../../../features/Auth/authSlice";
 // SweetAlert2 add করেছি
 import Swal from "sweetalert2";
 
-/* ----------------------
-  Helper: auth header (used only for legacy behavior; not used now but kept)
-------------------------*/
+
 const getAuthToken = () => {
   try {
     return localStorage.getItem("auth_access");
@@ -36,9 +34,7 @@ const getAuthToken = () => {
   }
 };
 
-/* ----------------------
-  Helper: full file URL
-------------------------*/
+
 const getFileUrl = (filePath: string) => {
   if (!filePath) return "";
   if (filePath.startsWith("http://") || filePath.startsWith("https://")) return filePath;
@@ -50,9 +46,7 @@ const getFileUrl = (filePath: string) => {
   }
 };
 
-/* ----------------------
-  Priority badge
-------------------------*/
+
 const PriorityBadge = ({ priority }: { priority: string }) => {
   let bgColor, textColor;
   switch (priority) {
@@ -76,10 +70,7 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
   );
 };
 
-/* ----------------------
-  Attachment Item
-  — only this component's download behavior changed
-------------------------*/
+
 const AttachmentItem = ({ attachment }: { attachment: any }) => {
   // helper to trigger download by fetching blob and using object URL
   const handleDownload = async (e: React.MouseEvent) => {
@@ -93,7 +84,7 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
     }
 
     try {
-      // Try to fetch the resource as blob so we can force a download
+      
       const res = await fetch(url, { method: "GET", mode: "cors" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -103,7 +94,7 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
       const a = document.createElement("a");
       a.href = objectUrl;
       a.download = filename;
-      // Append to DOM to make click work in some browsers
+
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -138,16 +129,13 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
   );
 };
 
-/* ----------------------
-  Update Card - শুধু এইটাতে পরিবর্তন করেছি
-------------------------*/
 const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const attachmentCount = update.attachments?.length ?? 0;
 
-  // Delete handle function add করেছি
+
   const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Important: Prevent card toggle
+    e.stopPropagation(); 
     onDelete(update.id);
   };
 
@@ -177,7 +165,7 @@ const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) 
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
           
-          {/* Delete button add করেছি এখানে */}
+     
           <button
             onClick={handleDeleteClick}
             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
@@ -210,9 +198,7 @@ const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) 
   );
 };
 
-/* ----------------------
-  Announcement Modal (uses dispatch(createAnnouncement))
-------------------------*/
+
 const AnnouncementModal = ({
   onClose,
   onAddLocal, // optional callback (local UI), new item will be available via Redux anyway
@@ -391,9 +377,7 @@ const AnnouncementModal = ({
   );
 };
 
-/* ----------------------
-  Main component (reads from Redux) - শুধু এইটাতে কিছু add করেছি
-------------------------*/
+
 const AdminAnnouncements = () => {
   const dispatch = useDispatch<AppDispatch>();
   const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements) ?? [];
@@ -401,15 +385,15 @@ const AdminAnnouncements = () => {
   const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // Search term state যোগ করেছি
+  const [searchTerm, setSearchTerm] = useState(""); 
 
   useEffect(() => {
-    // dispatch fetchAnnouncements on mount
+  
     dispatch(fetchAnnouncements());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, []);
 
-  // Map backend announcement objects to UI-shape used by UpdateCard (details/attachments)
+
   const mappedAnnouncements = (announcementsFromStore || []).map((item: any) => ({
     id: item.id,
     title: item.title,
@@ -426,7 +410,7 @@ const AdminAnnouncements = () => {
     })),
   }));
 
-  // Filter announcements based on search term
+
   const filteredAnnouncements = mappedAnnouncements.filter((announcement) => {
     if (!searchTerm.trim()) return true;
     
@@ -439,9 +423,9 @@ const AdminAnnouncements = () => {
     );
   });
 
-  // Delete function add করেছি - সরাসরি API call করবে
+
   const handleDeleteAnnouncement = async (id: number) => {
-    // SweetAlert confirmation dialog
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: "Do you really want to delete this announcement?",
@@ -498,9 +482,9 @@ const AdminAnnouncements = () => {
     }
   };
 
-  // Optional local add callback (not strictly necessary since Redux will update)
+
   const handleAddAnnouncementLocal = (createdMapped: any) => {
-    // no-op: Redux will already have the created item in state via thunk reducer
+
   };
 
   return (
@@ -517,7 +501,7 @@ const AdminAnnouncements = () => {
           </button>
         </div>
 
-        {/* Search field - center e top e add করেছি */}
+
         <div className="flex justify-center mb-8">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -540,7 +524,7 @@ const AdminAnnouncements = () => {
         </div>
 
         <main className="relative">
-          {/* Deleting overlay add করেছি */}
+ 
           {deleting && (
             <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/20">
               <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
@@ -553,7 +537,7 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* Centered loading overlay while (re)loading */}
+  
           {loading && (
             <div className="absolute inset-0 z-30 flex items-center justify-center">
               <div className="bg-white/90 p-6 rounded-lg shadow-lg flex flex-col items-center">
@@ -576,7 +560,7 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* When not loading, show announcements or empty state */}
+        
           {!loading && filteredAnnouncements.length === 0 && (
             <div className="flex items-center justify-center p-12">
               <div className="text-center text-gray-500">
@@ -590,7 +574,7 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* Announcements list - এখানে onDelete prop pass করেছি */}
+
           <div className="space-y-4">
             {filteredAnnouncements.map((update: any) => (
               <UpdateCard key={update.id} update={update} onDelete={handleDeleteAnnouncement} />

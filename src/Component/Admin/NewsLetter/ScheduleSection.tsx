@@ -41,20 +41,18 @@ const ScheduleSection: React.FC<Props> = ({
 
   const monthDates = Array.from({ length: 31 }, (_, i) => i + 1);
   
-  // Generate time slots (every 30 minutes from 00:00 to 23:30)
   const timeSlots = Array.from({ length: 48 }, (_, i) => {
     const hours = Math.floor(i / 2);
     const minutes = (i % 2) * 30;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   });
 
-  // Function to convert Barbados time to UTC
+
   const convertBarbadosToUTC = (localTime: string): string => {
     try {
-      // Barbados is UTC-4 (no daylight saving)
+     
       const [hours, minutes] = localTime.split(':').map(Number);
-      
-      // Convert to UTC (add 4 hours)
+     
       let utcHours = hours + 4;
       if (utcHours >= 24) {
         utcHours -= 24;
@@ -63,16 +61,16 @@ const ScheduleSection: React.FC<Props> = ({
       return `${utcHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     } catch (error) {
       console.error("Error converting time:", error);
-      return localTime; // Fallback to original time
+      return localTime; 
     }
   };
 
-  // Function to convert UTC to Barbados time
+  
   const convertUTCToBarbados = (utcTime: string): string => {
     try {
       const [hours, minutes] = utcTime.split(':').map(Number);
-      
-      // Convert to Barbados time (subtract 4 hours)
+     
+  
       let barbadosHours = hours - 4;
       if (barbadosHours < 0) {
         barbadosHours += 24;
@@ -81,11 +79,11 @@ const ScheduleSection: React.FC<Props> = ({
       return `${barbadosHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     } catch (error) {
       console.error("Error converting UTC time:", error);
-      return utcTime; // Fallback to original time
+      return utcTime; 
     }
   };
 
-  // Update UTC time when scheduledTime changes
+
   useEffect(() => {
     if (scheduledTime) {
       const utc = convertBarbadosToUTC(scheduledTime);
@@ -93,20 +91,20 @@ const ScheduleSection: React.FC<Props> = ({
     }
   }, [scheduledTime]);
 
-  // Initialize UTC time when component mounts
+  
   useEffect(() => {
     const utc = convertBarbadosToUTC(scheduledTime);
     setUtcTime(utc);
   }, []);
 
-  // Handle time change from Barbados time input
+
   const handleTimeChange = (localTime: string) => {
     setScheduledTime(localTime);
     const utc = convertBarbadosToUTC(localTime);
     setUtcTime(utc);
   };
 
-  // Handle direct UTC time change (if needed)
+
   const handleUTCTimeChange = (utcTime: string) => {
     setUtcTime(utcTime);
     const barbadosTime = convertUTCToBarbados(utcTime);
@@ -232,9 +230,7 @@ const ScheduleSection: React.FC<Props> = ({
                       <option key={time} value={time}>{time}</option>
                     ))}
                   </select>
-                  {/* <p className="text-xs text-gray-500 mt-1">
-                    UTC: {utcTime}
-                  </p> */}
+            
                 </div>
                 
                 <div className="flex items-end">

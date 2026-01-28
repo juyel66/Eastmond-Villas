@@ -12,14 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-/**
- * AgentCard
- *
- * - Defensive: won't crash when fields missing.
- * - Shows last login formatted in Barbados time (America/Barbados) using Intl.DateTimeFormat.
- * - 3-dot menu: Edit / Manage Properties / Deactivate|Activate / Delete.
- * - Uses assigned_total_property to show Properties count.
- */
+
 
 const safe = (v, fallback = "") =>
   v === null || v === undefined ? fallback : v;
