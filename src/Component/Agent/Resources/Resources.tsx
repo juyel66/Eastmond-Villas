@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchResources } from '../../../features/Properties/PropertiesSlice';
 import { API_BASE, authFetch } from '../../../features/Auth/authSlice';
 import Swal from 'sweetalert2';
+import JSZip from 'jszip';
 
 type APIResourceFile = { name: string; url: string; type: 'image' | 'video' | 'pdf' | 'Other' };
 type UIResource = {
@@ -69,8 +70,11 @@ function formatCategoryForDisplay(cat?: string | null) {
 ------------------------*/
 const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource; onDownload: (r: UIResource) => void; onDelete: (r: UIResource) => void }) => {
   const fileCount = resource.files?.length ?? (resource.downloadUrl ? 1 : 0);
+  const description = resource.description || '';
+  const shouldScroll = description.length > 200;
+  
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5 flex flex-col hover:shadow-xl transition duration-300 relative">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5 flex flex-col hover:shadow-xl transition duration-300 relative h-full">
       <div className="flex justify-between items-start mb-4">
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
           <FileText className="w-6 h-6 text-blue-600" />
@@ -85,16 +89,30 @@ const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource
           <button
             onClick={() => onDelete(resource)}
             title="Delete resource"
-            className=""
+            className="flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none"
           >
-           
-           
+            <Trash2 className="w-4 h-4" />
+            <span className="text-sm">Delete</span>
           </button>
         </div>
       </div>
 
       <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">{resource.title}</h3>
-      <p className="text-sm text-gray-600 flex-grow mb-4">{resource.description}</p>
+      
+      {/* Scrollable description container */}
+      <div className={`mb-4 flex-grow ${shouldScroll ? 'overflow-y-auto' : ''}`}>
+        <div 
+          className={`text-sm text-gray-600 ${shouldScroll ? 'max-h-32 pr-2' : ''}`}
+          style={shouldScroll ? { 
+            overflowY: 'auto',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#cbd5e0 #f1f1f1'
+          } : {}}
+        >
+          {description}
+          {!description && <span className="text-gray-400 italic">No description provided</span>}
+        </div>
+      </div>
 
       <div className="flex justify-between items-center mb-3 border-t pt-4">
         <div>
@@ -109,7 +127,7 @@ const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-auto">
         <button
           onClick={() => onDownload(resource)}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white rounded-md"
@@ -149,6 +167,10 @@ export default function AdminResources() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Download progress state
+  const [downloadingZip, setDownloadingZip] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -413,80 +435,157 @@ export default function AdminResources() {
   }
 
   /* ============================
-     DOWNLOAD & DELETE
+     DOWNLOAD ALL FILES AS ZIP
      ============================ */
-
-  // UPDATED: prompt per-file using Swal before downloading each file
   async function handleDownload(resource: UIResource) {
-    // Build list of file candidates (preserve order)
-    const candidates: { name: string; url: string }[] = [];
+    // Collect all downloadable files
+    const downloadableFiles: { name: string; url: string }[] = [];
 
+    // Collect from files array
     if (Array.isArray(resource.files) && resource.files.length > 0) {
       for (const f of resource.files) {
         const url = f.url ?? getFileUrl(f.url);
-        const name = f.name ?? (f.url ? String(f.url).split('/').pop() : 'file');
-        if (url) candidates.push({ name, url });
+        if (url) {
+          const name = f.name || url.split('/').pop() || `file_${downloadableFiles.length + 1}`;
+          downloadableFiles.push({ name, url });
+        }
       }
-    } else if (resource.downloadUrl) {
+    }
+    
+    // Add downloadUrl if exists
+    if (resource.downloadUrl) {
       const name = resource.downloadUrl.split('/').pop() || String(resource.title || 'file').replace(/\s+/g, '_');
-      candidates.push({ name, url: resource.downloadUrl });
-    } else if (resource.raw && (resource.raw.file || resource.raw.file_path)) {
-      const url = getFileUrl(resource.raw.file ?? resource.raw.file_path);
-      const name = String(url?.split('/').pop?.() ?? resource.title ?? 'file');
-      if (url) candidates.push({ name, url });
+      downloadableFiles.push({ name, url: resource.downloadUrl });
     }
 
-    if (candidates.length === 0) {
-      Swal.fire('No file', 'No downloadable file URL available for this resource.', 'info');
+    // Add raw file if exists
+    if (resource.raw && (resource.raw.file || resource.raw.file_path)) {
+      const url = getFileUrl(resource.raw.file ?? resource.raw.file_path);
+      if (url) {
+        const name = url.split('/').pop() || resource.title || 'file';
+        downloadableFiles.push({ name, url });
+      }
+    }
+
+    if (downloadableFiles.length === 0) {
+      Swal.fire('No files', 'No downloadable files found for this resource.', 'info');
       return;
     }
 
-    // Loop each file and ask permission before downloading
-    for (const file of candidates) {
-      try {
-        const res = await Swal.fire({
-          title: `Download "${file.name}"?`,
-          text: `Do you want to save "${file.name}" to your device?`,
-          icon: 'question',
-          showCancelButton: true,
-          focusCancel: true,
-          confirmButtonText: 'Save',
-          cancelButtonText: 'Skip',
-        });
+    // Ask for confirmation
+    const confirm = await Swal.fire({
+      title: `Download ${downloadableFiles.length} files?`,
+      text: `This will download all ${downloadableFiles.length} files from "${resource.title}" as a ZIP archive.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Download',
+      confirmButtonColor: '#00897B',
+      cancelButtonText: 'Cancel',
+    });
 
-        if (!res.isConfirmed) {
-          // skip this file and continue to next
-          continue;
-        }
+    if (!confirm.isConfirmed) return;
 
-        // Attempt fetch -> blob download
-        try {
-          const resp = await fetch(file.url, { method: 'GET', mode: 'cors' });
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const blob = await resp.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = file.name;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-          console.warn('Fetch->blob download failed for', file.url, err);
-          // fallback: open in new tab
-          try {
-            window.open(file.url, '_blank', 'noopener,noreferrer');
-            // notify user we opened in new tab
-            await Swal.fire('Opened', `Could not auto-save "${file.name}". Opened in new tab instead.`, 'info');
-          } catch {
-            await Swal.fire('Error', `Unable to download or open "${file.name}". Check CORS or network.`, 'error');
-          }
-        }
-      } catch (outerErr) {
-        console.error('Download loop error', outerErr);
-        // continue to next file
+    // Start download process with progress
+    setDownloadingZip(true);
+    setDownloadProgress(0);
+
+    try {
+      const zip = new JSZip();
+      const folderName = `${resource.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_')}_files`;
+      const folder = zip.folder(folderName);
+      
+      if (!folder) {
+        throw new Error('Failed to create zip folder');
       }
+
+      let completed = 0;
+      const totalFiles = downloadableFiles.length;
+
+      // Download each file and add to zip
+      for (const [index, file] of downloadableFiles.entries()) {
+        try {
+          // Update progress
+          completed++;
+          const progress = Math.round((completed / totalFiles) * 100);
+          setDownloadProgress(progress);
+
+          // Download file
+          const response = await fetch(file.url);
+          if (!response.ok) {
+            console.warn(`Failed to fetch file ${index + 1}: ${file.url}`);
+            continue;
+          }
+
+          const blob = await response.blob();
+          
+          // Determine file extension
+          let extension = 'bin';
+          const contentType = response.headers.get('content-type');
+          if (contentType) {
+            if (contentType.includes('image/jpeg') || contentType.includes('image/jpg')) extension = 'jpg';
+            else if (contentType.includes('image/png')) extension = 'png';
+            else if (contentType.includes('image/gif')) extension = 'gif';
+            else if (contentType.includes('image/webp')) extension = 'webp';
+            else if (contentType.includes('application/pdf')) extension = 'pdf';
+            else if (contentType.includes('video/mp4')) extension = 'mp4';
+            else if (contentType.includes('video/quicktime')) extension = 'mov';
+            else extension = contentType.split('/').pop()?.split(';')[0] || 'bin';
+          }
+
+          // Clean filename
+          const fileNameWithoutExt = file.name.split('.').slice(0, -1).join('.') || file.name;
+          const safeFileName = fileNameWithoutExt.replace(/[^\w\s.-]/gi, '');
+          const finalFileName = `${safeFileName}_${index + 1}.${extension}`;
+
+          // Add to zip
+          folder.file(finalFileName, blob);
+        } catch (error) {
+          console.error(`Error downloading file ${index + 1}:`, error);
+        }
+      }
+
+      // Generate zip file
+      const content = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        // Update progress during zip generation (5-100% range)
+        const zipProgress = 5 + (metadata.percent * 0.95);
+        setDownloadProgress(zipProgress);
+      });
+
+      // Complete progress
+      setDownloadProgress(100);
+
+      // Create download link
+      const blobUrl = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${folderName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+
+      // Show success message
+      setTimeout(() => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Download Complete',
+          text: `All files from "${resource.title}" have been downloaded as ZIP.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }, 500);
+
+      // Reset progress after completion
+      setTimeout(() => {
+        setDownloadingZip(false);
+        setDownloadProgress(0);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error creating zip file:', error);
+      setDownloadingZip(false);
+      setDownloadProgress(0);
+      Swal.fire('Error', 'Failed to create ZIP file. Please try again.', 'error');
     }
   }
 
@@ -497,6 +596,7 @@ export default function AdminResources() {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it',
+      confirmButtonColor: '#e02424',
       cancelButtonText: 'Cancel',
       focusCancel: true,
     });
@@ -534,10 +634,7 @@ export default function AdminResources() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* <button onClick={openModal} className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-white font-medium shadow-md" style={{ backgroundColor: '#00A597' }}>
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Resources</span>
-            </button> */}
+           
           </div>
         </div>
 
@@ -577,6 +674,37 @@ export default function AdminResources() {
         {errorMessage && <div className="mb-4 text-sm text-red-600">{errorMessage}</div>}
         {apiError && <div className="mb-4 text-sm text-red-600">Error loading resources: {String(apiError)}</div>}
 
+        {/* Download Progress Overlay */}
+        {downloadingZip && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-xl p-6 w-96 shadow-2xl">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Downloading Files</h3>
+                <p className="text-sm text-gray-600 mt-1">Preparing ZIP archive...</p>
+              </div>
+              
+              <div className="mb-2">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Progress</span>
+                  <span>{downloadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="bg-teal-600 h-3 rounded-full transition-all duration-300"
+                    style={{ width: `${downloadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <p className="text-xs text-gray-500 text-center mt-3">
+                {downloadProgress === 100 
+                  ? 'Complete! Your download will start automatically...' 
+                  : 'Downloading and compressing files...'}
+              </p>
+            </div>
+          </div>
+        )}
+
         <main className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredResources.map((resource, idx) => (
             <ResourceCard key={resource.id ?? `res-${idx}`} resource={resource} onDownload={handleDownload} onDelete={handleDelete} />
@@ -589,7 +717,7 @@ export default function AdminResources() {
       </div>
 
       {/* Modal */}
-      {/* {isModalOpen && (
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6" role="dialog" aria-modal="true" onKeyDown={(e) => { if (e.key === 'Escape') closeModal(); }}>
           <div className="fixed inset-0 bg-black/40" onClick={closeModal}></div>
 
@@ -664,7 +792,7 @@ export default function AdminResources() {
             </form>
           </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 }
