@@ -256,11 +256,12 @@ const APITestimonialCard = ({ review }) => {
     return (
         <div className="bg-white p-6 rounded-3xl border border-teal-200 shadow-lg min-h-[350px] flex flex-col justify-between">
             <div className="flex items-center mb-6">
-                <img 
-                    src="https://api.eastmondvillas.com/static/default-avatar.png" 
-                    alt={review.user_name || "Guest"}
-                    className="w-16 h-16 rounded-full object-cover"
-                />
+              <img
+  src={review.images?.[0]?.image || "/placeholder-user.png"}
+  alt={review.user_name || "Guest"}
+  className="w-16 h-16 rounded-full border border-teal-600 object-cover"
+/>
+
             </div>
 
             <p className="text-gray-800 text-lg leading-relaxed mb-6 flex-grow">
@@ -269,8 +270,8 @@ const APITestimonialCard = ({ review }) => {
 
             <div className="flex items-center justify-between mt-auto">
                 <div>
-                    <h4 className="font-bold text-gray-900 text-base">{review.user_name || "Guest"}</h4>
-                    <p className="text-gray-600 text-sm">{review.address}</p>
+                    <h4 className="font-bold text-gray-900 text-base">{review.user_name || "Guest"}, {review.location} </h4>
+                    <p className="text-gray-600 text-sm">{review.profession}</p>
                 </div>
                 {review.rating && (
                     <div className="flex items-center bg-teal-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
