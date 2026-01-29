@@ -5,6 +5,9 @@ import { ChevronLeft, Copy } from 'lucide-react';
 import JSZip from 'jszip';
 import Swal from 'sweetalert2';
 
+// Import the Calendar component
+import Calendar from "../../../pages/Rents/Calendar";
+
 // --- TYPE DEFINITIONS ---
 interface Property {
   id?: number;
@@ -14,11 +17,13 @@ interface Property {
   location: string;
   image_url: string;
   description: string;
+  
+  // slug for dynamic calendar link
+  slug?: string;
 
   // numbers / booking stats
   add_guest?: number;
   bedrooms?: number;
-  tbc_by?: string;
   bathrooms?: number;
   pool?: number;
   price?: number;
@@ -47,6 +52,20 @@ interface Property {
   staff_name?: string;
   concierge_services: string[];
 
+  // calendar accuracy field
+  calendar_accuracy?: string;
+
+  // videos field
+  videos?: Array<{
+    id?: number;
+    video: string;
+    title?: string;
+    description?: string;
+  }>;
+
+  // TBC by field
+  tbc_by?: string;
+
   _raw?: any;
 }
 
@@ -55,6 +74,14 @@ interface PropertyImage {
   image: string;
   alt_text?: string;
   is_main?: boolean;
+}
+
+// Video interface
+interface PropertyVideo {
+  id?: number;
+  video: string;
+  title?: string;
+  description?: string;
 }
 
 // --- API base (use env var if available) ---
@@ -89,6 +116,14 @@ const copyToClipboard = (text: string, successMessage: string) => {
     console.error('copy failed', e);
     showActionMessage('Copy failed');
   }
+};
+
+// Function to get pluralized text
+const getPluralText = (count: number, singular: string, plural: string): string => {
+  if (count === 1) {
+    return `${count} ${singular}`;
+  }
+  return `${count} ${plural}`;
 };
 
 // --- QUICK ACTION BUTTON ---
@@ -143,7 +178,34 @@ const PropertiesSalesDetails: FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localStatus, setLocalStatus] = useState<string>('draft');
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
-  const [downloading, setDownloading] = useState(false);
+  const [propertyVideos, setPropertyVideos] = useState<PropertyVideo[]>([]);
+  const [downloadingImages, setDownloadingImages] = useState(false);
+  const [downloadingVideos, setDownloadingVideos] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  
+  // State to control calendar visibility
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // Function to generate dynamic calendar link from slug
+  const generateCalendarLink = (): string => {
+    if (!property?.slug) {
+      return property?.viewing_link || '';
+    }
+    
+    // Format the slug: convert to lowercase, replace spaces with hyphens
+    const formattedSlug = property.slug
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '');
+    
+    // Determine suffix based on listing type (rent or sale)
+    let suffix = 's.ics'; // Default suffix for sales
+    if (property.listing_type === 'rent') {
+      suffix = 'ics';
+    }
+    
+    return `https://www.eastmondvillas.com/dashboard/properties/ical-link/${formattedSlug}/bookings.${suffix}`;
+  };
 
   useEffect(() => {
     if (!id) {
@@ -254,6 +316,64 @@ const PropertiesSalesDetails: FC = () => {
         // Set property images
         setPropertyImages(images);
 
+        // --- Collect all videos from API response ---
+        const videos: PropertyVideo[] = [];
+        
+        // Videos field from API
+        if (Array.isArray(p.videos)) {
+          p.videos.forEach((video: any, index: number) => {
+            if (video.video || video.url || video.file_url) {
+              videos.push({
+                id: video.id || index,
+                video: video.video || video.url || video.file_url,
+                title: video.title || `Video ${index + 1}`,
+                description: video.description || ''
+              });
+            }
+          });
+        }
+
+        // Check other video fields
+        const videoFields = ['video_url', 'video_link', 'media_videos'];
+        videoFields.forEach(field => {
+          if (p[field]) {
+            if (Array.isArray(p[field])) {
+              p[field].forEach((video: any, index: number) => {
+                if (typeof video === 'string') {
+                  videos.push({
+                    video: video,
+                    title: `Video ${index + 1}`,
+                    description: ''
+                  });
+                } else if (video && (video.url || video.video)) {
+                  videos.push({
+                    id: video.id || index,
+                    video: video.url || video.video,
+                    title: video.title || `Video ${index + 1}`,
+                    description: video.description || ''
+                  });
+                }
+              });
+            } else if (typeof p[field] === 'string') {
+              videos.push({
+                video: p[field],
+                title: 'Main Video',
+                description: ''
+              });
+            }
+          }
+        });
+
+        console.log('=== All Videos from API ===');
+        console.log('Total videos found:', videos.length);
+        videos.forEach((video, index) => {
+          console.log(`[${index + 1}] ${video.video}`);
+          if (video.title) console.log(`    Title: ${video.title}`);
+        });
+
+        // Set property videos
+        setPropertyVideos(videos);
+
         // --- Normalize listing_type from backend ---
         const rawLt = String(p.listing_type ?? p.listingType ?? '')
           .toLowerCase()
@@ -279,6 +399,7 @@ const PropertiesSalesDetails: FC = () => {
         const interiorAmenities = normalizeStringArray(p.interior_amenities);
         const signatureDistinctions = normalizeStringArray(p.signature_distinctions);
         const conciergeServices = normalizeStringArray(p.concierge_services);
+        
         // staff might be object or array
         let staffName: string | undefined;
         if (Array.isArray(p.staff) && p.staff.length > 0) {
@@ -286,6 +407,9 @@ const PropertiesSalesDetails: FC = () => {
         } else if (p.staff && typeof p.staff === 'object') {
           staffName = p.staff.name ?? '';
         }
+
+        // Extract calendar_accuracy from API response
+        const calendarAccuracy = p.calendar_accuracy || p.calendar_accuracy_percentage || '';
 
         // Determine main image for display
         let mainImage = images.find(img => img.is_main)?.image || 
@@ -303,6 +427,9 @@ const PropertiesSalesDetails: FC = () => {
           p.city ??
           '—';
 
+        // Extract slug - check multiple possible fields
+        const slug = p.slug || p.name_slug || p.property_slug || null;
+
         const mapped: Property = {
           id: Number(p.id ?? p.pk ?? NaN),
           title: p.title ?? p.name ?? 'Untitled',
@@ -311,6 +438,7 @@ const PropertiesSalesDetails: FC = () => {
           location: address,
           image_url: mainImage,
           description: p.description ?? p.short_description ?? '',
+          slug: slug, // Add slug to property
 
           add_guest: Number(p.add_guest ?? 0) || 0,
           bedrooms: Number(p.bedrooms ?? 0) || 0,
@@ -322,7 +450,6 @@ const PropertiesSalesDetails: FC = () => {
           commission_rate: p.commission_rate ?? p.agent_commission ?? '',
           security_deposit: p.security_deposit ?? '',
           damage_deposit: p.damage_deposit ?? '',
-          tbc_by: p.tbc_by ?? '',
 
           outdoor_amenities: outdoorAmenities,
           interior_amenities: interiorAmenities,
@@ -341,6 +468,16 @@ const PropertiesSalesDetails: FC = () => {
           viewing_link: p.calendar_link ?? p.viewing_link ?? p.calendar_url ?? '',
           staff_name: staffName,
           concierge_services: conciergeServices,
+          
+          // Add calendar_accuracy field
+          calendar_accuracy: calendarAccuracy,
+          
+          // Add videos field
+          videos: videos,
+          
+          // Add tbc_by field
+          tbc_by: p.tbc_by ?? '',
+          
           _raw: p,
         };
 
@@ -370,76 +507,245 @@ const PropertiesSalesDetails: FC = () => {
       return;
     }
 
-    setDownloading(true);
-    try {
-      const zip = new JSZip();
-      const imageFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_images`);
-      
-      if (!imageFolder) {
-        throw new Error('Failed to create zip folder');
+    setDownloadingImages(true);
+    setDownloadProgress(0);
+    
+    // Show progress bar immediately
+    setTimeout(() => {
+      if (downloadProgress === 0) {
+        setDownloadProgress(5); // Start with 5% to show progress has started
       }
+    }, 100);
 
-      // Download each image and add to zip
-      const downloadPromises = propertyImages.map(async (img, index) => {
-        try {
-          // Ensure proper URL
-          let imageUrl = img.image;
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
-          }
-          
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
+    // Start download in background without waiting for completion
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip();
+        const imageFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_images`);
+        
+        if (!imageFolder) {
+          throw new Error('Failed to create zip folder');
+        }
+
+        let completed = 0;
+        const totalItems = propertyImages.length;
+        
+        // Download each image and add to zip
+        const downloadPromises = propertyImages.map(async (img, index) => {
+          try {
+            // Ensure proper URL
+            let imageUrl = img.image;
+            if (imageUrl.startsWith('/')) {
+              imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
+            }
+            
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
+              completed++;
+              const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+              setDownloadProgress(progress);
+              return null;
+            }
+            
+            const blob = await response.blob();
+            const extension = blob.type.split('/')[1] || 'jpg';
+            const fileName = `${property?.title.replace(/\s+/g, '_')}_image_${index + 1}.${extension}`;
+            
+            // Update progress
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
+            
+            return { fileName, blob };
+          } catch (error) {
+            console.error(`Error downloading image ${index + 1}:`, error);
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
             return null;
           }
+        });
+
+        const downloadedImages = await Promise.all(downloadPromises);
+        
+        // Add downloaded images to zip
+        downloadedImages.forEach((item) => {
+          if (item) {
+            imageFolder.file(item.fileName, item.blob);
+          }
+        });
+
+        // Generate zip file and trigger browser download
+        zip.generateAsync({ type: 'blob' }, (metadata) => {
+          // Update progress based on zip generation
+          if (metadata.percent) {
+            const zipProgress = 5 + (metadata.percent * 0.95); // Scale to 5-100%
+            setDownloadProgress(zipProgress);
+          }
+        }).then((content) => {
+          // Complete progress
+          setDownloadProgress(100);
           
-          const blob = await response.blob();
-          const extension = blob.type.split('/')[1] || 'jpg';
-          const fileName = `${property?.title.replace(/\s+/g, '_')}_${index + 1}.${extension}`;
+          // Create download link and trigger download
+          const blobUrl = URL.createObjectURL(content);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `${property?.title.replace(/\s+/g, '_')}_images.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
           
-          return { fileName, blob };
-        } catch (error) {
-          console.error(`Error downloading image ${index + 1}:`, error);
-          return null;
-        }
-      });
+          // Show success message after a brief delay
+          setTimeout(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: `Downloaded ${propertyImages.length} images`,
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }, 500);
+          
+          // Reset progress after completion
+          setTimeout(() => {
+            setDownloadingImages(false);
+            setDownloadProgress(0);
+          }, 1000);
+        });
 
-      const downloadedImages = await Promise.all(downloadPromises);
-      
-      // Add downloaded images to zip
-      downloadedImages.forEach((item, index) => {
-        if (item) {
-          imageFolder.file(item.fileName, item.blob);
-        }
-      });
+      } catch (error) {
+        console.error('Error creating zip file:', error);
+        setDownloadingImages(false);
+        setDownloadProgress(0);
+        showActionMessage('Failed to create zip file. Please try again.');
+      }
+    }, 300); // Small delay to show progress bar
+  };
 
-      // Generate zip file
-      const content = await zip.generateAsync({ type: 'blob' });
-      
-      // Create download link without file-saver
-      const blobUrl = URL.createObjectURL(content);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `${property?.title.replace(/\s+/g, '_')}_images.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-      
-      // showActionMessage(`Downloaded ${propertyImages.length} images as zip file`);
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: `Downloaded ${propertyImages.length} images as zip file`,
-      })
-    } catch (error) {
-      console.error('Error creating zip file:', error);
-      showActionMessage('Failed to create zip file. Please try again.');
-    } finally {
-      setDownloading(false);
+  // Function to download all videos as zip
+  const downloadAllVideosAsZip = async () => {
+    if (propertyVideos.length === 0) {
+      showActionMessage('No videos available to download.');
+      return;
     }
+
+    setDownloadingVideos(true);
+    setDownloadProgress(0);
+    
+    // Show progress bar immediately
+    setTimeout(() => {
+      if (downloadProgress === 0) {
+        setDownloadProgress(5); // Start with 5% to show progress has started
+      }
+    }, 100);
+
+    // Start download in background without waiting for completion
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip();
+        const videoFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_videos`);
+        
+        if (!videoFolder) {
+          throw new Error('Failed to create zip folder');
+        }
+
+        let completed = 0;
+        const totalItems = propertyVideos.length;
+        
+        // Download each video and add to zip
+        const downloadPromises = propertyVideos.map(async (video, index) => {
+          try {
+            // Ensure proper URL
+            let videoUrl = video.video;
+            if (videoUrl.startsWith('/')) {
+              videoUrl = `${API_BASE.replace(/\/api\/?$/, '')}${videoUrl}`;
+            }
+            
+            const response = await fetch(videoUrl);
+            if (!response.ok) {
+              console.warn(`Failed to fetch video ${index + 1}: ${videoUrl}`);
+              completed++;
+              const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+              setDownloadProgress(progress);
+              return null;
+            }
+            
+            const blob = await response.blob();
+            const extension = blob.type.split('/')[1] || 'mp4';
+            const fileName = `${property?.title.replace(/\s+/g, '_')}_video_${index + 1}.${extension}`;
+            
+            // Update progress
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
+            
+            return { fileName, blob };
+          } catch (error) {
+            console.error(`Error downloading video ${index + 1}:`, error);
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
+            return null;
+          }
+        });
+
+        const downloadedVideos = await Promise.all(downloadPromises);
+        
+        // Add downloaded videos to zip
+        downloadedVideos.forEach((item) => {
+          if (item) {
+            videoFolder.file(item.fileName, item.blob);
+          }
+        });
+
+        // Generate zip file and trigger browser download
+        zip.generateAsync({ type: 'blob' }, (metadata) => {
+          // Update progress based on zip generation
+          if (metadata.percent) {
+            const zipProgress = 5 + (metadata.percent * 0.95); // Scale to 5-100%
+            setDownloadProgress(zipProgress);
+          }
+        }).then((content) => {
+          // Complete progress
+          setDownloadProgress(100);
+          
+          // Create download link and trigger download
+          const blobUrl = URL.createObjectURL(content);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `${property?.title.replace(/\s+/g, '_')}_videos.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          
+          // Show success message after a brief delay
+          setTimeout(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: `Downloaded ${propertyVideos.length} videos`,
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }, 500);
+          
+          // Reset progress after completion
+          setTimeout(() => {
+            setDownloadingVideos(false);
+            setDownloadProgress(0);
+          }, 1000);
+        });
+
+      } catch (error) {
+        console.error('Error creating zip file:', error);
+        setDownloadingVideos(false);
+        setDownloadProgress(0);
+        showActionMessage('Failed to create zip file. Please try again.');
+      }
+    }, 300); // Small delay to show progress bar
   };
 
   // Function to copy all SEO text
@@ -485,6 +791,73 @@ Description: ${property.description.substring(0, 200)}...
     if (!property) return;
     const keywords = property.seo_info?.keywords?.join(', ') || 'Not available';
     copyToClipboard(keywords, 'Keywords copied to clipboard!');
+  };
+
+  // Function to copy dynamic calendar link
+  const handleCopyCalendarLink = () => {
+    if (!property) return;
+    
+    const calendarLink = generateCalendarLink();
+    
+    if (!calendarLink) {
+      showActionMessage('Calendar link is not available for this property.');
+      return;
+    }
+    
+    copyToClipboard(calendarLink, 'Calendar link copied!');
+  };
+
+  // Function to copy description
+  const handleCopyDescription = () => {
+    if (!property) return;
+    copyToClipboard(property.description, 'Description copied to clipboard!');
+  };
+
+  // Function to copy outdoor amenities
+  const handleCopyOutdoorAmenities = () => {
+    if (!property) return;
+    const amenitiesText = [...property.outdoor_amenities, ...property.interior_amenities].join(', ');
+    if (amenitiesText) {
+      copyToClipboard(amenitiesText, 'Outdoor & Interior amenities copied to clipboard!');
+    } else {
+      showActionMessage('No amenities available to copy.');
+    }
+  };
+
+  // --- Quick Action Handlers (matching screenshot labels) ---
+  const handleShowAmenities = () => {
+    const el = document.getElementById('outdoor-amenities-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showActionMessage('Amenities section not found on page.');
+    }
+  };
+
+  const handleShowStaff = () => {
+    if (property?.staff_name) {
+      showActionMessage(`Staff: ${property.staff_name}`);
+    } else {
+      showActionMessage('No staff information available.');
+    }
+  };
+
+  const handleShowAvailability = () => {
+    // Instead of opening a link, show the calendar component
+    setShowCalendar(true);
+    
+    // Scroll to calendar section
+    setTimeout(() => {
+      const calendarSection = document.getElementById('availability-calendar-section');
+      if (calendarSection) {
+        calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
+  const handleMarkAsSold = () => {
+    setLocalStatus('sold');
+    showActionMessage('This property has been marked as SOLD (local state only).');
   };
 
   if (loading) {
@@ -555,42 +928,10 @@ Description: ${property.description.substring(0, 200)}...
     }
   };
 
-  // --- Quick Action Handlers (matching screenshot labels) ---
-  const handleShowAmenities = () => {
-    const el = document.getElementById('outdoor-amenities-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      showActionMessage('Amenities section not found on page.');
-    }
-  };
+  // Get the dynamic calendar link
+  const dynamicCalendarLink = generateCalendarLink();
 
-  const handleShowStaff = () => {
-    if (property?.staff_name) {
-      showActionMessage(`Staff: ${property.staff_name}`);
-    } else {
-      showActionMessage('No staff information available.');
-    }
-  };
-
-  const handleShowAvailability = () => {
-    if (property?.viewing_link) {
-      window.open(property.viewing_link, '_blank', 'noopener');
-    } else {
-      showActionMessage('No viewing / calendar link set for this property.');
-    }
-  };
-
-  const handleCopyDescription = () =>
-    copyToClipboard(property?.description ?? '', 'Description copied!');
-
-  const handleCopyCalendarLink = () =>
-    copyToClipboard(property?.viewing_link ?? '', 'Calendar link copied!');
-
-  const handleMarkAsSold = () => {
-    setLocalStatus('sold');
-    showActionMessage('This property has been marked as SOLD (local state only).');
-  };
+  console.log('all data ', property);
 
   return (
     <div className="min-h-screen p-4 bg-gray-50 font-sans">
@@ -616,21 +957,62 @@ Description: ${property.description.substring(0, 200)}...
               label="Amenities"
               onClick={handleShowAmenities}
             />
+            {/* <QuickActionButton
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151081/user-community-line_sodsbc.png"
+              label="Show Staff"
+              onClick={handleShowStaff}
+            /> */}
+            {/* <QuickActionButton
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151122/search-eye-line_w28zd9.png"
+              label="Show Availability"
+              onClick={handleShowAvailability}
+            /> */}
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1767906306/Icon_26_ejcmnk.png"
               label="Copy Description"
               onClick={handleCopyDescription}
             />
+            {/* <QuickActionButton
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_31_evyeki.png"
+              label="Copy Calendar Link"
+              onClick={handleCopyCalendarLink}
+            /> */}
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
               label={`Download All Images (${propertyImages.length})`}
               onClick={downloadAllImagesAsZip}
-              disabled={downloading || propertyImages.length === 0}
+              disabled={downloadingImages || propertyImages.length === 0}
+            />
+            <QuickActionButton
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
+              label={`Download All Videos (${propertyVideos.length})`}
+              onClick={downloadAllVideosAsZip}
+              disabled={downloadingVideos || propertyVideos.length === 0}
             />
           </div>
-          {downloading && (
-            <div className="mt-3 text-sm text-blue-600">
-              Downloading {propertyImages.length} images as zip...
+          
+          {/* Download Progress Bar - Always show when downloading */}
+          {(downloadingImages || downloadingVideos) && (
+            <div className="mt-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <span>
+                  {downloadingImages 
+                    ? `Downloading ${propertyImages.length} Images...` 
+                    : `Downloading ${propertyVideos.length} Videos...`}
+                </span>
+                <span>{downloadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${downloadProgress}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {downloadProgress === 100 
+                  ? 'Complete! Browser download should start automatically...' 
+                  : 'Download in progress...'}
+              </div>
             </div>
           )}
         </div>
@@ -639,7 +1021,7 @@ Description: ${property.description.substring(0, 200)}...
         <h2 className="text-xl font-bold text-gray-800 mb-3">Property</h2>
         <div className="bg-white shadow-xl rounded-xl overflow-hidden p-6 mb-8 border border-gray-200">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left image */}
+            {/* Left image - showing one image from API */}
             <div className="lg:w-1/3 flex-shrink-0">
               <div className="relative h-56 rounded-lg overflow-hidden">
                 <img
@@ -676,26 +1058,32 @@ Description: ${property.description.substring(0, 200)}...
               </div>
 
 
-              {/* Guests / beds / baths / pools */}
+              {/* Guests / beds / baths / pools with pluralization */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-700">
+                {/* <div className="flex items-center gap-1">
+                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/user-fill_tqy1wd.png" alt="" />
+                  <span>
+                    {getPluralText(property.add_guest ?? 0, 'Guest', 'Guests')}
+                  </span>
+                </div> */}
                 <div className="flex items-center gap-1">
-                 <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
-                  <span>{property.bedrooms ?? 0} Beds</span>
+                 <img className='w-5 h-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
+                  <span>{getPluralText(property.bedrooms ?? 0, 'Bed', 'Beds')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
-                  <span>{property.bathrooms ?? 0} Baths</span>
+                  <span>{getPluralText(property.bathrooms ?? 0, 'Bath', 'Baths')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
-                  <span>{property.pool ?? 0} Pools</span>
+                  <span>{getPluralText(property.pool ?? 0, 'Pool', 'Pools')}</span>
                 </div>
               </div>
 
               {/* Commission & Damage deposit */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
-                  <img 
+                  <img
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920561/discount-percent-fill_fc6s5e.png"
                     alt="Commission"
                     className="w-5 h-5"
@@ -703,24 +1091,29 @@ Description: ${property.description.substring(0, 200)}...
                   <span>
                     {property.commission_rate
                       ? `${property.commission_rate}% Commission Offered To Agent`
-                      : 'Commission rate not set'}
+                      : 'Commission Rate Not Set'}
                   </span>
                 </div>
+            
               </div>
 
               {/* Booking status + calendar accuracy */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
-                 <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
-                  <span>Booking TBC by {property.tbc_by}</span>
+                 <img className='h-5 w-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
+                  <span>Booking TBC by {property.tbc_by || 'Owner'}</span>
                 </div>
+              
               </div>
             </div>
           </div>
         </div>
 
-        {/* Description */}
-        <h2 className="text-xl font-bold text-gray-800 mb-3">Description</h2>
+        {/* Description with Copy Button */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold text-gray-800">Description</h2>
+          <CopyButton onClick={handleCopyDescription} label="Copy Description" />
+        </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           <div
             className={`text-gray-700 leading-relaxed transition-all duration-300 ${
@@ -739,13 +1132,16 @@ Description: ${property.description.substring(0, 200)}...
           </button>
         </div>
 
-        {/* Outdoor Amenities (match screenshot section title) */}
-        <h2
-          id="outdoor-amenities-section"
-          className="text-xl font-bold text-gray-800 mb-3"
-        >
-          Outdoor Amenities
-        </h2>
+        {/* Outdoor Amenities with Copy Button */}
+        <div className="flex justify-between items-center mb-3">
+          <h2
+            id="outdoor-amenities-section"
+            className="text-xl font-bold text-gray-800"
+          >
+            Outdoor Amenities
+          </h2>
+          <CopyButton onClick={handleCopyOutdoorAmenities} label="Copy Amenities" />
+        </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           {property.outdoor_amenities.length === 0 &&
           property.interior_amenities.length === 0 ? (
@@ -831,6 +1227,21 @@ Description: ${property.description.substring(0, 200)}...
             </div>
           </div>
         </div>
+
+        {/* Viewing Calendar / Schedule a Viewing */}
+    
+
+        {/* Availability Calendar Section */}
+        {showCalendar && property?.id && (
+          <div id="availability-calendar-section" className="mt-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-3">
+              Availability Calendar
+            </h2>
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+              <Calendar villaId={property.id} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
