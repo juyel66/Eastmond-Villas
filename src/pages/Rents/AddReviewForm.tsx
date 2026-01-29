@@ -403,12 +403,10 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
                 htmlFor="location"
                 className="block text-base font-semibold text-gray-800 mb-1"
               >
-                Location <span className="text-red-500">*</span>
+                Location 
               </label>
               <input
-                {...register('location', {
-                  required: 'Location is required',
-                })}
+                {...register('location',)}
                 id="location"
                 placeholder="Enter your location"
                 className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
@@ -425,12 +423,10 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
                 htmlFor="profession"
                 className="block text-base font-semibold text-gray-800 mb-1"
               >
-                Profession <span className="text-red-500">*</span>
+                Profession
               </label>
               <input
-                {...register('profession', {
-                  required: 'Profession is required',
-                })}
+                {...register('profession',)}
                 id="profession"
                 placeholder="Enter your profession"
                 className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"

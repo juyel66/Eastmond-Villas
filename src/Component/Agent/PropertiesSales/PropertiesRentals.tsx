@@ -149,7 +149,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
   const StatusBadge = ({ status }: { status: Property['status'] }) => {
     let bgColor = 'bg-gray-100 text-gray-700';
-    if (status === 'published') bgColor = 'bg-green-100 text-green-700';
+    if (status.toLocaleLowerCase() === 'published') bgColor = 'bg-green-100 text-green-700';
     else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
     else if (status === 'pending_review' || status === 'pending') bgColor = 'bg-blue-100 text-blue-700';
     return (
@@ -157,6 +157,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
       >
         {status.replace('_', ' ')}
+        
+        
       </span>
     );
   };
@@ -258,7 +260,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               {title}
             </h2>
             <div className="flex items-center gap-2">
-              <StatusBadge status={status.charAt(0).toLowerCase() + status.slice(1)} />
+              <StatusBadge status={status.charAt(0).toUpperCase() + status.slice(1)} />
             </div>
           </div>
 

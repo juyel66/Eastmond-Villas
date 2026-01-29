@@ -278,7 +278,7 @@ export default function AgentCard({
             <span
               className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass}`}
             >
-              {status}
+              {status.toUpperCase().slice(0, 1) + status.slice(1)}
             </span>
           </div>
 

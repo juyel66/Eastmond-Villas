@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 
 // Import the Calendar component
 import Calendar from "../../../pages/Rents/Calendar";
+import { FaHandshakeSimple } from 'react-icons/fa6';
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -1053,7 +1054,7 @@ Description: ${property.description.substring(0, 200)}...
                     localStatus
                   )}`}
                 >
-                  {localStatus}
+                  {localStatus.toUpperCase().slice(0,1)+localStatus.slice(1)}
                 </span>
               </div>
 
@@ -1100,7 +1101,7 @@ Description: ${property.description.substring(0, 200)}...
               {/* Booking status + calendar accuracy */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
-                 <img className='h-5 w-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/shake-hands-fill_1_sthkzu.png" alt="" />
+                <div className='text-[23px]'><FaHandshakeSimple /></div>
                   <span>Booking TBC by {property.tbc_by || 'Owner'}</span>
                 </div>
               

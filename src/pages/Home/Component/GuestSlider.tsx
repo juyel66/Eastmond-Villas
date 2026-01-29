@@ -187,7 +187,7 @@ const testimonialData = [
         location: "Singapore",
         title: "Venture Capitalist",
         text: "EV is always super responsive, extremely professional and experienced enough to ensure our vacation was flawless.",
-        rating: 4.8,
+        rating: 4.9,
         image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760389418/Ellipse_1_3_jw2vgn.png"
     },
     {
@@ -214,7 +214,7 @@ const testimonialData = [
         location: "USA",
         title: "Travel Blogger",
         text: "My family trip was unforgettable. The local experiences arranged by the concierge were truly exceptional.",
-        rating: 4.7,
+        rating: 4.9,
         image: "https://randomuser.me/api/portraits/women/8.jpg"
     }
 ];
@@ -330,19 +330,12 @@ export default function GuestSlider() {
     return (
         <div className="w-full h-[450px] mt-10 flex flex-col">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-shrink-0">
-                <div className="mb-6">
-                    <h2 className="text-3xl font-bold text-gray-900">Guest Reviews</h2>
-                    <p className="text-gray-600 mt-2">
-                        {loading ? "Loading reviews..." : 
-                         hasApiData ? `Showing ${sortedTestimonialData.length} featured reviews and ${apiReviews.length} verified guest reviews` : 
-                         `Showing ${sortedTestimonialData.length} featured reviews`}
-                    </p>
-                    {error && (
-                        <p className="text-amber-600 text-sm mt-1">
-                            Note: Could not load additional reviews from server.
-                        </p>
-                    )}
-                </div>
+
+
+              
+
+
+
             </div>
 
             <div className="w-full flex-grow">
