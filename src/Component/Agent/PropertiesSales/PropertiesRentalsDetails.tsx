@@ -55,6 +55,14 @@ interface Property {
   // calendar accuracy field
   calendar_accuracy?: string;
 
+  // videos field
+  videos?: Array<{
+    id?: number;
+    video: string;
+    title?: string;
+    description?: string;
+  }>;
+
   _raw?: any;
 }
 
@@ -64,6 +72,14 @@ interface PropertyImage {
   image: string;
   alt_text?: string;
   is_main?: boolean;
+}
+
+// Video interface
+interface PropertyVideo {
+  id?: number;
+  video: string;
+  title?: string;
+  description?: string;
 }
 
 // --- API base (use env var if available) ---
@@ -98,6 +114,14 @@ const copyToClipboard = (text: string, successMessage: string) => {
     console.error('copy failed', e);
     showActionMessage('Copy failed');
   }
+};
+
+// Function to get pluralized text
+const getPluralText = (count: number, singular: string, plural: string): string => {
+  if (count === 1) {
+    return `${count} ${singular}`;
+  }
+  return `${count} ${plural}`;
 };
 
 // --- QUICK ACTION BUTTON ---
@@ -152,7 +176,10 @@ const PropertiesRentalsDetails: FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localStatus, setLocalStatus] = useState<string>('draft');
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
-  const [downloading, setDownloading] = useState(false);
+  const [propertyVideos, setPropertyVideos] = useState<PropertyVideo[]>([]);
+  const [downloadingImages, setDownloadingImages] = useState(false);
+  const [downloadingVideos, setDownloadingVideos] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   
   // State to control calendar visibility
   const [showCalendar, setShowCalendar] = useState(false);
@@ -288,6 +315,64 @@ const PropertiesRentalsDetails: FC = () => {
         // Set property images
         setPropertyImages(images);
 
+        // --- Collect all videos from API response ---
+        const videos: PropertyVideo[] = [];
+        
+        // Videos field from API
+        if (Array.isArray(p.videos)) {
+          p.videos.forEach((video: any, index: number) => {
+            if (video.video || video.url || video.file_url) {
+              videos.push({
+                id: video.id || index,
+                video: video.video || video.url || video.file_url,
+                title: video.title || `Video ${index + 1}`,
+                description: video.description || ''
+              });
+            }
+          });
+        }
+
+        // Check other video fields
+        const videoFields = ['video_url', 'video_link', 'media_videos'];
+        videoFields.forEach(field => {
+          if (p[field]) {
+            if (Array.isArray(p[field])) {
+              p[field].forEach((video: any, index: number) => {
+                if (typeof video === 'string') {
+                  videos.push({
+                    video: video,
+                    title: `Video ${index + 1}`,
+                    description: ''
+                  });
+                } else if (video && (video.url || video.video)) {
+                  videos.push({
+                    id: video.id || index,
+                    video: video.url || video.video,
+                    title: video.title || `Video ${index + 1}`,
+                    description: video.description || ''
+                  });
+                }
+              });
+            } else if (typeof p[field] === 'string') {
+              videos.push({
+                video: p[field],
+                title: 'Main Video',
+                description: ''
+              });
+            }
+          }
+        });
+
+        console.log('=== All Videos from API ===');
+        console.log('Total videos found:', videos.length);
+        videos.forEach((video, index) => {
+          console.log(`[${index + 1}] ${video.video}`);
+          if (video.title) console.log(`    Title: ${video.title}`);
+        });
+
+        // Set property videos
+        setPropertyVideos(videos);
+
         // --- Normalize listing_type from backend ---
         const rawLt = String(p.listing_type ?? p.listingType ?? '')
           .toLowerCase()
@@ -386,6 +471,9 @@ const PropertiesRentalsDetails: FC = () => {
           // Add calendar_accuracy field
           calendar_accuracy: calendarAccuracy,
           
+          // Add videos field
+          videos: videos,
+          
           _raw: p,
         };
 
@@ -415,75 +503,245 @@ const PropertiesRentalsDetails: FC = () => {
       return;
     }
 
-    setDownloading(true);
-    try {
-      const zip = new JSZip();
-      const imageFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_images`);
-      
-      if (!imageFolder) {
-        throw new Error('Failed to create zip folder');
+    setDownloadingImages(true);
+    setDownloadProgress(0);
+    
+    // Show progress bar immediately
+    setTimeout(() => {
+      if (downloadProgress === 0) {
+        setDownloadProgress(5); // Start with 5% to show progress has started
       }
+    }, 100);
 
-      // Download each image and add to zip
-      const downloadPromises = propertyImages.map(async (img, index) => {
-        try {
-          // Ensure proper URL
-          let imageUrl = img.image;
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
-          }
-          
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
+    // Start download in background without waiting for completion
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip();
+        const imageFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_images`);
+        
+        if (!imageFolder) {
+          throw new Error('Failed to create zip folder');
+        }
+
+        let completed = 0;
+        const totalItems = propertyImages.length;
+        
+        // Download each image and add to zip
+        const downloadPromises = propertyImages.map(async (img, index) => {
+          try {
+            // Ensure proper URL
+            let imageUrl = img.image;
+            if (imageUrl.startsWith('/')) {
+              imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
+            }
+            
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
+              completed++;
+              const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+              setDownloadProgress(progress);
+              return null;
+            }
+            
+            const blob = await response.blob();
+            const extension = blob.type.split('/')[1] || 'jpg';
+            const fileName = `${property?.title.replace(/\s+/g, '_')}_image_${index + 1}.${extension}`;
+            
+            // Update progress
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
+            
+            return { fileName, blob };
+          } catch (error) {
+            console.error(`Error downloading image ${index + 1}:`, error);
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
             return null;
           }
+        });
+
+        const downloadedImages = await Promise.all(downloadPromises);
+        
+        // Add downloaded images to zip
+        downloadedImages.forEach((item) => {
+          if (item) {
+            imageFolder.file(item.fileName, item.blob);
+          }
+        });
+
+        // Generate zip file and trigger browser download
+        zip.generateAsync({ type: 'blob' }, (metadata) => {
+          // Update progress based on zip generation
+          if (metadata.percent) {
+            const zipProgress = 5 + (metadata.percent * 0.95); // Scale to 5-100%
+            setDownloadProgress(zipProgress);
+          }
+        }).then((content) => {
+          // Complete progress
+          setDownloadProgress(100);
           
-          const blob = await response.blob();
-          const extension = blob.type.split('/')[1] || 'jpg';
-          const fileName = `${property?.title.replace(/\s+/g, '_')}_${index + 1}.${extension}`;
+          // Create download link and trigger download
+          const blobUrl = URL.createObjectURL(content);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `${property?.title.replace(/\s+/g, '_')}_images.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
           
-          return { fileName, blob };
-        } catch (error) {
-          console.error(`Error downloading image ${index + 1}:`, error);
-          return null;
-        }
-      });
+          // Show success message after a brief delay
+          setTimeout(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: `Downloaded ${propertyImages.length} images`,
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }, 500);
+          
+          // Reset progress after completion
+          setTimeout(() => {
+            setDownloadingImages(false);
+            setDownloadProgress(0);
+          }, 1000);
+        });
 
-      const downloadedImages = await Promise.all(downloadPromises);
-      
-      // Add downloaded images to zip
-      downloadedImages.forEach((item, index) => {
-        if (item) {
-          imageFolder.file(item.fileName, item.blob);
-        }
-      });
+      } catch (error) {
+        console.error('Error creating zip file:', error);
+        setDownloadingImages(false);
+        setDownloadProgress(0);
+        showActionMessage('Failed to create zip file. Please try again.');
+      }
+    }, 300); // Small delay to show progress bar
+  };
 
-      // Generate zip file
-      const content = await zip.generateAsync({ type: 'blob' });
-      
-      // Create download link without file-saver
-      const blobUrl = URL.createObjectURL(content);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `${property?.title.replace(/\s+/g, '_')}_images.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-      
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: `Downloaded ${propertyImages.length} images as zip file`,
-      })
-
-    } catch (error) {
-      console.error('Error creating zip file:', error);
-      showActionMessage('Failed to create zip file. Please try again.');
-    } finally {
-      setDownloading(false);
+  // Function to download all videos as zip
+  const downloadAllVideosAsZip = async () => {
+    if (propertyVideos.length === 0) {
+      showActionMessage('No videos available to download.');
+      return;
     }
+
+    setDownloadingVideos(true);
+    setDownloadProgress(0);
+    
+    // Show progress bar immediately
+    setTimeout(() => {
+      if (downloadProgress === 0) {
+        setDownloadProgress(5); // Start with 5% to show progress has started
+      }
+    }, 100);
+
+    // Start download in background without waiting for completion
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip();
+        const videoFolder = zip.folder(`${property?.title.replace(/\s+/g, '_')}_videos`);
+        
+        if (!videoFolder) {
+          throw new Error('Failed to create zip folder');
+        }
+
+        let completed = 0;
+        const totalItems = propertyVideos.length;
+        
+        // Download each video and add to zip
+        const downloadPromises = propertyVideos.map(async (video, index) => {
+          try {
+            // Ensure proper URL
+            let videoUrl = video.video;
+            if (videoUrl.startsWith('/')) {
+              videoUrl = `${API_BASE.replace(/\/api\/?$/, '')}${videoUrl}`;
+            }
+            
+            const response = await fetch(videoUrl);
+            if (!response.ok) {
+              console.warn(`Failed to fetch video ${index + 1}: ${videoUrl}`);
+              completed++;
+              const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+              setDownloadProgress(progress);
+              return null;
+            }
+            
+            const blob = await response.blob();
+            const extension = blob.type.split('/')[1] || 'mp4';
+            const fileName = `${property?.title.replace(/\s+/g, '_')}_video_${index + 1}.${extension}`;
+            
+            // Update progress
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
+            
+            return { fileName, blob };
+          } catch (error) {
+            console.error(`Error downloading video ${index + 1}:`, error);
+            completed++;
+            const progress = Math.round((completed / totalItems) * 95) + 5; // 5-100 range
+            setDownloadProgress(progress);
+            return null;
+          }
+        });
+
+        const downloadedVideos = await Promise.all(downloadPromises);
+        
+        // Add downloaded videos to zip
+        downloadedVideos.forEach((item) => {
+          if (item) {
+            videoFolder.file(item.fileName, item.blob);
+          }
+        });
+
+        // Generate zip file and trigger browser download
+        zip.generateAsync({ type: 'blob' }, (metadata) => {
+          // Update progress based on zip generation
+          if (metadata.percent) {
+            const zipProgress = 5 + (metadata.percent * 0.95); // Scale to 5-100%
+            setDownloadProgress(zipProgress);
+          }
+        }).then((content) => {
+          // Complete progress
+          setDownloadProgress(100);
+          
+          // Create download link and trigger download
+          const blobUrl = URL.createObjectURL(content);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `${property?.title.replace(/\s+/g, '_')}_videos.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          
+          // Show success message after a brief delay
+          setTimeout(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: `Downloaded ${propertyVideos.length} videos`,
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }, 500);
+          
+          // Reset progress after completion
+          setTimeout(() => {
+            setDownloadingVideos(false);
+            setDownloadProgress(0);
+          }, 1000);
+        });
+
+      } catch (error) {
+        console.error('Error creating zip file:', error);
+        setDownloadingVideos(false);
+        setDownloadProgress(0);
+        showActionMessage('Failed to create zip file. Please try again.');
+      }
+    }, 300); // Small delay to show progress bar
   };
 
   // Function to copy all SEO text
@@ -719,18 +977,38 @@ Description: ${property.description.substring(0, 200)}...
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
               label={`Download All Images (${propertyImages.length})`}
               onClick={downloadAllImagesAsZip}
-              disabled={downloading || propertyImages.length === 0}
+              disabled={downloadingImages || propertyImages.length === 0}
             />
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
-              label={`Download All Videos (${propertyImages.length})`}
-              onClick={downloadAllImagesAsZip}
-              disabled={downloading || propertyImages.length === 0}
+              label={`Download All Videos (${propertyVideos.length})`}
+              onClick={downloadAllVideosAsZip}
+              disabled={downloadingVideos || propertyVideos.length === 0}
             />
           </div>
-          {downloading && (
-            <div className="mt-3 text-sm text-blue-600">
-              Downloading {propertyImages.length} images as zip...
+          
+          {/* Download Progress Bar - Always show when downloading */}
+          {(downloadingImages || downloadingVideos) && (
+            <div className="mt-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <span>
+                  {downloadingImages 
+                    ? `Downloading ${propertyImages.length} Images...` 
+                    : `Downloading ${propertyVideos.length} Videos...`}
+                </span>
+                <span>{downloadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${downloadProgress}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {downloadProgress === 100 
+                  ? 'Complete! Browser download should start automatically...' 
+                  : 'Download in progress...'}
+              </div>
             </div>
           )}
         </div>
@@ -776,25 +1054,25 @@ Description: ${property.description.substring(0, 200)}...
               </div>
 
 
-              {/* Guests / beds / baths / pools */}
+              {/* Guests / beds / baths / pools with pluralization */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-1">
                   <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/user-fill_tqy1wd.png" alt="" />
                   <span>
-                    {property.add_guest ?? 0} Guests
+                    {getPluralText(property.add_guest ?? 0, 'Guest', 'Guests')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
                  <img className='w-5 h-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
-                  <span>{property.bedrooms ?? 0} Beds</span>
+                  <span>{getPluralText(property.bedrooms ?? 0, 'Bed', 'Beds')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
-                  <span>{property.bathrooms ?? 0} Baths</span>
+                  <span>{getPluralText(property.bathrooms ?? 0, 'Bath', 'Baths')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
-                  <span>{property.pool ?? 0} Pools</span>
+                  <span>{getPluralText(property.pool ?? 0, 'Pool', 'Pools')}</span>
                 </div>
               </div>
 
@@ -818,22 +1096,11 @@ Description: ${property.description.substring(0, 200)}...
                     alt="Damage Deposit"
                     className="w-5 h-5"
                   />
-                  {/* <span>
-                    {property.damage_deposit
-                      ? `USD$ ${formatMoney(property.damage_deposit)} Damage Deposit`
-                      : 'No Damage Deposit'}
-                  </span> */}
-
-
-
-                     <span>
+                  <span>
                     {property.damage_deposit
                       ? `USD$ ${formatMoney(property.security_deposit)} Security Deposit`
                       : 'No Damage Deposit'}
                   </span>
-
-
-
                 </div>
               </div>
 
