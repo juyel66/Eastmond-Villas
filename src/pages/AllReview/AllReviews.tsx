@@ -23,6 +23,8 @@ type ReviewItem = {
   images?: ReviewImage[];
   address?: string | null;
   status?: string;
+  location?: string;
+  profession?: string;
 };
 
 type ReviewsResponse = {
@@ -39,7 +41,13 @@ const REVIEWS_URL = `${API_BASE}/villas/reviews/`;
 const formatDate = (iso?: string) => {
   if (!iso) return '-';
   try {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   } catch {
     return iso;
   }
@@ -100,6 +108,7 @@ const AllReview: React.FC = () => {
 
   // modal state
   const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
 
   const doFetchWithRefresh = useCallback(
     async (input: RequestInfo, init: RequestInit = {}, allowRetry = true): Promise<Response> => {
@@ -313,18 +322,40 @@ const AllReview: React.FC = () => {
     }
   };
 
-  // modal
+  // modal functions
   const openView = (r: ReviewItem) => {
     setSelectedReview(r);
+    setCurrentImageIndex(0);
     document.body.style.overflow = 'hidden';
   };
+  
   const closeView = () => {
     setSelectedReview(null);
+    setCurrentImageIndex(0);
     document.body.style.overflow = '';
   };
+  
+  const nextImage = () => {
+    if (selectedReview?.images && selectedReview.images.length > 0) {
+      setCurrentImageIndex((prev) => 
+        prev === selectedReview.images!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+  
+  const prevImage = () => {
+    if (selectedReview?.images && selectedReview.images.length > 0) {
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? selectedReview.images!.length - 1 : prev - 1
+      );
+    }
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && selectedReview) closeView();
+      if (e.key === 'ArrowRight' && selectedReview) nextImage();
+      if (e.key === 'ArrowLeft' && selectedReview) prevImage();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -410,8 +441,6 @@ const AllReview: React.FC = () => {
 
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
-                         
-
                           {/* Dropdown to change status */}
                           <select
                             value={status}
@@ -479,83 +508,197 @@ const AllReview: React.FC = () => {
         )}
       </div>
 
-      {/* Modal: View Review */}
+      {/* Modal: View Review with Image Slideshow */}
       {selectedReview && (
-        <div role="dialog" aria-modal="true" aria-labelledby="view-review-title" className="fixed  inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={closeView} />
-         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto z-10 mx-auto">
+        <div role="dialog" aria-modal="true" aria-labelledby="view-review-title" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={closeView} />
+          
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto z-10 mx-auto">
 
-  {/* Image Banner */}
-  {selectedReview.images && selectedReview.images.length > 0 && (
-    <div className="relative w-full h-64 overflow-hidden rounded-t-2xl">
-      <img
-        src={selectedReview.images[0].image}
-        alt="Review Banner"
-        className="w-full h-full object-cover"
-      />
+            {/* Image Slideshow Section */}
+            {selectedReview.images && selectedReview.images.length > 0 ? (
+              <div className="relative w-full h-72 overflow-hidden rounded-t-2xl">
+                {/* Main Image */}
+                <img
+                  src={selectedReview.images[currentImageIndex].image}
+                  alt={`Review ${currentImageIndex + 1}`}
+                  className="w-full h-full object-cover transition-opacity duration-300"
+                />
 
-      <div className="absolute inset-0 bg-black/40 flex items-end justify-center p-4">
-        <span className="text-white text-sm bg-black/60 px-4 py-1 rounded-full">
-          {selectedReview.images.length} Photo
-          {selectedReview.images.length > 1 ? "s" : ""}
-        </span>
-      </div>
+                {/* Navigation Buttons */}
+                {selectedReview.images.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-black"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-black"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
 
-      <button
-        onClick={closeView}
-        className="absolute top-4 right-4 bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black"
-      >
-        ✕
-      </button>
-    </div>
-  )}
+                {/* Image Counter */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                  <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                    {currentImageIndex + 1} / {selectedReview.images.length}
+                  </div>
+                </div>
 
-  {/* Header */}
-  <div className="p-6 text-center border-b space-y-3">
-    <h3 className="text-xl font-bold text-gray-800">
-      Review
-    </h3>
+                {/* Thumbnail Strip */}
+                <div className="absolute bottom-16 left-0 right-0 flex justify-center space-x-2 px-4">
+                  {selectedReview.images.map((img, index) => (
+                    <button
+                      key={img.id}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-12 h-12 rounded overflow-hidden border-2 ${
+                        index === currentImageIndex ? 'border-teal-500' : 'border-transparent'
+                      }`}
+                    >
+                      <img
+                        src={img.image}
+                        alt={`Thumb ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
 
-    <div className="flex justify-center items-center gap-3">
-      <StarRow rating={selectedReview.rating} />
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-semibold
-        ${
-          selectedReview.status === "approved"
-            ? "bg-green-100 text-green-700"
-            : "bg-yellow-100 text-yellow-700"
-        }`}
-      >
-        {selectedReview.status === "approved"
-          ? "Approved"
-          : selectedReview.status ?? "Pending"}
-      </span>
-    </div>
-  </div>
+                <button
+                  onClick={closeView}
+                  className="absolute top-4 right-4 bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="relative w-full h-48 bg-gray-100 rounded-t-2xl flex items-center justify-center">
+                <span className="text-gray-400">No Images</span>
+                <button
+                  onClick={closeView}
+                  className="absolute top-4 right-4 bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
-  {/* Body */}
-  <div className="p-6 space-y-6 text-center">
+            {/* Header with User Info */}
+            <div className="p-6 border-b space-y-4">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-800">
+                  Review Details
+                </h3>
+                <div className="flex justify-center items-center gap-3 mt-2">
+                  <StarRow rating={selectedReview.rating} />
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold
+                    ${
+                      selectedReview.status === "approved"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {selectedReview.status === "approved"
+                      ? "Approved"
+                      : selectedReview.status ?? "Pending"}
+                  </span>
+                </div>
+              </div>
 
-    <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-w-2xl mx-auto">
-      {selectedReview.comment}
-    </div>
+              {/* User Info Section */}
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-700">User</div>
+                  <div className="text-lg font-bold text-gray-900">
+                    {selectedReview.user_name || 'Anonymous'}
+                  </div>
+                </div>
+                
+                {selectedReview.location && (
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-gray-700">Location</div>
+                    <div className="text-lg text-gray-900">{selectedReview.location}</div>
+                  </div>
+                )}
+                
+                {selectedReview.profession && (
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-gray-700">Profession</div>
+                    <div className="text-lg text-gray-900">{selectedReview.profession}</div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-    <div className="flex justify-center gap-6 text-xs text-gray-500">
-      <div>Created: {formatDate(selectedReview.created_at)}</div>
-      <div>Rating: {selectedReview.rating} / 5</div>
-    </div>
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-500 mb-2">Review Comment</h4>
+                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
+                  {selectedReview.comment}
+                </div>
+              </div>
 
-    <div className="flex justify-center pt-2">
-      <button
-        onClick={closeView}
-        className="px-6 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-</div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-500">Property:</span>{' '}
+                  <span className="text-gray-700">{selectedReview.property_title || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">Rating:</span>{' '}
+                  <span className="text-gray-700">{selectedReview.rating} / 5</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">Created:</span>{' '}
+                  <span className="text-gray-700">{formatDate(selectedReview.created_at)}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">Images:</span>{' '}
+                  <span className="text-gray-700">{(selectedReview.images?.length || 0)} photos</span>
+                </div>
+              </div>
 
+              <div className="flex justify-center pt-4 space-x-4">
+                <button
+                  onClick={closeView}
+                  className="px-6 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedReview.status === 'approved') {
+                      handleChangeStatus(selectedReview.id, 'pending');
+                    } else {
+                      handleChangeStatus(selectedReview.id, 'approved');
+                    }
+                  }}
+                  className="px-6 py-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 transition"
+                  disabled={updatingStatusId === selectedReview.id}
+                >
+                  {updatingStatusId === selectedReview.id ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Updating...
+                    </span>
+                  ) : selectedReview.status === 'approved' ? (
+                    'Mark as Pending'
+                  ) : (
+                    'Approve Review'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>
