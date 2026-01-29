@@ -12,6 +12,8 @@ import {
 
 interface ReviewInputs {
   reviewText: string;
+  location: string;
+  profession: string;
 }
 
 interface AddReviewFormProps {
@@ -36,7 +38,11 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
     reset,
     formState: { errors },
   } = useForm<ReviewInputs>({
-    defaultValues: { reviewText: '' },
+    defaultValues: { 
+      reviewText: '',
+      location: '',
+      profession: ''
+    },
   });
 
   const MAX_FILE_SIZE_KB = 2048; // 2MB
@@ -50,9 +56,6 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
     const fileArray = Array.from(newFiles);
 
     for (const file of fileArray) {
-      // If you want to restrict to images: uncomment next line
-      // if (!file.type.startsWith('image/')) continue;
-
       if (file.size > MAX_FILE_SIZE_KB * 1024) {
         console.warn(`Skipping ${file.name}: exceeds ${MAX_FILE_SIZE_KB} KB`);
         continue;
@@ -75,7 +78,6 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) processFiles(e.target.files);
-    // Reset input so same file can be re-selected if removed then re-added
     e.target.value = '';
   };
 
@@ -121,7 +123,7 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
       return;
     }
 
-    // require auth (because API returned 401 earlier)
+    // require auth
     if (!isAuthenticated) {
       const res = await Swal.fire({
         icon: 'warning',
@@ -142,12 +144,13 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
 
     try {
       const formData = new FormData();
+      
+      // Append data with correct field names
       formData.append('comment', data.reviewText);
+      formData.append('location', data.location);
+      formData.append('profession', data.profession);
       formData.append('rating', String(rating));
       formData.append('property', String(propertyId));
-
-      // If you want to link review to user id explicitly, don't append 'user' unless your backend expects it.
-      // e.g., formData.append('user', String(currentUser?.id));
 
       for (const file of files) {
         formData.append('images', file);
@@ -159,7 +162,6 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
         method: 'POST',
         headers: token
           ? {
-              // Do NOT set Content-Type header for FormData; browser will set multipart boundary
               Authorization: `Bearer ${token}`,
               Accept: 'application/json',
             }
@@ -170,15 +172,60 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
       });
 
       if (res.status === 401) {
-        // token invalid or expired
         Swal.fire({
           icon: 'error',
           title: 'Unauthorized',
           text: 'Authentication failed. Please login again.',
         }).then(() => {
-          // redirect to login to refresh credentials
           window.location.href = '/login';
         });
+        return;
+      }
+
+      // Handle 400 Bad Request for duplicate review
+      if (res.status === 400) {
+        try {
+          const errorData = await res.json();
+          
+          // Check if it's the "already reviewed" error
+          if (errorData.non_field_errors && 
+              errorData.non_field_errors.includes("You have already reviewed this property.")) {
+            
+            Swal.fire({
+              icon: 'info',
+              title: 'You Already Reviewed',
+              html: `
+                <div class="text-center">
+                  <div class="mb-4">
+                    <svg class="w-16 h-16 text-teal-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  
+                 
+                 
+                </div>
+              `,
+              confirmButtonText: 'Okay, Got it!',
+              confirmButtonColor: '#00897B',
+              showCancelButton: false,
+              
+              width: '500px'
+            });
+            return;
+          }
+          
+          // Handle other 400 errors
+          throw new Error(JSON.stringify(errorData));
+          
+        } catch (parseError) {
+          // If we can't parse JSON, show generic error
+          Swal.fire({
+            icon: 'error',
+            title: 'Submission Error',
+            text: 'An error occurred while submitting your review.',
+          });
+        }
         return;
       }
 
@@ -208,8 +255,6 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
       }
 
       const result = await res.json();
-      console.clear();
-      console.log('✅ Review POST response', result);
 
       // Reset form & UI
       reset();
@@ -218,17 +263,26 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
 
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Review submitted successfully!',
-        timer: 1800,
-        showConfirmButton: false,
+        title: 'Success!',
+        html: `
+          <div class="text-center">
+            
+            <p class="text-lg font-semibold text-gray-800 mb-2">Review Submitted Successfully!</p>
+            
+            <p class="text-sm text-gray-500 mt-3">Thank you for your valuable feedback!</p>
+          </div>
+        `,
+        showConfirmButton: true,
+        confirmButtonText: 'Continue',
+        confirmButtonColor: '#00897B',
+        timer: 5000,
       });
     } catch (error) {
       console.error('Network or unexpected error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Network error',
-        text: 'An error occurred while submitting the review. Check console for details.',
+        text: 'An error occurred while submitting the review. Please try again later.',
       });
     } finally {
       setUploading(false);
@@ -270,16 +324,22 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
           <span className="">Required fields are marked.</span>
         </p>
 
-        {
-          !isAuthenticated &&
-          <p className="mb-4 text-sm font-medium text-red-500">
-          Please{' '}
-          <a href="/login" className="text-teal-600 hover:underline">
-            login
-          </a>{' '}
-          to write review!
-        </p>
-        }
+       {
+  !isAuthenticated ? (
+    <p className="mb-4 text-sm font-medium text-red-500">
+      Please{" "}
+      <a href="/login" className="text-teal-600 hover:underline">
+        login
+      </a>{" "}
+      to write a review!
+    </p>
+  ) : (
+    <p className="mb-4 text-sm font-medium text-green-600">
+        You may submit your review now.
+    </p>
+  )
+}
+
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Rating */}
@@ -336,65 +396,52 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
             )}
           </div>
 
-
-      {/* <div className='md:flex  gap-5'>
-              <div className="mb-6 flex-1">
-            <label
-              htmlFor="reviewText"
-              className="block text-base font-semibold text-gray-800 mb-1"
-            >
-              Location <span className="text-red-500">*</span>
-            </label>
-
-            <input
-              {...register('reviewText', {
-                required: 'Review is required',
-                minLength: {
-                  value: 20,
-                  message: 'Minimum 20 characters required',
-                },
-              })}
-              id="reviewText"
-              rows={5}
-              placeholder="Write your review"
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
-            />
-            {errors.reviewText && (
-              <span className="text-red-500 text-xs mt-1 block">
-                {errors.reviewText.message}
-              </span>
-            )}
-          </div >
-          <div className="mb-6 flex-1">
-            <label
-              htmlFor="reviewText"
-              className="block text-base font-semibold text-gray-800 mb-1"
-            >
-              Profession <span className="text-red-500">*</span>
-            </label>
-            <input
-              {...register('reviewText', {
-                required: 'Review is required',
-                minLength: {
-                  value: 20,
-                  message: 'Minimum 20 characters required',
-                },
-              })}
-              id="reviewText"
-              rows={5}
-              placeholder="Write your review"
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
-            />
-            {errors.reviewText && (
-              <span className="text-red-500 text-xs mt-1 block">
-                {errors.reviewText.message}
-              </span>
-            )}
+          {/* Location and Profession */}
+          <div className='md:flex gap-5'>
+            <div className="mb-6 flex-1">
+              <label
+                htmlFor="location"
+                className="block text-base font-semibold text-gray-800 mb-1"
+              >
+                Location <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register('location', {
+                  required: 'Location is required',
+                })}
+                id="location"
+                placeholder="Enter your location"
+                className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
+              />
+              {errors.location && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {errors.location.message}
+                </span>
+              )}
+            </div>
+            
+            <div className="mb-6 flex-1">
+              <label
+                htmlFor="profession"
+                className="block text-base font-semibold text-gray-800 mb-1"
+              >
+                Profession <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register('profession', {
+                  required: 'Profession is required',
+                })}
+                id="profession"
+                placeholder="Enter your profession"
+                className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
+              />
+              {errors.profession && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {errors.profession.message}
+                </span>
+              )}
+            </div>
           </div>
-      </div> */}
-
-          
-        
 
           {/* File Upload */}
           <div className="mb-6">
@@ -463,7 +510,7 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
                 {files.map((file, idx) => (
                   <li
                     key={idx}
-                    className="flex justify_between items-center bg-gray-50 p-2 rounded truncate"
+                    className="flex justify-between items-center bg-gray-50 p-2 rounded truncate"
                   >
                     <span className="truncate">{file.name}</span>
                     <button
