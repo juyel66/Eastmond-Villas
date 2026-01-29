@@ -1,7 +1,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { CgProfile } from "react-icons/cg";
 import { IoSettingsOutline } from "react-icons/io5";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import NotificationBell from "../Notifications/NotificationBell";
@@ -9,20 +9,66 @@ import NotificationBell from "../Notifications/NotificationBell";
 const MOBILE_LOGO =
   "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760303130/hd_svg_logo_1_rfsh4e.png";
 
+// Function to extract page name from URL with ID/slug handling
+const extractPageName = (pathname: string, params: any): string => {
+  // Split the pathname into segments
+  const segments = pathname.split("/").filter(Boolean);
+  
+  // Get the last segment
+  const lastSegment = segments[segments.length - 1] || "dashboard";
+  
+  // Check if the last segment is a numeric ID (like "123") or a slug
+  const isNumericId = /^\d+$/.test(lastSegment);
+  
+  if (isNumericId && segments.length >= 2) {
+    // If it's an ID, get the segment before it (the page name)
+    const pageSegment = segments[segments.length - 2];
+    return formatName(pageSegment);
+  } else if (lastSegment === "update" && segments.length >= 3) {
+    // Handle update pages (e.g., /dashboard/agent-properties-sales/123/update)
+    const pageSegment = segments[segments.length - 3];
+    return `${formatName(pageSegment)} - Update`;
+  } else if (lastSegment === "create" && segments.length >= 3) {
+    // Handle create pages
+    const pageSegment = segments[segments.length - 3];
+    return `${formatName(pageSegment)} - Create`;
+  } else if (lastSegment === "create" && segments.length === 2) {
+    // Handle simple create pages (e.g., /dashboard/create)
+    return "Create";
+  }
+  
+  // Check if we have a slug parameter from useParams
+  if (params.slug) {
+    const pageSegment = segments[segments.length - 1] || segments[segments.length - 2];
+    return `${formatName(pageSegment)} - ${params.slug}`;
+  }
+  
+  // Check if we have an id parameter from useParams
+  if (params.id && segments.length >= 2) {
+    const pageSegment = segments[segments.length - 2];
+    return `${formatName(pageSegment)} - Details`;
+  }
+  
+  // Default: format the last segment
+  return formatName(lastSegment);
+};
+
+// Helper function to format name
+const formatName = (str: string): string => {
+  if (!str) return "Dashboard";
+  
+  return str
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+};
+
 const Navbar: React.FC = () => {
   const { pathname } = useLocation();
+  const params = useParams(); // Get route parameters (id, slug, etc.)
 
-  // PAGE TITLE
-  const segments = pathname.split("/").filter(Boolean);
-  const last = segments[segments.length - 1] || "dashboard";
-
-  const formatName = (str: string) =>
-    str
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-
-  const pageName = formatName(last);
+  // Get page name with ID/slug handling
+  const pageName = extractPageName(pathname, params);
 
   // CURRENT USER
   const currentUser = useSelector((state: any) => state?.auth?.user);
