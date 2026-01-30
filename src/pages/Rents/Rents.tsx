@@ -16,7 +16,18 @@ interface VillaType {
   amenities: string[];
   rateType: string;
   imageUrl: string;
-  slug: string; // Add slug field
+  slug: string;
+  // Guest related fields - এগুলো যোগ করতে হবে
+  add_guest?: number;
+  guests?: number;
+  max_guests?: number;
+  max_guest?: number;
+  guest_capacity?: number;
+  // Additional fields for filtering
+  bedrooms?: number;
+  bathrooms?: number;
+  price_display?: string;
+  listing_type?: string;
 }
 
 interface PaginationProps {
@@ -173,6 +184,13 @@ const Rents: React.FC = () => {
               );
           }
 
+          // Guest data mapping - এটা খুবই গুরুত্বপূর্ণ
+          const add_guest = it.add_guest ? Number(it.add_guest) : undefined;
+          const guests = it.guests ? Number(it.guests) : undefined;
+          const max_guests = it.max_guests ? Number(it.max_guests) : undefined;
+          const max_guest = it.max_guest ? Number(it.max_guest) : undefined;
+          const guest_capacity = it.guest_capacity ? Number(it.guest_capacity) : undefined;
+
           return {
             id: Number(it.id),
             title: it.title || it.slug || 'Untitled',
@@ -192,11 +210,29 @@ const Rents: React.FC = () => {
                 ? 'per night'
                 : 'sale',
             imageUrl: firstImage,
-            slug: it.slug || it.id.toString(), // Add slug field
+            slug: it.slug || it.id.toString(),
+            // Guest data যোগ করা
+            add_guest,
+            guests,
+            max_guests,
+            max_guest,
+            guest_capacity,
+            // Additional fields for filtering
+            bedrooms: Number(it.bedrooms) || 0,
+            bathrooms: Number(it.bathrooms) || 0,
+            price_display: it.price_display || String(it.price) || "",
+            listing_type: it.listing_type || "rent",
           } as VillaType;
         });
 
         if (!cancelled) {
+          console.log("📥 Loaded villas with guest data:", mapped.map(v => ({
+            title: v.title,
+            guests: v.guests,
+            add_guest: v.add_guest,
+            max_guests: v.max_guests
+          })));
+          
           setAllVillas(mapped);
           setFilteredVillas(mapped); // seed filtered with master list
           setCurrentPage(1); // reset pagination to page 1
@@ -248,14 +284,11 @@ const Rents: React.FC = () => {
         <FilterSystem
           data={allVillas}
           onResults={(results: VillaType[]) => {
+            console.log("🔍 FilterSystem returned results:", results.length);
             setFilteredVillas(results ?? []);
             setCurrentPage(1); // reset to first page for new search results
           }}
-          // optional: you can handle search params if FilterSystem forwards them
-          onSearchParams={(params: any) => {
-            // console.log("Search params:", params);
-            // You can optionally do server-side search here using params
-          }}
+          allowedType="rent"
         />
       </div>
 
@@ -335,7 +368,7 @@ const Rents: React.FC = () => {
           !error &&
           currentVillas.map((villa) => (
             <div
-              key={villa.slug} // Use slug as key instead of id
+              key={villa.slug}
               className=""
             >
               <RentsCard property={villa} />
