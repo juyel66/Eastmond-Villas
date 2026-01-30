@@ -52,7 +52,7 @@ const InfoTooltip = () => {
           <li>• 10% Government Tax</li>
           <li>• 2.5% Booking Fee</li>
           <li className="font-semibold pt-1 text-gray-800">
-            Total added: 12.5% extra
+            Total Added: 12.5% Extra
           </li>
         </ul>
       </div>
@@ -186,7 +186,7 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
               Security &amp;/Or Damages Deposit
             </h3>
             <span className="inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-medium text-slate-600">
-              Refundable per property terms
+              Swift Post-Stay Refund Process
             </span>
           </div>
 
