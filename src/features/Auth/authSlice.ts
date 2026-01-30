@@ -1,14 +1,7 @@
 // src/features/Auth/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-/**
- * Auth slice + thunks
- *
- * Notes:
- * - Uses localStorage keys: auth_access, auth_refresh, auth_user
- * - All API requests that require auth should use authFetch (adds Authorization header)
- * - changePassword thunk posts to: ${API_BASE}/auth/password/change/
- */
+
 
 export const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
@@ -17,7 +10,7 @@ const ACCESS_KEY = 'auth_access';
 const REFRESH_KEY = 'auth_refresh';
 const USER_KEY = 'auth_user';
 
-/* ----------------------------- Local storage helpers ---------------------------- */
+
 const saveTokens = ({ access, refresh }) => {
   try {
     if (access) localStorage.setItem(ACCESS_KEY, access);
@@ -55,7 +48,7 @@ export const getRefreshToken = () => {
 
 const saveUser = (user) => {
   try {
-    // JSON.stringify(null) -> "null" which is OK to store; getUserFromStorage handles it.
+  
     localStorage.setItem(USER_KEY, JSON.stringify(user ?? null));
   } catch (e) {
     // ignore
@@ -79,27 +72,19 @@ const clearUser = () => {
   }
 };
 
-/* ----------------------------- Fetch helper (auth) ----------------------------- */
-/**
- * authFetch(url, options)
- * - adds Authorization header when access token available
- * - merges headers provided in options
- * - sets Accept: application/json
- * - sets Content-Type: application/json unless body is FormData or Content-Type already provided
- */
+
 export const authFetch = (url, options = {}) => {
   const headers = { ...(options.headers || {}) };
 
-  // Always accept JSON responses
   if (!headers.Accept) headers.Accept = 'application/json';
 
-  // Attach Authorization header if available
+
   const access = getAccessToken();
   if (access && !headers.Authorization) {
     headers.Authorization = `Bearer ${access}`;
   }
 
-  // Only set Content-Type to application/json when the caller didn't provide it and body is not FormData
+
   const body = options.body;
   const isFormData =
     typeof FormData !== 'undefined' && body instanceof FormData;
@@ -108,11 +93,11 @@ export const authFetch = (url, options = {}) => {
     headers['Content-Type'] = 'application/json';
   }
 
-  // Return the raw fetch promise so calling code can handle response/json
+  
   return fetch(url, { ...options, headers });
 };
 
-/* ----------------------------- Async thunks ----------------------------- */
+
 
 export const register = createAsyncThunk(
   'auth/register',
@@ -242,7 +227,7 @@ export const fetchCurrentUser = createAsyncThunk(
   }
 );
 
-/* ----------------------------- Admin user management ----------------------------- */
+
 
 export const adminListUsers = createAsyncThunk(
   'auth/adminListUsers',
@@ -308,15 +293,7 @@ export const adminDeleteUser = createAsyncThunk(
   }
 );
 
-/* ----------------------------- Password change thunk ----------------------------- */
-/**
- * changePassword payload should contain:
- * - old_password (optional depending on backend)
- * - new_password1
- * - new_password2
- *
- * Endpoint: POST ${API_BASE}/auth/password/change/
- */
+
 export const changePassword = createAsyncThunk(
   'auth/changePassword',
   async (payload, { rejectWithValue }) => {
@@ -334,7 +311,7 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-/* ----------------------------- Slice & reducers ----------------------------- */
+
 
 const initialState = {
   access: getAccessToken(),

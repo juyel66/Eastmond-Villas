@@ -214,9 +214,56 @@ const testimonialData = [
         location: "USA",
         title: "Travel Blogger",
         text: "My family trip was unforgettable. The local experiences arranged by the concierge were truly exceptional.",
-        rating: 4.9,
+        rating: 5.0,
         image: "https://randomuser.me/api/portraits/women/8.jpg"
-    }
+    },
+    {
+    id: 2,
+    name: "Sophia Williams",
+    location: "USA",
+    title: "Founder, Luxe Living",
+    text: "The experience was seamless from start to finish. The properties are premium and the support team is extremely professional.",
+    rating: 5.0,
+    image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1769731152/christina-wocintechchat-com-m-SJvDxw0azqw-unsplash_odkked.webp"
+},
+{
+    id: 3,
+    name: "Daniel Carter",
+    location: "UAE",
+    title: "Real Estate Investor",
+    text: "Exceptional quality and transparency. I was impressed by how smooth the entire booking and management process was.",
+    rating: 5.0,
+    image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1769731145/irene-strong-v2aKnjMbP_k-unsplash_yqgspq.webp"
+},
+{
+    id: 4,
+    name: "Isabella Romano",
+    location: "Italy",
+    title: "Luxury Travel Consultant",
+    text: "Truly world-class villas and outstanding concierge service. My clients are always satisfied and keep coming back.",
+    rating: 5.0,
+    image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1769730769/freestocks-9UVmlIb0wJU-unsplash_1_y69bro.webp"
+},
+{
+    id: 5,
+    name: "James Anderson",
+    location: "Canada",
+    title: "Business Owner",
+    text: "Professional team, beautiful properties, and excellent communication. Everything was handled perfectly.",
+    rating: 5.0,
+    image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1769730769/janko-ferlic-G-jo31ESuRE-unsplash_qvxx4s.webp"
+},
+{
+    id: 6,
+    name: "Aisha Khan",
+    location: "Qatar",
+    title: "Private Client",
+    text: "Luxury, comfort, and reliability all in one place. I felt completely taken care of throughout my stay.",
+    rating: 5.0,
+    image: "https://res.cloudinary.com/dqkczdjjs/image/upload/v1769730769/christina-wocintechchat-com-m-0Zx1bDv5BNY-unsplash_c2fjaz.webp"
+}
+
+
 ];
 
 // TestimonialCard component for fake data

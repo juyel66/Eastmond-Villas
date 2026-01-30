@@ -671,8 +671,20 @@ export default function AdminResources() {
           </div>
         )}
 
-        {errorMessage && <div className="mb-4 text-sm text-red-600">{errorMessage}</div>}
-        {apiError && <div className="mb-4 text-sm text-red-600">Error loading resources: {String(apiError)}</div>}
+       {(errorMessage || apiError) && (
+  <div className="mb-4 flex justify-center">
+    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-md p-3 text-center">
+      <p className="text-xs font-semibold text-gray-800 mb-1">
+        Session Expired
+      </p>
+
+      <p className="text-[11px] text-gray-500">
+        Your session is no longer valid. Please log out and log in again to continue.
+      </p>
+    </div>
+  </div>
+)}
+
 
         {/* Download Progress Overlay */}
         {downloadingZip && (
@@ -711,7 +723,7 @@ export default function AdminResources() {
           ))}
 
           {!apiLoading && filteredResources.length === 0 && (
-            <p className="col-span-full text-center text-gray-500 py-10">No resources found matching your filter and search criteria.</p>
+            <p className="col-span-full text-center text-gray-500 py-10">No Resources Found </p>
           )}
         </main>
       </div>

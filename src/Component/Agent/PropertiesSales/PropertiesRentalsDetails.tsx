@@ -157,7 +157,7 @@ const CopyButton: FC<CopyButtonProps> = ({ onClick, label = "Copy" }) => (
     className="flex items-center gap-1 px-3 py-1.5 bg-gray-200 text-black text-xs font-medium rounded-lg hover:bg-gray-300 transition duration-150 cursor-pointer"
   >
     <Copy className="w-3 h-3" />
-    <span>{label}</span>
+    <span className=''>{label}</span>
   </button>
 );
 
@@ -860,9 +860,14 @@ Description: ${property.description.substring(0, 200)}...
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-700 text-lg">
-        Loading property...
-      </div>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+  <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+
+  <p className="text-gray-700 text-sm font-medium">
+    Loading property...
+  </p>
+</div>
+
     );
   }
 
@@ -1047,7 +1052,7 @@ Description: ${property.description.substring(0, 200)}...
                  
                 </div>
                 <span
-                  className={`text-xs md:text-sm font-semibold px-3 py-1 rounded-full ${getStatusStyle(
+                  className={`text-xs md:text-sm font-semibold px-3 py-1 mt-2 rounded-full ${getStatusStyle(
                     localStatus
                   )}`}
                 >

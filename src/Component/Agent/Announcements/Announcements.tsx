@@ -10,7 +10,7 @@ import {
   X,
   UploadCloud,
   Trash2,
-  Search, // Search icon যোগ করেছি
+  Search, 
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../../store"; // adjust path to your store types if available
@@ -25,9 +25,7 @@ import { API_BASE } from "../../../features/Auth/authSlice";
 // SweetAlert2 add করেছি
 import Swal from "sweetalert2";
 
-/* ----------------------
-  Helper: auth header (used only for legacy behavior; not used now but kept)
-------------------------*/
+
 const getAuthToken = () => {
   try {
     return localStorage.getItem("auth_access");
@@ -36,9 +34,7 @@ const getAuthToken = () => {
   }
 };
 
-/* ----------------------
-  Helper: full file URL
-------------------------*/
+
 const getFileUrl = (filePath: string) => {
   if (!filePath) return "";
   if (filePath.startsWith("http://") || filePath.startsWith("https://")) return filePath;
@@ -50,9 +46,7 @@ const getFileUrl = (filePath: string) => {
   }
 };
 
-/* ----------------------
-  Priority badge
-------------------------*/
+
 const PriorityBadge = ({ priority }: { priority: string }) => {
   let bgColor, textColor;
   switch (priority) {
@@ -76,10 +70,7 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
   );
 };
 
-/* ----------------------
-  Attachment Item
-  — only this component's download behavior changed
-------------------------*/
+
 const AttachmentItem = ({ attachment }: { attachment: any }) => {
   // helper to trigger download by fetching blob and using object URL
   const handleDownload = async (e: React.MouseEvent) => {
@@ -93,7 +84,7 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
     }
 
     try {
-      // Try to fetch the resource as blob so we can force a download
+      
       const res = await fetch(url, { method: "GET", mode: "cors" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -103,7 +94,7 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
       const a = document.createElement("a");
       a.href = objectUrl;
       a.download = filename;
-      // Append to DOM to make click work in some browsers
+
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -117,11 +108,12 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
   };
 
   return (
-    <div className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-teal-500 transition">
-      <div className="flex items-center space-x-3">
+    <div className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-teal-500 transition gap-2 overflow-visible">
+      <div className="flex items-center space-x-3 ">
         <FileText className="w-5 h-5 text-blue-500" />
         <div>
-          <p className="text-sm font-medium text-gray-800 truncate">{attachment.name}</p>
+          <p className="text-sm font-medium text-gray-800 truncate md:hidden">{attachment.name.slice(0, 10)}...</p>
+          <p className="text-sm font-medium text-gray-800 truncate hidden md:block">{attachment.name}</p>
           <p className="text-xs text-gray-500">{attachment.size}</p>
         </div>
       </div>
@@ -132,41 +124,41 @@ const AttachmentItem = ({ attachment }: { attachment: any }) => {
         aria-label={`Download ${attachment.name}`}
         type="button"
       >
-        <Download className="w-4 h-4 mr-1" /> Download
+        <Download className="w-4 h-4 mr-1" /> <span className="hidden md:block">Download</span>
       </button>
     </div>
   );
 };
 
-/* ----------------------
-  Update Card - শুধু এইটাতে পরিবর্তন করেছি
-------------------------*/
 const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const attachmentCount = update.attachments?.length ?? 0;
 
-  // Delete handle function add করেছি
+
   const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Important: Prevent card toggle
+    e.stopPropagation(); 
     onDelete(update.id);
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all overflow-hidden">
+    
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all whitespace-nowrap overflow-hidden">
       <div
-        className="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition"
+        className="flex justify-between items-center p-3 md:p-5 cursor-pointer hover:bg-gray-50 transition whitespace-nowrap overflow-visible!"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4 w-fit">
           <img
             src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760910352/Container_3_l81okq.png"
             alt=""
             className="w-8 h-8"
           />
-          <span className="text-base font-medium text-gray-800">{update.title}</span>
-          <PriorityBadge priority={update.priority} />
+          <span className="text-sm md:text-base font-medium text-gray-800 whitespace-break-spaces">{update.title}</span>
+          <div className="whitespace-nowrap hidden md:block">
+            <PriorityBadge  priority={update.priority} />
+          </div>
           <span
-            className={`text-xs font-medium py-1 px-3 rounded-full ${
+            className={`text-xs font-medium py-1 px-3 rounded-full whitespace-nowrap hidden md:block ${
               attachmentCount > 0 ? "bg-gray-200 text-gray-700" : "bg-gray-100 text-gray-500"
             }`}
           >
@@ -174,17 +166,17 @@ const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) 
           </span>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4 ">
           <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
           
-          {/* Delete button add করেছি এখানে */}
+     
           <button
             onClick={handleDeleteClick}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+            className="p-1.5 md:p-2 text-red-500 hover:bg-red-50 rounded-lg transition border"
             aria-label={`Delete announcement: ${update.title}`}
             type="button"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           
           {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
@@ -193,11 +185,11 @@ const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) 
 
       {isOpen && (
         <div className="p-5 pt-0 border-t border-gray-100">
-          <p className="text-sm text-gray-700 mb-4 leading-relaxed">{update.details}</p>
+          <p className="text-sm md:text-base text-gray-700 mb-4 leading-relaxed whitespace-break-spaces">{update.details}</p>
           {attachmentCount > 0 && (
             <>
               <h4 className="text-sm font-semibold text-gray-800 mb-3 border-t pt-4">Attachments</h4>
-              <div className="space-y-3">
+              <div className="space-y-3  overflow-hidden">
                 {update.attachments.map((att: any, index: number) => (
                   <AttachmentItem key={index} attachment={att} />
                 ))}
@@ -207,12 +199,66 @@ const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) 
         </div>
       )}
     </div>
+    // original copy 
+    // <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 transition-all overflow-hidden">
+    //   <div
+    //     className="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition"
+    //     onClick={() => setIsOpen(!isOpen)}
+    //   >
+    //     <div className="flex items-center space-x-4">
+    //       <img
+    //         src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760910352/Container_3_l81okq.png"
+    //         alt=""
+    //         className="w-8 h-8"
+    //       />
+    //       <span className="text-base font-medium text-gray-800">{update.title}</span>
+    //       <PriorityBadge priority={update.priority} />
+    //       <span
+    //         className={`text-xs font-medium py-1 px-3 rounded-full ${
+    //           attachmentCount > 0 ? "bg-gray-200 text-gray-700" : "bg-gray-100 text-gray-500"
+    //         }`}
+    //       >
+    //         {attachmentCount > 0 ? `${attachmentCount} Attachment(s)` : "No attachments"}
+    //       </span>
+    //     </div>
+
+    //     <div className="flex items-center space-x-4 ">
+    //       <span className="text-sm text-gray-500 hidden md:block">{update.date}</span>
+          
+     
+    //       <button
+    //         onClick={handleDeleteClick}
+    //         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+    //         aria-label={`Delete announcement: ${update.title}`}
+    //         type="button"
+    //       >
+    //         <Trash2 className="w-5 h-5" />
+    //       </button>
+          
+    //       {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+    //     </div>
+    //   </div>
+
+    //   {isOpen && (
+    //     <div className="p-5 pt-0 border-t border-gray-100">
+    //       <p className="text-sm text-gray-700 mb-4 leading-relaxed">{update.details}</p>
+    //       {attachmentCount > 0 && (
+    //         <>
+    //           <h4 className="text-sm font-semibold text-gray-800 mb-3 border-t pt-4">Attachments</h4>
+    //           <div className="space-y-3">
+    //             {update.attachments.map((att: any, index: number) => (
+    //               <AttachmentItem key={index} attachment={att} />
+    //             ))}
+    //           </div>
+    //         </>
+    //       )}
+    //     </div>
+    //   )}
+    // </div>
   );
 };
 
-/* ----------------------
-  Announcement Modal (uses dispatch(createAnnouncement))
-------------------------*/
+
 const AnnouncementModal = ({
   onClose,
   onAddLocal, // optional callback (local UI), new item will be available via Redux anyway
@@ -300,11 +346,11 @@ const AnnouncementModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 relative">
+      <div className="bg-white  rounded-xl shadow-xl max-w-2xl w-full p-6 relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-lg font-semibold  text-gray-800 mb-4">Add Announcement</h2>
+        <h2 className="text-xl md:text-lg font-semibold text-gray-800 mb-4">Add Announcement</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -318,7 +364,7 @@ const AnnouncementModal = ({
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-2 md:gap-4 ">
             <div className="flex-1">
               <label className="text-sm font-medium text-gray-700">Date</label>
               <input
@@ -370,7 +416,8 @@ const AnnouncementModal = ({
               <ul className="mt-3 space-y-2">
                 {filePreviews.map((f, i) => (
                   <li key={i} className="flex justify-between text-sm text-gray-700 border-b pb-1">
-                    <span>{f.name}</span>
+                    <span className="hidden md:block">{f.name}</span>
+                    <span className="md:hidden">{f.name.slice(0, 15)}...</span>
                     <a href={f.downloadUrl} download={f.name} className="text-teal-600 hover:underline text-xs">
                       Download
                     </a>
@@ -382,7 +429,7 @@ const AnnouncementModal = ({
 
           {error && <div className="text-sm text-red-600">{error}</div>}
 
-          <button type="submit" disabled={loading} className="w-full  bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-md text-sm font-semibold disabled:opacity-60">
+          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-md text-sm font-semibold disabled:opacity-60">
             {loading ? "Adding..." : "Add Announcement"}
           </button>
         </form>
@@ -391,9 +438,7 @@ const AnnouncementModal = ({
   );
 };
 
-/* ----------------------
-  Main component (reads from Redux) - শুধু এইটাতে কিছু add করেছি
-------------------------*/
+
 const AdminAnnouncements = () => {
   const dispatch = useDispatch<AppDispatch>();
   const announcementsFromStore = useSelector((s: RootState) => s.propertyBooking.announcements) ?? [];
@@ -401,15 +446,15 @@ const AdminAnnouncements = () => {
   const fetchError = useSelector((s: RootState) => s.propertyBooking.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // Search term state যোগ করেছি
+  const [searchTerm, setSearchTerm] = useState(""); 
 
   useEffect(() => {
-    // dispatch fetchAnnouncements on mount
+  
     dispatch(fetchAnnouncements());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, []);
 
-  // Map backend announcement objects to UI-shape used by UpdateCard (details/attachments)
+
   const mappedAnnouncements = (announcementsFromStore || []).map((item: any) => ({
     id: item.id,
     title: item.title,
@@ -426,7 +471,7 @@ const AdminAnnouncements = () => {
     })),
   }));
 
-  // Filter announcements based on search term
+
   const filteredAnnouncements = mappedAnnouncements.filter((announcement) => {
     if (!searchTerm.trim()) return true;
     
@@ -439,9 +484,9 @@ const AdminAnnouncements = () => {
     );
   });
 
-  // Delete function add করেছি - সরাসরি API call করবে
+
   const handleDeleteAnnouncement = async (id: number) => {
-    // SweetAlert confirmation dialog
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: "Do you really want to delete this announcement?",
@@ -498,26 +543,26 @@ const AdminAnnouncements = () => {
     }
   };
 
-  // Optional local add callback (not strictly necessary since Redux will update)
+
   const handleAddAnnouncementLocal = (createdMapped: any) => {
-    // no-op: Redux will already have the created item in state via thunk reducer
+
   };
 
   return (
     <div className="bg-gray-50 font-sans p-4 md:p-8 min-h-screen">
       <div className="">
-        <div className="flex justify-between mb-8">
+        <div className="flex justify-between md:flex-row flex-col gap-3 mb-8">
           <header>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Announcements</h1>
             <p className="text-gray-600 text-sm">Stay informed with the latest company updates and news.</p>
           </header>
 
-          <button onClick={() => setIsModalOpen(true)} className="flex hidden items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow">
+          <button onClick={() => setIsModalOpen(true)} className="flex hidden items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white  px-4 py-2 rounded-lg shadow">
             <Plus className="w-4 h-4" /> Add Announcement
           </button>
         </div>
 
-        {/* Search field - center e top e add করেছি */}
+
         <div className="flex justify-center mb-8">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -540,7 +585,7 @@ const AdminAnnouncements = () => {
         </div>
 
         <main className="relative">
-          {/* Deleting overlay add করেছি */}
+ 
           {deleting && (
             <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/20">
               <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
@@ -553,7 +598,7 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* Centered loading overlay while (re)loading */}
+  
           {loading && (
             <div className="absolute inset-0 z-30 flex items-center justify-center">
               <div className="bg-white/90 p-6 rounded-lg shadow-lg flex flex-col items-center">
@@ -566,17 +611,17 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* Error */}
+       
           {fetchError && <div className="text-sm text-red-600 mb-3">{String(fetchError)}</div>}
 
-          {/* Search results info */}
+          
           {searchTerm && (
             <div className="mb-4 text-sm text-gray-600">
               Found {filteredAnnouncements.length} announcement(s) matching "{searchTerm}"
             </div>
           )}
 
-          {/* When not loading, show announcements or empty state */}
+        
           {!loading && filteredAnnouncements.length === 0 && (
             <div className="flex items-center justify-center p-12">
               <div className="text-center text-gray-500">
@@ -590,7 +635,7 @@ const AdminAnnouncements = () => {
             </div>
           )}
 
-          {/* Announcements list - এখানে onDelete prop pass করেছি */}
+
           <div className="space-y-4">
             {filteredAnnouncements.map((update: any) => (
               <UpdateCard key={update.id} update={update} onDelete={handleDeleteAnnouncement} />

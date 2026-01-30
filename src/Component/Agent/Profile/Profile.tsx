@@ -88,23 +88,34 @@ const LoadingState = () => (
 );
 
 const MetricCard = ({ metric }) => (
-  <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between border border-gray-100 transition hover:shadow-lg">
-    <div>
-      <p className="text-3xl font-semibold text-gray-900 mb-1">
-        {metric.count}
-      </p>
-      <p className="text-sm text-gray-500">{metric.title}</p>
-    </div>
-    <div
-      className={`p-2 rounded-xl ${metric.bg} flex items-center justify-center`}
-    >
-      <img
-        src={metric.img}
-        alt={metric.title}
-        className="w-12 h-12 object-contain"
-      />
-    </div>
+ <div className="bg-white rounded-xl shadow-md p-4 
+flex flex-col md:flex-row 
+items-center md:items-center 
+justify-center md:justify-between 
+text-center md:text-left
+border border-gray-100 transition hover:shadow-lg">
+
+  <div className="mb-3 md:mb-0">
+    <p className="text-3xl font-semibold text-gray-900 mb-1">
+      {metric.count}
+    </p>
+    <p className="text-sm text-gray-500">
+      {metric.title}
+    </p>
   </div>
+
+  <div
+    className={`p-2 rounded-xl ${metric.bg} flex items-center justify-center`}
+  >
+    <img
+      src={metric.img}
+      alt={metric.title}
+      className="w-12 h-12 object-contain"
+    />
+  </div>
+
+</div>
+
 );
 
 const InfoField = ({ label, value, status, isBio = false, icon: Icon }) => {
@@ -736,6 +747,7 @@ const Profile = () => {
                   Update your personal details and contact information.
                 </p>
               </div>
+            
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200 transition"

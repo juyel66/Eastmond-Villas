@@ -621,7 +621,7 @@ const CreateNewsletterPage: React.FC = () => {
             }
           />
         </td>
-        <td className="p-4">
+        <td className="p-4 min-w-[200px]">
           <div className="flex gap-3 items-center">
             <img
               src={imageUrl}
@@ -636,9 +636,9 @@ const CreateNewsletterPage: React.FC = () => {
             </div>
           </div>
         </td>
-        <td className="p-4 text-gray-700">{property.address}</td>
-        <td className="p-4 text-gray-900 font-medium">USD${price}</td>
-        <td className="p-4">
+        <td className="p-4 text-gray-700 min-w-[150px]">{property.address}</td>
+        <td className="p-4 text-gray-900 font-medium min-w-[120px]">USD${price}</td>
+        <td className="p-4 min-w-[100px]">
           <span className={`px-3 py-1 rounded-full text-xs ${
             property.status === "published" 
               ? "bg-green-100 text-green-800"
@@ -653,20 +653,33 @@ const CreateNewsletterPage: React.FC = () => {
     );
   };
 
+  // Responsive table header
+  const renderTableHeader = () => (
+    <thead className="bg-gray-50 text-sm">
+      <tr>
+        <th className="p-4 text-left text-gray-500 font-medium min-w-[50px]">Select</th>
+        <th className="p-4 text-left text-gray-500 font-medium min-w-[200px]">Project Name</th>
+        <th className="p-4 text-left text-gray-500 font-medium min-w-[150px]">Location</th>
+        <th className="p-4 text-left text-gray-500 font-medium min-w-[120px]">Price</th>
+        <th className="p-4 text-left text-gray-500 font-medium min-w-[100px]">Status</th>
+      </tr>
+    </thead>
+  );
+
   return (
-    <div className="mx-auto space-y-6 mt-3">
+    <div className="mx-auto space-y-6 mt-3 px-4 md:px-0">
       <h1 className="text-2xl font-semibold text-gray-900">Create Newsletter</h1>
 
       {/* ---------------- TYPE & LAYOUT ---------------- */}
-      <div className="flex flex-wrap gap-8 bg-white p-6 rounded-xl shadow-sm border">
-        <div>
+      <div className="flex flex-col md:flex-row md:flex-wrap gap-6 md:gap-8 bg-white p-4 md:p-6 rounded-xl shadow-sm border">
+        <div className="w-full md:w-auto">
           <p className="text-sm text-gray-500 mb-2">Newsletter Type</p>
           <div className="flex gap-2 border p-2 rounded-lg">
             {(["rentals", "sales"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setNewsletterType(t)}
-                className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 md:px-4 py-2 border rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${
                   newsletterType === t
                     ? "bg-teal-600 text-white shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
@@ -678,11 +691,10 @@ const CreateNewsletterPage: React.FC = () => {
           </div>
         </div>
 
-        <div>
+        <div className="w-full md:w-auto md:flex-1">
           <p className="text-sm text-gray-500 mb-2">Visual Layout</p>
-
-          <div className="flex justify-between items-center gap-2">
-            <div className="items-center border p-2 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="items-center border p-2 rounded-lg w-full sm:w-auto">
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -697,7 +709,7 @@ const CreateNewsletterPage: React.FC = () => {
                       });
                     }
                   }}
-                  className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 md:px-4 py-2 border rounded-md text-sm font-medium transition-colors flex-1 sm:flex-none ${
                     layout === "focus"
                       ? "bg-teal-600 text-white shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
@@ -708,7 +720,7 @@ const CreateNewsletterPage: React.FC = () => {
 
                 <button
                   onClick={() => setLayout("showcase")}
-                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${
+                  className={`px-3 md:px-4 py-2 rounded-md border text-sm font-medium transition-colors flex-1 sm:flex-none ${
                     layout === "showcase"
                       ? "bg-teal-600 text-white shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
@@ -719,7 +731,10 @@ const CreateNewsletterPage: React.FC = () => {
               </div>
             </div>
 
-            <Link to="/dashboard/admin-newsletter-management" className="bg-teal-600 text-white px-4 py-2 rounded-md text-sm font-semibold cursor-pointer hover:bg-teal-800 transition whitespace-nowrap">
+            <Link 
+              to="/dashboard/admin-newsletter-management" 
+              className="bg-teal-600 text-white px-4 py-2 rounded-md text-sm font-semibold cursor-pointer hover:bg-teal-800 transition whitespace-nowrap text-center w-full sm:w-auto"
+            >
               Manage Newsletter
             </Link>
           </div>
@@ -743,7 +758,7 @@ const CreateNewsletterPage: React.FC = () => {
         </div>
         
         {propertiesLoading ? (
-          <div className="p-8 text-center">
+          <div className="p-8 text-center ">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
             <p className="mt-2 text-gray-500">Loading properties...</p>
           </div>
@@ -753,7 +768,7 @@ const CreateNewsletterPage: React.FC = () => {
             <p className="text-gray-600">{propertiesError}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="mt-4 text-teal-600 hover:text-teal-700"
+              className="mt-4 text-teal-600 hover:text-teal-700 px-4 py-2 border border-teal-600 rounded-md"
             >
               Try Again
             </button>
@@ -767,20 +782,25 @@ const CreateNewsletterPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 text-sm">
-                <tr>
-                  <th className="p-4 text-left text-gray-500 font-medium">Select</th>
-                  <th className="p-4 text-left text-gray-500 font-medium">Project Name</th>
-                  <th className="p-4 text-left text-gray-500 font-medium">Location</th>
-                  <th className="p-4 text-left text-gray-500 font-medium">Price</th>
-                  <th className="p-4 text-left text-gray-500 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProperties.map(renderPropertyRow)}
-              </tbody>
-            </table>
+            {/* Horizontal scroll indicator for mobile */}
+            <div className="md:hidden flex justify-center items-center py-2 bg-gray-50 text-gray-500 text-xs">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+              </svg>
+              Scroll horizontally to see all columns
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+            
+            <div className="min-w-[800px]">
+              <table className="w-full">
+                {renderTableHeader()}
+                <tbody>
+                  {filteredProperties.map(renderPropertyRow)}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -797,9 +817,10 @@ const CreateNewsletterPage: React.FC = () => {
         setScheduledTime={setScheduledTime}
       />
 
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 bg-white p-6 rounded-xl shadow-sm border">
+      {/* ---------------- SELECT USERS AND SEND ---------------- */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 bg-white p-4 md:p-6 rounded-xl shadow-sm border">
         {/* LEFT GROUP */}
-        <div className="flex flex-col md:flex-row md:items-center gap-6">
+        <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
           {/* TARGET AUDIENCE */}
           <div>
             <p className="text-xs font-medium text-gray-500 mb-1">
@@ -810,7 +831,7 @@ const CreateNewsletterPage: React.FC = () => {
                 fetchUsers();
                 setOpenUserModal(true);
               }}
-              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 transition text-white px-5 py-2.5 rounded-lg shadow-sm font-medium"
+              className="flex items-center justify-center md:justify-start gap-2 bg-teal-600 hover:bg-teal-700 transition text-white px-4 md:px-5 py-2.5 rounded-lg shadow-sm font-medium w-full md:w-auto"
             >
               <img
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1768158718/Icon_27_g6ontt.png"
@@ -841,25 +862,52 @@ const CreateNewsletterPage: React.FC = () => {
           )}
         </div>
 
-  
-        <div className="flex justify-end">
+        {/* SEND BUTTON */}
+        <div className="flex justify-end mt-4 md:mt-0">
           <button
             onClick={handleSendNewsletter}
             disabled={sending}
-            className="bg-teal-600 hover:bg-teal-700 transition text-white px-6 py-3 rounded-lg shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="w-full md:w-auto bg-teal-600 hover:bg-teal-700 transition text-white px-6 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {sending ? (
               <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Sending...
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  ></path>
                 </svg>
                 Send Newsletter
               </>
@@ -868,33 +916,33 @@ const CreateNewsletterPage: React.FC = () => {
         </div>
       </div>
 
-
+      {/* ---------------- SELECTION SUMMARY ---------------- */}
       {(selectedProperties.length > 0 || selectedUsers.length > 0 || inviteEmails.trim()) && (
-        <div className="bg-gray-50 p-4 rounded-lg border">
+        <div className="bg-gray-50 p-4 md:p-6 rounded-lg border">
           <h3 className="font-medium text-gray-900 mb-2">Selection Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
             <div>
               <p className="text-sm text-gray-600">Properties Selected:</p>
-              <p className="font-medium">
+              <p className="font-medium text-sm md:text-base">
                 {selectedProperties.length} property{selectedProperties.length !== 1 ? 's' : ''}
                 {layout === "focus" ? " (Focus Layout)" : " (Showcase Layout)"}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Users Selected:</p>
-              <p className="font-medium">
+              <p className="font-medium text-sm md:text-base">
                 {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">User Emails:</p>
-              <p className="font-medium">
+              <p className="font-medium text-sm md:text-base">
                 {selectedUserEmails.length} email{selectedUserEmails.length !== 1 ? 's' : ''}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Additional Emails:</p>
-              <p className="font-medium">
+              <p className="font-medium text-sm md:text-base">
                 {inviteEmails.split(",").filter(e => e.trim()).length} email{inviteEmails.split(",").filter(e => e.trim()).length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -913,7 +961,7 @@ const CreateNewsletterPage: React.FC = () => {
         </div>
       )}
 
-
+      {/* ---------------- USER SELECTION MODAL ---------------- */}
       <SelectUserModal
         open={openUserModal}
         onClose={() => setOpenUserModal(false)}

@@ -19,7 +19,7 @@ const DashboardPage = () => {
         <AppSidebar />
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col min-h-screen overflow-auto p-4">
+        <main className="flex-1 flex flex-col min-h-screen overflow-auto md:p-4 ">
           {/* Navbar */}
           <DashboardNavbar />
 

@@ -220,111 +220,125 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100 flex flex-col md:flex-row gap-5 mb-6 w-full">
-      {/* Image */}
-      <div className="w-full md:w-48 lg:w-52 h-44 flex-shrink-0">
-        <img
-          src={imageUrl ?? PLACEHOLDER_IMAGE}
-          alt={title}
-          className="w-full h-full object-cover rounded-xl"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
-          }}
-        />
+   <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100 
+flex flex-col md:flex-row gap-5 mb-6 w-full">
+
+  {/* Image */}
+  <div className="w-full md:w-48 lg:w-52 h-44 flex-shrink-0 mx-auto md:mx-0">
+    <img
+      src={imageUrl ?? PLACEHOLDER_IMAGE}
+      alt={title}
+      className="w-full h-full object-cover rounded-xl"
+      onError={(e) => {
+        (e.target as HTMLImageElement).src =
+          'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
+      }}
+    />
+  </div>
+
+  {/* Details */}
+  <div className="flex-grow flex flex-col justify-between">
+
+    {/* Top info */}
+    <div className="text-center md:text-left">
+
+      {/* Title + status */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 gap-2">
+        <h2 className="text-lg font-bold text-gray-900 truncate">
+          {title}
+        </h2>
+
+        <div className="flex justify-center md:justify-end">
+          <StatusBadge
+            status={status.charAt(0).toUpperCase() + status.slice(1)}
+          />
+        </div>
       </div>
 
-      {/* Details */}
-      <div className="flex-grow flex flex-col justify-between">
+      {/* Address */}
+      <p className="text-sm text-gray-500 flex items-center justify-center md:justify-start mb-3">
+        <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+        {address}
+      </p>
+
+      {/* Grid info */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 text-sm">
         <div>
-          <div className="flex justify-between items-start mb-2">
-            <h2 className="text-lg font-bold text-gray-900 truncate">
-              {title}
-            </h2>
-            <div className="flex items-center gap-2">
-              <StatusBadge
-                status={status.charAt(0).toUpperCase() + status.slice(1)}
-              />
-            </div>
-          </div>
-
-          <p className="text-sm text-gray-500 flex items-center mb-3">
-            <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-            {address}
+          <p className="text-gray-500 text-xs uppercase">Price</p>
+          <p className="font-semibold text-gray-800">
+            USD{formatPrice(price)}
           </p>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 text-sm">
-            <div>
-              <p className="text-gray-500 text-xs uppercase">Price</p>
-              <p className="font-semibold text-gray-800">
-                USD{formatPrice(price)}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs uppercase">Bedrooms</p>
-              <p className="font-semibold text-gray-800">{bedrooms}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs uppercase">Bathrooms</p>
-              <p className="font-semibold text-gray-800">{bathrooms}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs uppercase">Pools</p>
-              <p className="font-semibold text-gray-800">{pool}</p>
-            </div>
-          </div>
         </div>
 
-        {/* Inline Buttons */}
-        <div
-          className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100"
-          style={{
-            rowGap: '8px',
-          }}
-        >
-          <Link
-            to={`/dashboard/agent-property-sales-details/${id}`}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
-          >
-            <img
-              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_29_mqukty.png"
-              alt=""
-              className="h-4 w-4"
-            />
-            View Details
-          </Link>
+        <div>
+          <p className="text-gray-500 text-xs uppercase">Bedrooms</p>
+          <p className="font-semibold text-gray-800">{bedrooms}</p>
+        </div>
 
-          <button
-            onClick={() =>
-              copyToClipboard(
-                property.description ?? `${title} - ${address}`,
-                'Description'
-              )
-            }
-            className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
-          >
-            <img
-              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_30_lfzqbf.png"
-              alt=""
-              className="h-4 w-4"
-            />
-            Copy Description
-          </button>
+        <div>
+          <p className="text-gray-500 text-xs uppercase">Bathrooms</p>
+          <p className="font-semibold text-gray-800">{bathrooms}</p>
+        </div>
 
-          <button
-            onClick={() => downloadImage(property.imageUrl)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 w-full bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
-          >
-            <img
-              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_32_a4vr39.png"
-              alt=""
-              className="h-4 w-4"
-            />
-            Download Images
-          </button>
+        <div>
+          <p className="text-gray-500 text-xs uppercase">Pools</p>
+          <p className="font-semibold text-gray-800">{pool}</p>
         </div>
       </div>
     </div>
+
+    {/* Buttons */}
+    <div
+      className="flex flex-col lg:flex-row items-stretch justify-between 
+      gap-3 mt-4 pt-4 border-t border-gray-100"
+    >
+      <Link
+        to={`/dashboard/agent-property-sales-details/${id}`}
+        className="flex items-center justify-center gap-1.5 px-3 py-2 
+        text-sm font-medium text-gray-700 w-full bg-white 
+        border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+      >
+        <img
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_29_mqukty.png"
+          className="h-4 w-4"
+        />
+        View Details
+      </Link>
+
+      <button
+        onClick={() =>
+          copyToClipboard(
+            property.description ?? `${title} - ${address}`,
+            'Description'
+          )
+        }
+        className="flex items-center justify-center gap-1.5 px-3 py-2 
+        text-sm font-medium text-gray-700 w-full bg-white 
+        border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+      >
+        <img
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_30_lfzqbf.png"
+          className="h-4 w-4"
+        />
+        Copy Description
+      </button>
+
+      <button
+        onClick={() => downloadImage(property.imageUrl)}
+        className="flex items-center justify-center gap-1.5 px-3 py-2 
+        text-sm font-medium text-gray-700 w-full bg-white 
+        border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+      >
+        <img
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_32_a4vr39.png"
+          className="h-4 w-4"
+        />
+        Download Images
+      </button>
+    </div>
+  </div>
+</div>
+
   );
 };
 

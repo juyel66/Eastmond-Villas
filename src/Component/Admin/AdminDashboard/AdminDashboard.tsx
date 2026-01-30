@@ -5,9 +5,9 @@ import { PlusCircle, UploadCloud } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProperties, fetchActivityLogs } from "../../../features/Properties/PropertiesSlice";
 import type { AppDispatch, RootState } from "../../../store";
-import { Link } from "react-router";
-
-
+import { Link, useNavigate } from "react-router";
+import Swal from "sweetalert2";
+import { getAccessToken, refreshToken } from "@/features/Auth/authSlice";
 
 const PLACEHOLDER_IMG =
   "data:image/svg+xml;utf8," +
@@ -59,6 +59,7 @@ function formatAgentDisplay(agent, details) {
 
 const AdminDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   // UI toggles and visible counts
   const [showAllProperties, setShowAllProperties] = useState(false);
@@ -119,12 +120,76 @@ const AdminDashboard = () => {
   const [agents, setAgents] = useState([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const [agentsError, setAgentsError] = useState(null);
-   const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  // Fetch API data on mount
+  // Authentication helper function (same as AllReview)
+  const doFetchWithRefresh = React.useCallback(
+    async (input: RequestInfo, init: RequestInit = {}, allowRetry = true): Promise<Response> => {
+      const token = getAccessToken();
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/json",
+        ...(init.headers ? (init.headers as Record<string, string>) : {}),
+      };
+      if (token) baseHeaders.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(input, { ...init, headers: baseHeaders });
+
+      if (res.status !== 401) return res;
+
+      if (!allowRetry) return res;
+
+      try {
+        // @ts-ignore
+        const refreshResult = await dispatch(refreshToken());
+        if (refreshToken.fulfilled.match(refreshResult)) {
+          const newToken = getAccessToken();
+          const retryHeaders = { ...baseHeaders, Authorization: newToken ? `Bearer ${newToken}` : undefined };
+          const retryRes = await fetch(input, { ...init, headers: retryHeaders });
+          return retryRes;
+        }
+        return res;
+      } catch (e) {
+        return res;
+      }
+    },
+    [dispatch]
+  );
+
+  // Fetch API data on mount with authentication
   useEffect(() => {
-    dispatch(fetchProperties());
-    dispatch(fetchActivityLogs());
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchProperties());
+        await dispatch(fetchActivityLogs());
+      } catch (error) {
+        if (error?.status === 401) {
+          try {
+            // @ts-ignore
+            const refreshResult = await dispatch(refreshToken());
+            if (refreshToken.fulfilled.match(refreshResult)) {
+              await dispatch(fetchProperties());
+              await dispatch(fetchActivityLogs());
+            } else {
+              await Swal.fire({
+                icon: "warning",
+                title: "Session Expired",
+                text: "Your session has expired. Please login again.",
+              });
+              navigate("/login");
+            }
+          } catch (refreshError) {
+            await Swal.fire({
+              icon: "warning",
+              title: "Session Expired",
+              text: "Your session has expired. Please login again.",
+            });
+            navigate("/login");
+          }
+        }
+      }
+    };
+
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -146,21 +211,15 @@ const AdminDashboard = () => {
     return Array.from(new Set(candidates));
   };
 
-  // Fetch agents list from API (NEW — robust, tries candidates)
+  // Fetch agents list from API (NEW — robust, tries candidates) with authentication
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
-    const token = (() => {
-      try {
-        return localStorage.getItem("auth_access");
-      } catch {
-        return null;
-      }
-    })();
+    const token = getAccessToken();
 
     const candidates = buildAgentUrlCandidates();
 
-    (async () => {
+    const fetchAgents = async () => {
       setAgentsLoading(true);
       setAgentsError(null);
       try {
@@ -170,17 +229,18 @@ const AdminDashboard = () => {
         for (const url of candidates) {
           if (!mounted) break;
           try {
-            const headers: Record<string, string> = { Accept: "application/json" };
-            if (token) headers.Authorization = `Bearer ${token}`;
-            const res = await fetch(url, { signal: controller.signal, headers });
+            const res = await doFetchWithRefresh(url, { 
+              signal: controller.signal,
+              method: "GET"
+            });
+            
             if (!res.ok) {
-              // record and try next
               const txt = await res.text().catch(() => "");
               lastErr = `Attempt ${url} → HTTP ${res.status} ${txt ? `: ${txt}` : ""}`;
               console.warn("[agents fetch] candidate failed:", url, res.status, txt);
               continue;
             }
-            // ok
+
             const json = await res.json();
             const list = Array.isArray(json) ? json : (Array.isArray(json.results) ? json.results : []);
             if (mounted) setAgents(list);
@@ -189,16 +249,14 @@ const AdminDashboard = () => {
           } catch (err) {
             lastErr = err;
             if (err && err.name === "AbortError") {
-              // aborted — stop
               break;
             }
             console.warn("[agents fetch] candidate threw:", url, err);
-            continue; // try next
+            continue;
           }
         }
 
         if (!success) {
-          // both attempts failed
           const message = typeof lastErr === "string" ? lastErr : (lastErr && lastErr.message) ? lastErr.message : "Failed to fetch agents";
           if (mounted) setAgentsError(message);
           console.error("[agents fetch] all candidates failed:", candidates, lastErr);
@@ -211,13 +269,15 @@ const AdminDashboard = () => {
       } finally {
         if (mounted) setAgentsLoading(false);
       }
-    })();
+    };
+
+    fetchAgents();
 
     return () => {
       mounted = false;
       controller.abort();
     };
-  }, []);
+  }, [doFetchWithRefresh]);
 
   // Normalize properties (API-driven) and extract first image
   const normalizedProperties = useMemo(() => {
@@ -243,12 +303,26 @@ const AdminDashboard = () => {
 
       image = image || p.main_image_url || p.image || p.thumbnail || null;
 
+      // Fix: Change "Pending Review" to "Pending Review" (capitalized properly)
+      let status = p.status ?? p.state ?? (p.published ? "Published" : "Draft");
+      if (typeof status === "string") {
+        status = status.replace(/_/g, " "); // Replace underscores with spaces
+        if (status.toLowerCase() === "pending review" || status.toLowerCase() === "pending_review") {
+          status = "Pending Review";
+        } else {
+          // Capitalize first letter of each word
+          status = status.split(" ").map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(" ");
+        }
+      }
+
       return {
         id: p.id ?? p.pk ?? Math.random(),
         image,
         title: p.title ?? p.name ?? p.address ?? `Property ${p.id ?? ""}`,
         price: (typeof p.price === "number" ? `$${p.price}` : p.price) ?? p.price_display ?? "—",
-        status: (p.status ?? p.state ?? (p.published ? "Published" : "Draft")) || "Draft",
+        status: status || "Draft",
         created_at: p.created_at ?? p.created ?? null,
         agent: p.created_by_name ?? p.agent_name ?? null,
       };
@@ -399,7 +473,7 @@ const AdminDashboard = () => {
   return (
     <div>
       {/* Action buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 py-6">
+      <div className="flex flex-col sm:flex-row gap-4 py-6 p-2 ">
        <div className="relative inline-block">
       {/* Main Button */}
       <button
@@ -446,7 +520,7 @@ const AdminDashboard = () => {
 
       {/* Dashboard cards */}
       <div className="mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-2">
           <div className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-start shadow-sm" style={{ minHeight: "120px" }}>
             <div className="mb-3">
               <img className=" bg-[#00968915] p-3 rounded-lg " src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760834371/Icon_4_vocxhj.png" alt="" />
@@ -484,7 +558,12 @@ const AdminDashboard = () => {
             <div className="text-gray-500 text-sm">Active Agents</div>
 
             {/* show fetch error if exists (small) */}
-            {agentsError && <div className="text-xs text-red-500 mt-2">Agents fetch error: {String(agentsError).slice(0, 80)}</div>}
+            {agentsLoading && (
+  <div className="">
+    <div className="" />
+  </div>
+)}
+
           </div>
         </div>
       </div>
@@ -522,11 +601,32 @@ const AdminDashboard = () => {
               ))
             )}
 
-            {!propertiesLoading && normalizedProperties.length === 0 && (
-              <div className="text-sm text-gray-500">No properties found.</div>
-            )}
+           {!propertiesLoading && normalizedProperties.length === 0 && (
+  <div className="mt-3 flex justify-center">
+    <div className="w-full max-w-xs border border-gray-200 rounded-md p-3 text-center bg-white">
+      <p className="text-xs font-medium text-gray-700">
+        No properties found
+      </p>
+      <p className="text-[11px] text-gray-500 mt-1">
+        Please log out and log in again.
+      </p>
+    </div>
+  </div>
+)}
 
-            {propertiesError && <div className="mt-3 text-sm text-red-600">Error loading properties: {String(propertiesError)}</div>}
+
+{!properties?.length && !propertiesError && (
+  <div className="mt-4 flex justify-center">
+    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg p-4 text-center">
+      <h3 className="text-sm font-semibold text-gray-800 mb-1">
+        No Properties Found
+      </h3>
+
+     
+    </div>
+  </div>
+)}
+
           </div>
 
           {/* BOTTOM controls for progressive load (below the list) */}
@@ -559,7 +659,9 @@ const AdminDashboard = () => {
 
           <div className="space-y-4">
             {activityLoading && normalizedActivity.length === 0 ? (
-              <div className="text-sm text-gray-500">Loading activity...</div>
+                <div className="mt-3 flex justify-center">
+    <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+  </div>
             ) : (
               recentActivityToShow.map((activity) => (
                 <div key={activity.id} className="flex justify-between items-start bg-white p-4 rounded-lg border border-gray-200">
@@ -584,11 +686,32 @@ const AdminDashboard = () => {
               ))
             )}
 
-            {!activityLoading && normalizedActivity.length === 0 && (
-              <div className="text-sm text-gray-500">No activity found.</div>
-            )}
+   {!activityLoading && normalizedActivity.length === 0 && (
+  <div className="mt-3 flex justify-center">
+    <div className="w-full max-w-xs bg-white border border-gray-200 rounded-md p-3 text-center">
+        <div className="mt-3 flex justify-center">
+    <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+  </div>
+    </div>
+  </div>
+)}
 
-            {activityError && <div className="mt-3 text-sm text-red-600">Error loading activity: {String(activityError)}</div>}
+
+{activityError && (
+  <div className="mt-3 flex justify-center">
+    <div className="w-full max-w-xs bg-white border border-gray-200 rounded-md p-3 text-center">
+      <p className="text-xs font-semibold text-gray-800 mb-1">
+        User not found
+      </p>
+
+      <p className="text-[11px] text-gray-600">
+        Please log out and log in again.
+      </p>
+    </div>
+  </div>
+)}
+
+
           </div>
 
           {/* BOTTOM controls for progressive load (below the activity list) */}

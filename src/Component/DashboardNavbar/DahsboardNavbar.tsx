@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import NotificationBell from "../Notifications/NotificationBell";
 
 const MOBILE_LOGO =
-  "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760303130/hd_svg_logo_1_rfsh4e.png";
+  "https://res.cloudinary.com/dqkczdjjs/image/upload/v1760828543/hd_svg_logo_2_hw4vsa.png";
 
 // Function to extract page name from URL with ID/slug handling
 const extractPageName = (pathname: string, params: any): string => {
@@ -120,21 +120,44 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="navbar-end flex items-center gap-4 pr-4" ref={dropdownRef}>
-          
-          {/* Notification Bell (all devices) */}
-          <NotificationBell />
+      <div
+  className="navbar-end w-full flex flex-col md:flex-row items-center md:justify-end gap-3 md:gap-4 pr-4"
+  ref={dropdownRef}
+>
+  {/* Mobile layout */}
+  <div className="w-full flex justify-between items-center md:hidden">
+    {/* Notification left */}
+    <NotificationBell />
 
-          {/* USER INFO — Name ABOVE Role */}
-          <div className="flex flex-col text-left">
-            <p className="text-lg font-semibold">{username.charAt(0).toUpperCase() + username.slice(1)}</p>
-            <p className="text-gray-500 text-sm">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</p>
-          </div>
+    {/* Name & Role right */}
+    <div className="flex flex-col text-right">
+      <p className="text-lg font-semibold">
+        {username.charAt(0).toUpperCase() + username.slice(1)}
+      </p>
+      <p className="text-gray-500 text-sm">
+        {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+      </p>
+    </div>
+  </div>
 
-          {/* Profile Icon + Settings (desktop only) */}
-          <CgProfile className="text-xl text-white hidden md:flex" />
-          <IoSettingsOutline className="text-xl ml-2 text-white hidden md:flex" />
-        </div>
+  {/* Desktop layout */}
+  <div className="hidden md:flex items-center gap-4">
+    <NotificationBell />
+
+    <div className="flex flex-col text-left">
+      <p className="text-lg font-semibold">
+        {username.charAt(0).toUpperCase() + username.slice(1)}
+      </p>
+      <p className="text-gray-500 text-sm">
+        {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+      </p>
+    </div>
+
+    <CgProfile className="text-xl text-white" />
+    <IoSettingsOutline className="text-xl ml-2 text-white" />
+  </div>
+</div>
+
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ const ImagePreview = ({
   type = 'media',
 }) => {
   return (
-    <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
+    <div className="relative border rounded-xl overflow-hidden h-32 group   bg-gray-100">
       <div className="w-full h-full flex items-center justify-center">
         <img
           src={image.url}
@@ -79,7 +79,7 @@ const BedroomImagePreview = ({
 }) => {
   return (
     <div className="space-y-2">
-      <div className="relative border rounded-xl overflow-hidden h-32 group bg-gray-100">
+      <div className="relative border  rounded-xl overflow-hidden h-32 group bg-gray-100">
         <div className="w-full h-full flex items-center justify-center">
           <img
             src={image.url}

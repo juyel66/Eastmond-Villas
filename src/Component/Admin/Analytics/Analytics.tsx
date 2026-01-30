@@ -1045,44 +1045,55 @@ const Analytics = () => {
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
       <div>
-        <div className="flex justify-between items-center mt-5">
-          <div>
-            <h1 className="text-3xl font-semibold">Analytics Dashboard</h1>
-            <p className="text-gray-500">Track Performance, Insights, and Property Metrics.</p>
-          </div>
+       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mt-5 gap-4">
+  {/* Title */}
+  <div className="text-center lg:text-left">
+    <h1 className="text-2xl lg:text-3xl font-semibold">
+      Analytics Dashboard
+    </h1>
+    <p className="text-gray-500">
+      Track Performance, Insights, and Property Metrics.
+    </p>
+  </div>
 
-          <div className="lg:flex items-center gap-4 relative">
-            <div className="bg-gray-100 border-2 border-gray-300 text-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150 cursor-pointer relative">
-              <select 
-                value={selectedRange} 
-                onChange={(e) => setSelectedRange(e.target.value)} 
-                className="bg-transparent outline-none text-black text-sm cursor-pointer"
-              >
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-                <option>Last 90 Days</option>
-              </select>
-            </div>
+  {/* Actions */}
+  <div className="flex flex-col sm:flex-row items-center gap-3 relative w-full lg:w-auto">
+    {/* Date Range */}
+    <div className="w-full sm:w-auto bg-gray-100 border-2 border-gray-300 text-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150 cursor-pointer relative">
+      <select
+        value={selectedRange}
+        onChange={(e) => setSelectedRange(e.target.value)}
+        className="w-full bg-transparent outline-none text-black text-sm cursor-pointer"
+      >
+        <option>Last 7 Days</option>
+        <option>Last 30 Days</option>
+        <option>Last 90 Days</option>
+      </select>
+    </div>
 
-            <button
-              onClick={exportToPDF}
-              disabled={exporting || !apiData}
-              className={`bg-gray-100 lg:mt-0 mt-2 border-2 border-gray-300 text-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150 hover:bg-gray-200 ${exporting || !apiData ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {exporting ? (
-                <>
-                  <div className="animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full"></div>
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <FileDown className="w-4 h-4" />
-                  Export PDF
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+    {/* Export button */}
+    <button
+      onClick={exportToPDF}
+      disabled={exporting || !apiData}
+      className={`w-full sm:w-auto bg-gray-100 border-2 border-gray-300 text-black flex items-center justify-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150 hover:bg-gray-200 ${
+        exporting || !apiData ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+    >
+      {exporting ? (
+        <>
+          <div className="animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full"></div>
+          Exporting...
+        </>
+      ) : (
+        <>
+          <FileDown className="w-4 h-4" />
+          Export PDF
+        </>
+      )}
+    </button>
+  </div>
+</div>
+
 
         {/* --- Stats Cards (use API totals) --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">

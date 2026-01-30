@@ -5,8 +5,6 @@ import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import toast from 'react-hot-toast';
 
-
-
 const ROLE_FILTERS = ['all', 'customer', 'agent', 'admin'];
 const ALL_ROLES = ['customer', 'agent', 'admin'];
 const API_BASE =
@@ -24,6 +22,134 @@ const showToast = (title, icon = 'success', timer = 2500) => {
     title,
   });
 };
+
+// List of common passwords to check against
+const COMMON_PASSWORDS = [
+  'password',
+  '12345678',
+  '123456789',
+  'qwerty123',
+  'password123',
+  'admin123',
+  'letmein',
+  'welcome',
+  'monkey',
+  'dragon',
+  'sunshine',
+  'master',
+  'hello',
+  'freedom',
+  'whatever',
+  'qazwsx',
+  'trustno1',
+  '654321',
+  'jordan23',
+  'harley',
+  'ranger',
+  'iwantu',
+  'password1',
+  'blink182',
+  'soccer',
+  'anthony',
+  'friends',
+  'purple',
+  'angel',
+  'jordan',
+  'butter',
+  'ginger',
+  'matrix',
+  'buster',
+  'jennifer',
+  'babygirl',
+  'family',
+  'superman',
+  'michael',
+  'tigger',
+  '123456',
+  '1234567',
+  '1234567890',
+  '111111',
+  '000000',
+  'abc123',
+  'admin',
+  'administrator',
+  'letmein',
+  'football',
+  'baseball',
+  'welcome',
+  'monkey',
+  'login',
+  'passw0rd',
+  'starwars',
+  'iloveyou',
+  'princess',
+  'solo',
+  'ashley',
+  'bailey',
+  'shadow',
+  'hannah',
+  'thomas',
+  'summer',
+  'charlie',
+  'jessica',
+  'pepper',
+  'daniel',
+  'access',
+  '1234',
+  '12345',
+  '123456',
+  '123123',
+  '123321',
+  '654321',
+  '7777777',
+  '666666',
+  '888888',
+  '999999',
+  '00000000',
+  '11111111',
+  '222222',
+  '333333',
+  '444444',
+  '555555',
+  '666666',
+  '777777',
+  '888888',
+  '999999',
+  'adminadmin',
+  'passwordpassword',
+  'qwertyuiop',
+  'asdfghjkl',
+  'zxcvbnm',
+  'qwertyui',
+  'asdfghjk',
+  'zxcvbn',
+  'asdfasdf',
+  'qazqaz',
+  'wsxwsx',
+  'edcedc',
+  'rfvrfv',
+  'tgbtgb',
+  'yhnujm',
+  'mko0mko',
+  'qwertyuiop[]',
+  'asdfghjkl;',
+  'zxcvbnm,./',
+  '!@#$%^&*',
+  '!@#$%^&*()',
+  'q1w2e3r4',
+  '1q2w3e4r',
+  '1qaz2wsx',
+  'zaq12wsx',
+  'xsw23edc',
+  'cde34rfv',
+  'vfr45tgb',
+  'bgt56yhn',
+  'nhy67ujm',
+  'mju78ik',
+  'ki89ol',
+  'lo90p;',
+  ';p01-'
+];
 
 export default function UserManagement() {
   // Start with empty list — no static fallback data
@@ -48,6 +174,94 @@ export default function UserManagement() {
     newPassword: false,
     confirmPassword: false,
   });
+  const [passwordErrors, setPasswordErrors] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [apiError, setApiError] = useState('');
+
+  // Enhanced password validation function
+  const validatePassword = (password, fieldName) => {
+    if (!password) return '';
+    
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    
+    // Check if password is too common
+    const lowerPassword = password.toLowerCase();
+    if (COMMON_PASSWORDS.includes(lowerPassword)) {
+      return 'This password is too common. Please choose a stronger password.';
+    }
+    
+    // Check for sequential numbers (e.g., 12345678)
+    if (/^(0123456789|12345678|23456789|34567890|45678901|56789012|67890123|78901234|89012345|90123456)$/.test(password)) {
+      return 'Sequential numbers are too easy to guess.';
+    }
+    
+    // Check for repeated characters (e.g., aaaaaaaa, 11111111)
+    if (/^(.)\1{7,}$/.test(password)) {
+      return 'Repeated characters are not secure.';
+    }
+    
+    return '';
+  };
+
+  // Update password validation on change
+  const handlePasswordChange = (field, value) => {
+    setResetPasswordData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // Clear API error when user starts typing
+    if (apiError) {
+      setApiError('');
+    }
+
+    // Validate new password
+    if (field === 'newPassword') {
+      const error = validatePassword(value, 'newPassword');
+      setPasswordErrors((prev) => ({
+        ...prev,
+        newPassword: error,
+      }));
+    }
+
+    // Validate password match
+    if (field === 'confirmPassword' || field === 'newPassword') {
+      const newPassword = field === 'newPassword' ? value : resetPasswordData.newPassword;
+      const confirmPassword = field === 'confirmPassword' ? value : resetPasswordData.confirmPassword;
+      
+      let matchError = '';
+      if (confirmPassword && newPassword !== confirmPassword) {
+        matchError = 'Passwords do not match';
+      } else if (confirmPassword && newPassword === confirmPassword && passwordErrors.newPassword) {
+        // If passwords match but new password has an error, show that error
+        matchError = passwordErrors.newPassword;
+      }
+      
+      setPasswordErrors((prev) => ({
+        ...prev,
+        confirmPassword: matchError,
+      }));
+    }
+  };
+
+  // Check if reset button should be enabled
+  const isResetButtonEnabled = () => {
+    const { newPassword, confirmPassword } = resetPasswordData;
+    const { newPassword: newPasswordError, confirmPassword: confirmPasswordError } = passwordErrors;
+    
+    return (
+      newPassword.length >= 8 &&
+      confirmPassword.length >= 8 &&
+      newPassword === confirmPassword &&
+      !newPasswordError &&
+      !confirmPasswordError &&
+      !actionInProgress[passwordResetModal.userId]
+    );
+  };
 
   // Try to derive current user's email from common localStorage keys
   const getCurrentUserEmail = () => {
@@ -186,6 +400,11 @@ export default function UserManagement() {
       newPassword: '',
       confirmPassword: '',
     });
+    setPasswordErrors({
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setApiError('');
     setShowPassword({
       newPassword: false,
       confirmPassword: false,
@@ -204,6 +423,11 @@ export default function UserManagement() {
       newPassword: '',
       confirmPassword: '',
     });
+    setPasswordErrors({
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setApiError('');
   };
 
   // Toggle password visibility
@@ -217,33 +441,10 @@ export default function UserManagement() {
   // Handle password reset
   const handlePasswordReset = async () => {
     const { userId, userName } = passwordResetModal;
-    const { newPassword, confirmPassword } = resetPasswordData;
+    const { newPassword } = resetPasswordData;
 
-    // Validation
-    if (!newPassword || !confirmPassword) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Validation Error',
-        text: 'Both password fields are required.',
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Validation Error',
-        text: 'Passwords do not match.',
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Validation Error',
-        text: 'Password must be at least 6 characters long.',
-      });
+    // Final validation
+    if (!isResetButtonEnabled()) {
       return;
     }
 
@@ -297,13 +498,27 @@ export default function UserManagement() {
     } catch (err) {
       console.error('Password reset failed:', err);
       const message = err && err.message ? err.message : 'Unknown error';
-      Swal.fire({ 
-        icon: 'error', 
-        title: 'Reset Failed', 
-        html: `Failed to reset password: <strong>${message}</strong>` 
-      });
+      
+      // Try to parse the API error message for common passwords
+      try {
+        const errorObj = JSON.parse(message.replace('Error: ', ''));
+        if (errorObj.new_password && Array.isArray(errorObj.new_password)) {
+          const apiErrorMessage = errorObj.new_password[0];
+          setApiError(apiErrorMessage);
+          
+          // Also show it under the new password field
+          setPasswordErrors(prev => ({
+            ...prev,
+            newPassword: apiErrorMessage
+          }));
+        } else {
+          setApiError(message);
+        }
+      } catch (parseError) {
+        setApiError(message);
+      }
+      
       toast.error('Password reset failed');
-      showToast('Password reset failed', 'error', 3000);
     } finally {
       setActionInProgress((s) => {
         const clone = { ...s };
@@ -499,8 +714,6 @@ export default function UserManagement() {
     }
   }
 
- 
-
   const pretty = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
   return (
@@ -525,11 +738,6 @@ export default function UserManagement() {
                 </button>
               </div>
 
-              <div > </div>
-
-
-              
-              
               <div className="mb-6">
                 <p className="text-sm text-gray-600 mb-2">
                   Reset password for:
@@ -541,23 +749,28 @@ export default function UserManagement() {
               </div>
 
               <div className="space-y-4">
+                {/* API Error Message */}
+                {apiError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600 font-medium">Error: {apiError}</p>
+                  </div>
+                )}
+
                 {/* New Password Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    New Password
+                    New Password <span className="text-red-500">*</span>
+                    <span className="text-xs text-gray-500 ml-1">(min. 8 characters)</span>
                   </label>
                   <div className="relative">
                     <input
                       type={showPassword.newPassword ? "text" : "password"}
                       value={resetPasswordData.newPassword}
-                      onChange={(e) =>
-                        setResetPasswordData((prev) => ({
-                          ...prev,
-                          newPassword: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter new password"
+                      onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter new password (min. 8 characters)"
                     />
                     <button
                       type="button"
@@ -572,24 +785,26 @@ export default function UserManagement() {
                       )}
                     </button>
                   </div>
+                  {passwordErrors.newPassword && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {passwordErrors.newPassword}
+                    </p>
+                  )}
                 </div>
 
                 {/* Confirm Password Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirm Password
+                    Confirm Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
                       type={showPassword.confirmPassword ? "text" : "password"}
                       value={resetPasswordData.confirmPassword}
-                      onChange={(e) =>
-                        setResetPasswordData((prev) => ({
-                          ...prev,
-                          confirmPassword: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       placeholder="Confirm new password"
                     />
                     <button
@@ -605,6 +820,23 @@ export default function UserManagement() {
                       )}
                     </button>
                   </div>
+                  {passwordErrors.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {passwordErrors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password Requirements */}
+                <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-600">
+                  <p className="font-medium mb-1">Password Requirements:</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Minimum 8 characters</li>
+                    <li>Passwords must match</li>
+                    <li>Avoid common passwords like "password123" or "12345678"</li>
+                    <li>Avoid sequential numbers like "12345678"</li>
+                    <li>Avoid repeated characters like "aaaaaaaa"</li>
+                  </ul>
                 </div>
               </div>
 
@@ -617,12 +849,8 @@ export default function UserManagement() {
                 </button>
                 <button
                   onClick={handlePasswordReset}
-                  disabled={
-                    actionInProgress[passwordResetModal.userId] ||
-                    !resetPasswordData.newPassword ||
-                    !resetPasswordData.confirmPassword
-                  }
-                  className="px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isResetButtonEnabled()}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                   {actionInProgress[passwordResetModal.userId] ? (
                     <>
@@ -838,16 +1066,16 @@ export default function UserManagement() {
                                 : `Edit ${user.name}`
                             }
                           >
-                             <button
-  disabled={isCurrentUser}
-  className={`text-sm ${
-    isCurrentUser
-      ? "cursor-not-allowed text-gray-400"
-      : "text-black cursor-pointer"
-  }`}
->
-  Edit
-</button>
+                            <button
+                              disabled={isCurrentUser}
+                              className={`text-sm ${
+                                isCurrentUser
+                                  ? "cursor-not-allowed text-gray-400"
+                                  : "text-black cursor-pointer"
+                              }`}
+                            >
+                              Edit
+                            </button>
                           </button>
                           <button
                             onClick={() => openPasswordResetModal(user)}
@@ -856,17 +1084,16 @@ export default function UserManagement() {
                             title={`Reset password for ${user.name}`}
                           >
                             <Key size={14} />
-                           <button
-  disabled={isCurrentUser}
-  className={`text-sm ${
-    isCurrentUser
-      ? "cursor-not-allowed text-gray-400"
-      : "text-black cursor-pointer"
-  }`}
->
-  Reset Pass
-</button>
-
+                            <button
+                              disabled={isCurrentUser}
+                              className={`text-sm ${
+                                isCurrentUser
+                                  ? "cursor-not-allowed text-gray-400"
+                                  : "text-black cursor-pointer"
+                              }`}
+                            >
+                              Reset Pass
+                            </button>
                           </button>
                           <button
                             onClick={() => handleDelete(user.id)}

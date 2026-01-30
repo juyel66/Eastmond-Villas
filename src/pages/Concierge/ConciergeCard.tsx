@@ -1,41 +1,39 @@
-// src/components/LuxuryCardGrid.jsx
-
 import React from 'react';
 import clock from '../../assets/clock.svg';
-// --- Feature Card Data (One icon per card) ---
+
 const LUXURY_CARD_DATA = [
   {
     id: 1,
-    // Using original image URL, as requested to use "default ja img use kora ache segulai use korba"
+
     imageUrl:
       'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760215908/ImageWithFallback_1_ho2re6.png',
-    brandName: 'The Unspoken Itinerary', // Matches card title in the image
-    tagline: 'True luxury anticipates your needs before they arise', // Matches the main bold text in the image
-    description: null, // Set to null for the Feature List Card variant
+    brandName: 'The Unspoken Itinerary',
+    tagline: 'True luxury anticipates your needs before they arise',
+    description: null,
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833071/Container_wsqj7b.png',
-    // New data for the Feature List Card:
+
     features: [
       'Private aviation & yacht/catamaran coordination',
       'Villa pre-stocking (rare vintages & bespoke pantry curation)',
       'Discreet relocation & logistics mastery',
     ],
-    // The icon you requested to use for the "options" (nicher option gula te)
+
     featureIconUrl: clock,
   },
   {
     id: 2,
     imageUrl:
       'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216052/ImageWithFallback_2_ucygoa.png',
-    brandName: 'VIP Access',
-    tagline: 'Beyond the Velvet Rope',
+    brandName: 'Access Beyond Privilege',
+    tagline: 'Unlock experiences beyond ordinary reach',
     description: 'Unlock experiences that are simply beyond ordinary reach.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833740/Frame_1000004285_fehjjw.png',
     features: [
-      'Priority access to fully booked venues, private clubs, and invitations',
-      'Curated cultural, dining, and nightlife itineraries beyond public reach',
-      'Seamless coordination with elite hosts, promoters, and curators',
+      'Hard-to-get tables at top Restaurants',
+      'Private after-hours viewings of couture collections or galleries',
+      'Exclusive members-only experiences and hidden island spots',
     ],
-    // The icon you requested to use for the "options" (nicher option gula te)
+
     featureIconUrl: clock,
   },
   {
@@ -51,35 +49,34 @@ const LUXURY_CARD_DATA = [
       'Risk assessment and location intelligence before every arrival',
       'Confidential coordination with trusted global protection teams',
     ],
-    // The icon you requested to use for the "options" (nicher option gula te)
+
     featureIconUrl: clock,
   },
   {
     id: 4,
     imageUrl:
       'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760216147/ImageWithFallback_4_bqamcw.png',
-    brandName: 'Bespoke Events',
-    tagline: 'The Alchemy of the Exceptional',
+    brandName: 'The Alchemy of the Exceptional',
+    tagline: 'Absolute privacy and professional oversight',
     description: 'Customized luxury crafted from your unique vision.',
     icon: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760833829/Container_2_cdh1jr.png',
     features: [
-      'One-of-a-kind experiences crafted around your passions',
-      'Transforming ordinary moments into unforgettable private occasions',
-      'Precision planning where creativity, timing, and detail converge',
+      'Midnight concert by a Grammy-winning virtuoso in a villa',
+      'Once-in-a-lifetime island safari curated by legendary explorers',
+      'Custom perfume blended in Provence exclusively for clients ',
     ],
-    // The icon you requested to use for the "options" (nicher option gula te)
+
     featureIconUrl: clock,
   },
 ];
 
-// --- Reusable Card Component (Single Icon) ---
 interface LuxuryFeatureCardProps {
   imageUrl: string;
   brandName: string;
   tagline: string;
-  description: string | null; // Made nullable for the new card type
+  description: string | null;
   icon: string;
-  // New props for the feature list
+
   features?: string[];
   featureIconUrl?: string;
 }
@@ -95,12 +92,10 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({
 }) => {
   const isFeatureListCard = features && features.length > 0;
 
-  // The feature icon URL, defaulting to the one provided by the user if available
   const itemIcon = featureIconUrl;
 
   return (
     <div className="bg-white shadow-xl rounded-xl overflow-hidden my-0 flex flex-col h-full">
-      {/* 1. Image Section */}
       <div className="relative h-64 sm:h-72 w-full flex-shrink-0">
         <img
           src={imageUrl}
@@ -109,21 +104,15 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({
         />
       </div>
 
-      {/* 2. Content Card Section */}
       <div className="p-6 md:p-8 border-t flex-grow flex flex-col">
-        {/* Header - Icon, Brand Name, and Tagline (Original style) or Icon and Title (New style) */}
         <div className="flex items-center mb-4 gap-3">
-          {/* Single Icon */}
           <img src={icon} alt="icon" className="w-6 h-6 object-contain" />
 
-          {/* Title / Brand and Tagline */}
           {isFeatureListCard ? (
-            // New Card: Only Title is shown here
             <p className="text-gray-900 font-semibold text-lg leading-none">
               {brandName}
             </p>
           ) : (
-            // Original Card: Brand Name and Tagline are both shown
             <div>
               <p className="text-gray-900 font-semibold text-lg leading-none">
                 {brandName}
@@ -133,18 +122,14 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({
           )}
         </div>
 
-        {/* Description Text */}
-        <p className="text-2xl sm:text-3xl font-bold text-gray-800 leading-snug pt-2 flex-shrink-0">
-          {/* Use tagline for the main bold text in the new list card, and description for the original card */}
+        <p className="text-2xl sm:text-2xl font-bold text-gray-800 leading-snug pt-2 flex-shrink-0">
           {isFeatureListCard ? tagline : description}
         </p>
 
-        {/* Feature List (Conditional Rendering) */}
         {isFeatureListCard && (
           <ul className="space-y-4 pt-6 mt-6 border-t border-gray-100 flex-grow">
             {features.map((feature, index) => (
               <li key={index} className="flex items-center gap-1">
-                {/* Use the requested feature icon */}
                 <img
                   src={itemIcon}
                   alt="feature icon"
@@ -162,7 +147,6 @@ const LuxuryFeatureCard: React.FC<LuxuryFeatureCardProps> = ({
   );
 };
 
-// --- Main Grid Rendering Component ---
 const LuxuryCardGrid = () => {
   return (
     <section>
@@ -223,7 +207,7 @@ const LuxuryCardGrid = () => {
   );
 };
 
-// Example Usage Component
+
 const ConciergeCard: React.FC = () => (
   <div>
     <LuxuryCardGrid />

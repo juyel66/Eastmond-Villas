@@ -119,8 +119,8 @@ const NotificationBell: React.FC = () => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-96 bg-white border shadow-lg rounded z-50">
-          <div className="p-3 border-b flex items-center justify-between">
+        <div className="absolute  right-0  mt-2 lg:w-96 w-60  bg-white border shadow-lg rounded z-50">
+          <div className="p-3  border-b flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="font-medium">Notifications</span>
               <button

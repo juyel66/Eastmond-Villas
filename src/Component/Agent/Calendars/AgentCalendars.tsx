@@ -291,7 +291,7 @@ export default function Calendars() {
   };
 
   return (
-    <div className=" ">
+    <div className="p-2 ">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">
@@ -340,7 +340,7 @@ export default function Calendars() {
 
           <button
             onClick={() => fetchMonthly(selectedMonth, selectedYear)}
-            className="px-3 py-1 rounded-md bg-white border text-sm shadow-sm hover:bg-gray-50"
+            className="px-3 py-1 rounded-md bg-white border text-sm  hover:bg-gray-50"
           >
             Refresh
           </button>

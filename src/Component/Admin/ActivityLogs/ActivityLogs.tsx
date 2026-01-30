@@ -449,11 +449,11 @@ export default function ActivityLogsExactPDF_NoBorders({ headerImageUrl }) {
           </div>
         )}
 
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col gap-2 md:flex-row justify-between items-center mb-6">
           <div className="text-sm text-gray-600">
             Total: {filtered.length} logs | Showing {startIndex + 1}-{Math.min(endIndex, filtered.length)} of {filtered.length}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-col md:flex-row ">
             <button 
               onClick={toggleSelectAllVisible} 
               className="px-3 py-2 bg-white rounded text-sm shadow-sm hover:bg-gray-50 border border-gray-200"
@@ -547,68 +547,86 @@ export default function ActivityLogsExactPDF_NoBorders({ headerImageUrl }) {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 px-2">
-            <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`p-2 rounded ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    className={`px-3 py-1 rounded text-sm ${currentPage === pageNum ? 'bg-teal-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-              
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`p-2 rounded ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm">
-              <span className="text-gray-600">Go to:</span>
-              <input
-                type="number"
-                min="1"
-                max={totalPages}
-                value={currentPage}
-                onChange={(e) => {
-                  const page = parseInt(e.target.value);
-                  if (page >= 1 && page <= totalPages) {
-                    goToPage(page);
-                  }
-                }}
-                className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
-              />
-            </div>
-          </div>
+         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mt-6 px-2 gap-4">
+  {/* Page info */}
+  <div className="text-sm text-gray-600 text-center lg:text-left">
+    Page {currentPage} of {totalPages}
+  </div>
+
+  {/* Pagination buttons */}
+  <div className="flex items-center justify-center flex-wrap gap-2">
+    <button
+      onClick={() => goToPage(currentPage - 1)}
+      disabled={currentPage === 1}
+      className={`p-2 rounded ${
+        currentPage === 1
+          ? "text-gray-400 cursor-not-allowed"
+          : "text-gray-700 hover:bg-gray-100"
+      }`}
+    >
+      <ChevronLeft className="h-5 w-5" />
+    </button>
+
+    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+      let pageNum;
+
+      if (totalPages <= 5) {
+        pageNum = i + 1;
+      } else if (currentPage <= 3) {
+        pageNum = i + 1;
+      } else if (currentPage >= totalPages - 2) {
+        pageNum = totalPages - 4 + i;
+      } else {
+        pageNum = currentPage - 2 + i;
+      }
+
+      return (
+        <button
+          key={pageNum}
+          onClick={() => goToPage(pageNum)}
+          className={`px-3 py-1 rounded text-sm ${
+            currentPage === pageNum
+              ? "bg-teal-600 text-white"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          {pageNum}
+        </button>
+      );
+    })}
+
+    <button
+      onClick={() => goToPage(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className={`p-2 rounded ${
+        currentPage === totalPages
+          ? "text-gray-400 cursor-not-allowed"
+          : "text-gray-700 hover:bg-gray-100"
+      }`}
+    >
+      <ChevronRight className="h-5 w-5" />
+    </button>
+  </div>
+
+  {/* Go to page */}
+  <div className="flex items-center justify-center lg:justify-end space-x-2 text-sm">
+    <span className="text-gray-600">Go to:</span>
+    <input
+      type="number"
+      min="1"
+      max={totalPages}
+      value={currentPage}
+      onChange={(e) => {
+        const page = parseInt(e.target.value);
+        if (page >= 1 && page <= totalPages) {
+          goToPage(page);
+        }
+      }}
+      className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+    />
+  </div>
+</div>
+
         )}
       </div>
     </div>

@@ -432,7 +432,7 @@ export default function BookingManagement(): JSX.Element {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleDelete(b.id)}
-                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-white text-sm"
+                        className="flex items-center  justify-center gap-2 px-3 py-2 rounded-md text-white text-sm"
                         style={{
                           backgroundColor:
                             deletingId === b.id ? '#9B1C1C' : '#DC2626',
@@ -521,7 +521,7 @@ export default function BookingManagement(): JSX.Element {
                   </div>
 
                   <div className="col-span-2 mt-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-end gap-2">
                       <div className="flex-1">
                         <div className="text-xs text-gray-500">Status</div>
 

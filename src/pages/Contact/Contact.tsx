@@ -129,7 +129,7 @@ const Contact = () => {
                       type="text"
                       name="name"
                       className="block w-full pl-12 pr-4 py-4 border border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                      placeholder="Alex"
+                      placeholder="Enter Your Name"
                       value={formData.name}
                       onChange={handleChange}
                       required
@@ -164,7 +164,7 @@ const Contact = () => {
                         type="email"
                         name="email"
                         className="block w-full pl-12 pr-4 py-4 border border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                        placeholder="demo@gmail.com"
+                        placeholder="Enter Your Email"
                         value={formData.email}
                         onChange={handleChange}
                         required
@@ -197,7 +197,7 @@ const Contact = () => {
                         type="tel"
                         name="phone"
                         className="block w-full pl-12 pr-4 py-4 border border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                        placeholder="01845756776"
+                        placeholder="Enter Your Phone Number"
                         value={formData.phone}
                         onChange={handleChange}
                       />

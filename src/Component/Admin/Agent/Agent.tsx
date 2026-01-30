@@ -316,19 +316,21 @@ export default function Agent() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mt-5">
-        <div>
-          <h1 className="text-3xl font-semibold">Agent</h1>
-          <p className="text-gray-500">Manage agent and admin accounts.</p>
-        </div>
+   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-4">
+  <div className="text-center sm:text-left">
+    <h1 className="text-2xl sm:text-3xl font-semibold">Agent</h1>
+    <p className="text-gray-500">Manage agent and admin accounts.</p>
+  </div>
 
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="bg-[#009689] text-white flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150"
-        >
-          <CgProfile className="h-5 w-5" /> Add Agent
-        </button>
-      </div>
+  <button
+    onClick={() => setIsAddOpen(true)}
+    className="w-full sm:w-auto bg-[#009689] text-white flex items-center justify-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150"
+  >
+    <CgProfile className="h-5 w-5" />
+    Add Agent
+  </button>
+</div>
+
 
       {loading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">

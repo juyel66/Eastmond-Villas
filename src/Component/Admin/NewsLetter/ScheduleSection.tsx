@@ -116,7 +116,7 @@ const ScheduleSection: React.FC<Props> = ({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">Send Schedule</h3>
         <div className="flex items-center gap-2">
-          {/* Timezone display only */}
+          
           <div className="text-sm text-gray-500">
             Timezone: <span className="font-medium">{timezone}</span>
           </div>
@@ -124,7 +124,7 @@ const ScheduleSection: React.FC<Props> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* FREQUENCY SELECTION */}
+       
         <div>
           <p className="text-sm font-medium text-gray-700 mb-2">Frequency</p>
           <div className="space-y-2">
@@ -148,11 +148,11 @@ const ScheduleSection: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* SCHEDULE OPTIONS */}
+
         <div className="md:col-span-2">
           <p className="text-sm font-medium text-gray-700 mb-2">Schedule Details</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* WEEKLY OPTIONS */}
+           
             {value === "weekly" && (
               <>
                 <div>
@@ -182,9 +182,7 @@ const ScheduleSection: React.FC<Props> = ({
                       <option key={time} value={time}>{time}</option>
                     ))}
                   </select>
-                  {/* <p className="text-xs text-gray-500 mt-1">
-                    UTC: {utcTime}
-                  </p> */}
+                  
                 </div>
                 
                 <div className="flex items-end mt-3">
@@ -200,7 +198,7 @@ const ScheduleSection: React.FC<Props> = ({
               </>
             )}
 
-            {/* MONTHLY OPTIONS */}
+          
             {value === "monthly" && (
               <>
                 <div>
@@ -246,7 +244,7 @@ const ScheduleSection: React.FC<Props> = ({
               </>
             )}
 
-            {/* IMMEDIATE OPTION */}
+          
             {value === "immediate" && (
               <div className="md:col-span-3">
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">

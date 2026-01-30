@@ -150,9 +150,10 @@ const FAQs: React.FC = () => {
         },
       });
 
-      if (!res.ok) {
-        throw new Error(`Failed to load FAQs (${res.status})`);
-      }
+    if (!res.ok) {
+  throw new Error("SESSION_TIMEOUT");
+}
+
 
       const json = await res.json();
       // support both list + paginated
@@ -317,7 +318,7 @@ const FAQs: React.FC = () => {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#009689] cursor-pointer text-white flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150"
+            className="bg-[#009689] cursor-pointer text-white flex text-center items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150"
           >
             Add FAQs
           </button>
@@ -379,7 +380,17 @@ const FAQs: React.FC = () => {
           )}
 
           {error && (
-            <p className="text-center text-red-500 py-4 text-sm">{error}</p>
+           <div className="mt-6 flex justify-center">
+    <div className="w-full max-w-md bg-white border border-gray-200 rounded-lg p-5 text-center">
+      <p className="text-sm font-semibold text-gray-800 mb-1">
+        Session Expired
+      </p>
+
+      <p className="text-xs text-gray-500">
+        Your session has timed out. Please log out and log in again to continue.
+      </p>
+    </div>
+  </div>
           )}
 
           {!loading &&
