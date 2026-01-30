@@ -1037,8 +1037,6 @@
 
 
 
-
-
 // ImageGallerySections.tsx
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
@@ -1366,11 +1364,11 @@ const ImageGallerySection = ({ villa }) => {
 
   const [showAll, setShowAll] = useState(false);
 
-const [showAllStaff, setShowAllStaff] = useState(false);
+  const [showAllStaff, setShowAllStaff] = useState(false);
 
-const toggleStaffView = () => {
-  setShowAllStaff((prev) => !prev);
-};
+  const toggleStaffView = () => {
+    setShowAllStaff((prev) => !prev);
+  };
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
@@ -1987,7 +1985,7 @@ const toggleStaffView = () => {
         {/* LEFT */}
         <div className="lg:col-span-7">
           <h2 className="text-3xl text-center font-bold text-gray-900 mb-8">
-            Image Gallery - {media_images.length} photos
+            Image Gallery - {media_images.length} Photos
           </h2>
 
           <div className="grid grid-cols-3 gap-4">
@@ -2042,90 +2040,121 @@ const toggleStaffView = () => {
 
         {/* RIGHT */}
         <div className="lg:col-span-5 border-l lg:pl-12 pl-0">
-          <h3 className="text-2xl font-bold mb-4">
-            Signature Distinctions
-          </h3>
-          <ul>
-            {signature_distinctions.map((item, i) => (
-              <AmenityItem key={i} name={item} />
-            ))}
-          </ul>
-
-          <h3 className="text-2xl font-bold mt-10 mb-4">
-            Finer Details
-          </h3>
-
-          <h4 className="font-semibold text-lg mb-2">
-            Interior Amenities
-          </h4>
-          <ul className="grid grid-cols-2 gap-x-6">
-            {interior_amenities.map((item, i) => (
-              <AmenityItem key={i} name={item} />
-            ))}
-          </ul>
-
-          <h4 className="font-semibold text-lg mt-6 mb-2">
-            Outdoor Amenities
-          </h4>
-          <ul>
-            {outdoor_amenities.map((item, i) => (
-              <AmenityItem key={i} name={item} />
-            ))}
-          </ul>
-
-          {/* Rules & Check-in/out & Staff: render only for rent-type */}
-          {isRentType && (
+          {/* Signature Distinctions - only show if data exists */}
+          {signature_distinctions.length > 0 && (
             <>
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Check-In / Out Policy & Information
-              </h3>
-              {check_in_out_time.check_in ? (
-                <p>Check-In: {check_in_out_time.check_in}</p>
-              ) : (
-                <p>Check-In: —</p>
-              )}
-              {check_in_out_time.check_out ? (
-                <p>Check-Out: {check_in_out_time.check_out}</p>
-              ) : (
-                <p>Check-Out: —</p>
-              )}
-              {check_in_out_time.description ? (
-                <p>{check_in_out_time.description}</p>
-              ) : null}
-              
-              {/* Check-in/out policy description field */}
-              {villa.check_in_check_out_policy && (
-                <div className="mt-3">
-                  <p className="text-gray-700">{villa.check_in_check_out_policy}</p>
-                </div>
-              )}
-
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Rules & Etiquette
+              <h3 className="text-2xl font-bold mb-4">
+                Signature Distinctions
               </h3>
               <ul>
-                {rules_and_etiquette.map((item, i) => (
+                {signature_distinctions.map((item, i) => (
                   <AmenityItem key={i} name={item} />
                 ))}
               </ul>
+            </>
+          )}
 
+          {/* Finer Details - only show if interior or outdoor amenities exist */}
+          {(interior_amenities.length > 0 || outdoor_amenities.length > 0) && (
+            <>
               <h3 className="text-2xl font-bold mt-10 mb-4">
-                Staff Complement
+                Finer Details
               </h3>
 
-              <ul>
-                {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
-                  <StaffItem key={i} name={s.name} details={s.details} />
-                ))}
-              </ul>
+              {interior_amenities.length > 0 && (
+                <>
+                  <h4 className="font-semibold text-lg mb-2">
+                    Interior Amenities
+                  </h4>
+                  <ul className="grid grid-cols-2 gap-x-6">
+                    {interior_amenities.map((item, i) => (
+                      <AmenityItem key={i} name={item} />
+                    ))}
+                  </ul>
+                </>
+              )}
 
-              {staffArray.length > 2 && (
-                <button
-                  onClick={toggleStaffView}
-                  className="mt-2 text-sm text-teal-600 "
-                >
-                  {showAllStaff ? "Show Less" : "Show More"}
-                </button>
+              {outdoor_amenities.length > 0 && (
+                <>
+                  <h4 className="font-semibold text-lg mt-6 mb-2">
+                    Outdoor Amenities
+                  </h4>
+                  <ul>
+                    {outdoor_amenities.map((item, i) => (
+                      <AmenityItem key={i} name={item} />
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          )}
+
+          {/* Rules & Check-in/out & Staff: render only for rent-type AND if data exists */}
+          {isRentType && (
+            <>
+              {/* Check-In / Out Policy & Information - only show if data exists */}
+              {(check_in_out_time.check_in || check_in_out_time.check_out || check_in_out_time.description || villa.check_in_check_out_policy) && (
+                <>
+                  <h3 className="text-2xl font-bold mt-10 mb-4">
+                    Check-In / Out Policy & Information
+                  </h3>
+                  {check_in_out_time.check_in ? (
+                    <p>Check-In: {check_in_out_time.check_in}</p>
+                  ) : (
+                    <p>Check-In: —</p>
+                  )}
+                  {check_in_out_time.check_out ? (
+                    <p>Check-Out: {check_in_out_time.check_out}</p>
+                  ) : (
+                    <p>Check-Out: —</p>
+                  )}
+                  {check_in_out_time.description && (
+                    <p>{check_in_out_time.description}</p>
+                  )}
+                  
+                  {villa.check_in_check_out_policy && (
+                    <div className="mt-3">
+                      <p className="text-gray-700">{villa.check_in_check_out_policy}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Rules & Etiquette - only show if data exists */}
+              {rules_and_etiquette.length > 0 && (
+                <>
+                  <h3 className="text-2xl font-bold mt-10 mb-4">
+                    Rules & Etiquette
+                  </h3>
+                  <ul>
+                    {rules_and_etiquette.map((item, i) => (
+                      <AmenityItem key={i} name={item} />
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {/* Staff Complement - only show if data exists */}
+              {staffArray.length > 0 && (
+                <>
+                  <h3 className="text-2xl font-bold mt-10 mb-4">
+                    Staff Complement
+                  </h3>
+                  <ul>
+                    {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
+                      <StaffItem key={i} name={s.name} details={s.details} />
+                    ))}
+                  </ul>
+
+                  {staffArray.length > 2 && (
+                    <button
+                      onClick={toggleStaffView}
+                      className="mt-2 text-sm text-teal-600 "
+                    >
+                      {showAllStaff ? "Show Less" : "Show More"}
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}
@@ -2137,37 +2166,40 @@ const toggleStaffView = () => {
 
           {isRentType && (
             <>
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Concierge Service
-              </h3>
+              {/* Concierge Service - only show if data exists */}
+              {(concierge_service.length > 0 || villa.concierge_description) && (
+                <>
+                  <h3 className="text-2xl font-bold mt-10 mb-4">
+                    Concierge Services
+                  </h3>
 
-                {villa.concierge_description && (
-                <div className=" mb-4">
-                  <p className="text-gray-700">{villa.concierge_description}</p>
-                </div>
+                  {villa.concierge_description && (
+                    <div className="mb-4">
+                      <p className="text-gray-700">{villa.concierge_description}</p>
+                    </div>
+                  )}
+
+                  {concierge_service.length > 0 && (
+                    <ul>
+                      {concierge_service.map((item, i) => (
+                        <AmenityItem key={i} name={item} />
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
-
-              <ul>
-                {concierge_service.map((item, i) => (
-                  <AmenityItem key={i} name={item} />
-                ))}
-              </ul>
               
-              
-            
-            </>
-          )}
-
-          {/* 🔐 Security Deposit: ONLY for RENT properties now */}
-          {isRentType && (
-            <>
-              <h3 className="text-3xl font-bold mt-10 mb-4">
-                Security Deposit
-              </h3>
-
-              <p className="text-2xl font-semibold">
-                USD$ {formattedSecurityDeposit || "10,000.00"}
-              </p>
+              {/* Security Deposit - only show if data exists */}
+              {security_deposit && (
+                <>
+                  <h3 className="text-3xl font-bold mt-10 mb-4">
+                    Security Deposit
+                  </h3>
+                  <p className="text-2xl font-semibold">
+                    USD$ {formattedSecurityDeposit || "10,000.00"}
+                  </p>
+                </>
+              )}
             </>
           )}
 
