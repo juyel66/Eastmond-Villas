@@ -321,6 +321,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
       price: propertyData.price || propertyData.price_display || '',
       property_type: propertyData.property_type || 'rentals',
       status: propertyData.status || 'draft',
+      priority: propertyData.priority || 'medium',
       add_guest: propertyData.add_guest || '',
       bedrooms: propertyData.bedrooms || '',
       bathrooms: propertyData.bathrooms || '',
@@ -793,6 +794,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         property_type: values.property_type || 'rentals',
         listing_type: 'rent',
         status: (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
+        priority: values.priority || 'medium',
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 1,
@@ -1060,155 +1062,173 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         className="max-w-full mx-auto space-y-6"
       >
         {/* Basic Info */}
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Title
-            </label>
-            <input
-              name="title"
-              {...register('title')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property title"
-            />
-          </div>
+    <div className="grid grid-cols-12 gap-6">
 
-          <div className="col-span-12">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              {...register('description')}
-              rows="3"
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property description"
-            />
-          </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
-            </label>
-            <input
-              name="price"
-              type="number"
-              {...register('price')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter price"
-            />
-          </div>
+  <div className="col-span-12">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Property Title
+    </label>
+    <input
+      {...register("title")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property title"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Type
-            </label>
-            <input 
-              type="text" 
-              disabled 
-              value="rentals" 
-              className='w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500' 
-            />
-          </div>
+  
+  <div className="col-span-12">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Description
+    </label>
+    <textarea
+      {...register("description")}
+      rows={3}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property description"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <div className="relative">
-              <select
-                {...register("status")}
-                className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
-              >
-                <option value="draft">Draft</option>
-                <option value="pending_review">Pending Review</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
-              <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
-                ▼
-              </span>
-            </div>
-          </div>
 
-          <div className="col-span-12 md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Add Guest
-            </label>
-            <input
-              name="add_guest"
-              type="number"
-              placeholder="Number of guests"
-              {...register('add_guest')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Price
+    </label>
+    <input
+      type="number"
+      {...register("price")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter price"
+    />
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bedrooms
-            </label>
-            <input
-              name="bedrooms"
-              type="number"
-              step="0.1"
-              {...register('bedrooms')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of bedrooms"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Property Type
+    </label>
+    <input
+      type="text"
+      disabled
+      value="rentals"
+      className="w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500"
+    />
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bathrooms
-            </label>
-            <input
-              name="bathrooms"
-              type="number"
-              step="0.1"
-              {...register('bathrooms')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of bathrooms"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Status
+    </label>
+    <div className="relative">
+      <select
+        {...register("status")}
+        className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+      >
+        <option value="draft">Draft</option>
+        <option value="pending_review">Pending Review</option>
+        <option value="published">Published</option>
+        <option value="archived">Archived</option>
+      </select>
+      <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+    </div>
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pools
-            </label>
-            <input
-              name="pool"
-              type="number"
-              {...register('pool')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of pools"
-            />
-          </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              name="address"
-              {...register('address')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property address"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Priority
+    </label>
+    <div className="relative">
+      <select
+        {...register("priority")}
+        className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+      >
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+    </div>
+  </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
-            </label>
-            <input
-              name="city"
-              {...register('city')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter city"
-            />
-          </div>
-        </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Add Guest
+    </label>
+    <input
+      type="number"
+      {...register("add_guest")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of guests"
+    />
+  </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Bedrooms
+    </label>
+    <input
+      type="number"
+      step="0.1"
+      {...register("bedrooms")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of bedrooms"
+    />
+  </div>
+
+ 
+  <div className="col-span-12 sm:col-span-6 md:col-span-3">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Bathrooms
+    </label>
+    <input
+      type="number"
+      step="0.1"
+      {...register("bathrooms")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of bathrooms"
+    />
+  </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-3">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Pools
+    </label>
+    <input
+      type="number"
+      {...register("pool")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of pools"
+    />
+  </div>
+
+
+  <div className="col-span-12 md:col-span-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Address
+    </label>
+    <input
+      {...register("address")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property address"
+    />
+  </div>
+
+  <div className="col-span-12 md:col-span-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      City
+    </label>
+    <input
+      {...register("city")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter city"
+    />
+  </div>
+
+</div>
 
         {/* Media Images Section */}
         <div>
@@ -1573,7 +1593,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
                         className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                       >
                         Remove
-                      </button>
+                    </button>
                     )}
                   </div>
                 </div>
@@ -1716,9 +1736,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
-        
-
-
           <div className="col-span-12 ">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Check In / Check Out Description
@@ -1733,8 +1750,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
-          
-
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Security Deposit
@@ -1747,19 +1762,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
-
-          {/* <div className="col-span-12 sm:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Damage Deposit
-            </label>
-            <input
-              name="damage_deposit"
-              type="number"
-              {...register('damage_deposit')}
-              placeholder="10000.00"
-              className="w-full border rounded-lg p-3 bg-gray-50"
-            />
-          </div> */}
 
           <div className="col-span-12 sm:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1775,7 +1777,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
-
           <div className="col-span-12 ">
             <label className="block text-sm font-medium text-gray-700 mb-1">
              Booking Approval Process
@@ -1790,7 +1791,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
-
           <div className="col-span-12 ">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Concierge Description
@@ -1804,12 +1804,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
               className="w-full border rounded-lg p-3 bg-gray-50"
             />
           </div>
-          
-
-
-          
-
-
         </div>
 
         {/* Concierge services */}
@@ -2092,7 +2086,6 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
                   className="mr-2 w-5 h-5 cursor-pointer"
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760999922/Icon_41_fxo3ap.png"
                   alt="icon"
-
                 />{' '}
                 Update Property 
               </>
