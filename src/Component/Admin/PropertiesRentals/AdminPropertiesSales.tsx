@@ -465,28 +465,30 @@ const AdminPropertiesSales: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-4 md:px-6 py-4 min-w-[100px]">
-                        <div className="flex items-center justify-start gap-3">
-                          <Link 
-                            to={`/dashboard/admin-update-property-sales/${item.id}`}
+                                        <div className="flex items-center gap-2 sm:gap-3">
+                        
+                          {/* EDIT BUTTON */}
+                          <Link
+                             to={`/dashboard/admin-update-property-sales/${item.id}`}
                             onClick={() => handleEdit(item.id)}
-                            className="p-2 text-green-500 bg-white hover:bg-gray-100 flex items-center justify-center"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-md bg-white hover:bg-gray-100 flex items-center justify-center text-red-500 border"
                           >
                             <img
                               src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1761000758/Edit_hejj0l.png"
                               alt="Edit"
-                              className="p-2  text-green-500 bg-white hover:bg-gray-100 flex items-center justify-center
-                              
-                              
-                              "
+                              className="w-6 h-6 sm:w-6 sm:h-6 object-contain"
                             />
                           </Link>
+                        
+                          {/* DELETE BUTTON */}
                           <Button
                             onClick={() => handleDelete(item.id)}
-                            className="p-2 border text-red-500 bg-white hover:bg-gray-100 flex items-center justify-center"
                             disabled={deletingId === item.id}
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-md bg-white hover:bg-gray-100 flex items-center justify-center text-red-500 border"
                           >
-                            <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
+                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                           </Button>
+                        
                         </div>
                       </td>
                     </tr>
