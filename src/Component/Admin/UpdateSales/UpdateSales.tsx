@@ -278,13 +278,14 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
   const populateFormWithData = (propertyData) => {
     console.log('Populating form with data:', propertyData);
     
-    // Populate form fields including youtube_link, tbc_by, commission_rate, and calendar_accuracy
+    // Populate form fields including youtube_link, tbc_by, commission_rate, calendar_accuracy, and priority
     const formData = {
       title: propertyData.title || '',
       description: propertyData.description || '',
       price: propertyData.price || propertyData.price_display || '',
       property_type: propertyData.property_type || 'sales',
       status: propertyData.status || 'draft',
+      priority: propertyData.priority || 'medium', // Added priority field
       add_guest: propertyData.add_guest || '',
       bedrooms: propertyData.bedrooms || '',
       bathrooms: propertyData.bathrooms || '',
@@ -316,20 +317,16 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       }
       
       if (Array.isArray(fieldData)) {
-        // If array has items, return them, otherwise return empty field
         return fieldData.length > 0 ? fieldData : [''];
       }
       
       if (typeof fieldData === 'object') {
-        // If it's an empty object, return empty field
         if (Object.keys(fieldData).length === 0) {
           return [''];
         }
-        // If it's an object with values, convert to array
         return Object.values(fieldData).filter(Boolean);
       }
       
-      // Default fallback
       return [''];
     };
 
@@ -478,7 +475,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         id: `new-media-${Date.now()}-${i}`,
         url: url,
         file,
-        isPrimary: mediaImages.length === 0, // Set as primary if first image
+        isPrimary: mediaImages.length === 0,
         isExisting: false,
         existingId: null,
       };
@@ -525,7 +522,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
     setState((prev) => {
       const filtered = prev.filter((i) => i.id !== id);
 
-      // If we removed the primary image, set the first image as primary
       const removedImage = prev.find((i) => i.id === id);
       if (removedImage?.isPrimary && filtered.length > 0) {
         filtered[0].isPrimary = true;
@@ -534,7 +530,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       return filtered;
     });
 
-    // If it's an existing image, add to delete list
     if (existingId) {
       if (type === 'media') {
         setMediaImagesToDelete(prev => [...prev, existingId]);
@@ -551,7 +546,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
   const removeExistingVideo = (index, videoId) => {
     setExistingVideos(prev => prev.filter((_, i) => i !== index));
     
-    // If it's an existing video with ID, add to delete list
     if (videoId) {
       setVideosToDelete(prev => [...prev, videoId]);
       toast.success('Video marked for deletion');
@@ -579,7 +573,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
 
   const removeArrayItem = (setter, arr, idx) => {
     if (arr.length === 1) {
-      // If only one item remains, clear it but keep the field
       setter(['']);
       return;
     }
@@ -607,7 +600,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
 
   const removeSpotlightRow = (idx) => {
     if (spotlightRows.length === 1) {
-      // If only one row remains, clear it but keep the fields
       setSpotlightRows([{ title: '', description: '' }]);
       return;
     }
@@ -632,7 +624,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       order: startOrder + idx,
     }));
 
-  // কোন validation নেই - সব field optional
   const validateBeforeSubmit = () => {
     clearErrors();
     setMediaError('');
@@ -640,11 +631,9 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
   };
 
   const onSubmit = async (values) => {
-    // শুধু errors clear করুন, কোন validation নেই
     clearErrors();
     setMediaError('');
     
-    // Validate function call করুন (এখন কোন validation নেই)
     if (!validateBeforeSubmit()) return;
 
     setSubmitting(true);
@@ -657,6 +646,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         property_type: values.property_type || 'sales',
         listing_type: 'sale',
         status: (values.status || 'draft').toLowerCase().replace(/\s+/g, '_'),
+        priority: values.priority || 'medium', // Added priority field
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 0,
@@ -694,7 +684,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         }
       };
 
-      // Append all processed data including youtube_link, tbc_by, commission_rate, and calendar_accuracy
+      // Append all processed data including priority
       Object.entries(processed).forEach(([key, value]) => {
         append(key, value);
       });
@@ -720,7 +710,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         id: img.existingId || null,
       }));
       
-      // Separate update and create metadata
       const updateBedroomMeta = bedroomsMeta.filter(meta => meta.id);
       const newBedroomMeta = bedroomsMeta.filter(meta => !meta.id);
       
@@ -777,7 +766,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       const headers = {};
       if (access) headers['Authorization'] = `Bearer ${access}`;
 
-      // Use PATCH method for update
       const res = await fetch(
         `${API_BASE}/villas/properties/${propertyId}/`,
         {
@@ -816,7 +804,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         if (onClose) {
           onClose();
         } else {
-          // Redirect back to properties list
           navigate('/dashboard/admin-properties-sales');
         }
       });
@@ -901,143 +888,162 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         className="max-w-full mx-auto space-y-6"
       >
         {/* Basic Info */}
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Title
-            </label>
-            <input
-              name="title"
-              {...register('title')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property title"
-            />
-          </div>
+       <div className="grid grid-cols-12 gap-6">
 
-          <div className="col-span-12">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              {...register('description')}
-              rows="3"
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property description"
-            />
-          </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
-            </label>
-            <input
-              name="price"
-              type="number"
-              {...register('price')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter price"
-            />
-          </div>
+  <div className="col-span-12">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Property Title
+    </label>
+    <input
+      {...register("title")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property title"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Type
-            </label>
-            <input 
-              type="text" 
-              disabled 
-              value="sales" 
-              className='w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500' 
-            />
-          </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <div className="relative">
-              <select
-                {...register("status")}
-                className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
-              >
-                <option value="draft">Draft</option>
-                <option value="pending_review">Pending Review</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-                <option value="sold">Sold</option>
-              </select>
-              <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
-                ▼
-              </span>
-            </div>
-          </div>
+  <div className="col-span-12">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Description
+    </label>
+    <textarea
+      {...register("description")}
+      rows={3}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property description"
+    />
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bedrooms
-            </label>
-            <input
-              name="bedrooms"
-              type="number"
-              step="0.1"
-              {...register('bedrooms')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of bedrooms"
-            />
-          </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bathrooms
-            </label>
-            <input
-              name="bathrooms"
-              type="number"
-              step="0.1"
-              {...register('bathrooms')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of bathrooms"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Price
+    </label>
+    <input
+      type="number"
+      {...register("price")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter price"
+    />
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pools
-            </label>
-            <input
-              name="pool"
-              type="number"
-              {...register('pool')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of pools"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Property Type
+    </label>
+    <input
+      type="text"
+      disabled
+      value="sales"
+      className="w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              name="address"
-              {...register('address')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property address"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Status
+    </label>
+    <div className="relative">
+      <select
+        {...register("status")}
+        className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+      >
+        <option value="draft">Draft</option>
+        <option value="pending_review">Pending Review</option>
+        <option value="published">Published</option>
+        <option value="archived">Archived</option>
+        <option value="sold">Sold</option>
+      </select>
+      <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+    </div>
+  </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
-            </label>
-            <input
-              name="city"
-              {...register('city')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter city"
-            />
-          </div>
-        </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Priority
+    </label>
+    <div className="relative">
+      <select
+        {...register("priority")}
+        className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+      >
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+    </div>
+  </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Bedrooms
+    </label>
+    <input
+      type="number"
+      step="0.1"
+      {...register("bedrooms")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of bedrooms"
+    />
+  </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Bathrooms
+    </label>
+    <input
+      type="number"
+      step="0.1"
+      {...register("bathrooms")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of bathrooms"
+    />
+  </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Pools
+    </label>
+    <input
+      type="number"
+      {...register("pool")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of pools"
+    />
+  </div>
+
+
+  <div className="col-span-12 md:col-span-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Address
+    </label>
+    <input
+      {...register("address")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property address"
+    />
+  </div>
+
+  <div className="col-span-12 md:col-span-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      City
+    </label>
+    <input
+      {...register("city")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter city"
+    />
+  </div>
+
+</div>
+
 
         {/* Media Images Section */}
         <div>
@@ -1604,7 +1610,6 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
                   className="mr-2 w-5 h-5 cursor-pointer"
                   src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760999922/Icon_41_fxo3ap.png"
                   alt="icon"
-
                 />{' '}
                 Update Sales Property 
               </>
