@@ -10,22 +10,24 @@ const Description: React.FC<DescriptionProps> = ({
   descriptionImage,
 }) => {
   const [showFull, setShowFull] = useState(false);
+
   const toggleShow = () => setShowFull((prev) => !prev);
 
   const text = descriptionData;
   const shortText = text.slice(0, 550) + "...";
-  const title = "Descriptions";
+  const title = "Description";
 
   return (
     <div className="flex mt-20 gap-5 flex-col md:flex-row items-start justify-center">
       {/* TEXT SECTION */}
       <div className="w-full md:w-1/2 bg-white rounded-lg">
-        <div className="h-96 w-full p-4 text-left">
+        <div className="h-[440px] w-full p-4 text-left">
           <h2 className="text-2xl font-bold text-[#0F172A] mb-4">
             {title}
           </h2>
 
-          <div className="text-gray-600 text-base leading-relaxed mb-4">
+          {/* SCROLLABLE DESCRIPTION TEXT */}
+          <div className="text-gray-600 text-base leading-relaxed mb-4 max-h-[300px] overflow-y-auto pr-2">
             {showFull ? text : shortText}
           </div>
 
