@@ -804,7 +804,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
                   }
                
                   return `From USD$${formatPrice(effectiveVilla.price_display)}${
-                    isRentType ? "/night" : ""
+                    isRentType ? "/Night" : ""
                   }`;
                 }
 
