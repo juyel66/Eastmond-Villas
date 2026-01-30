@@ -32,22 +32,26 @@ export default function FilterSystem({
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [villaName, setVillaName] = useState("");
-  const [minBeds, setMinBeds] = useState("Any");
-  const [minBaths, setMinBaths] = useState("Any");
-  const [guests, setGuests] = useState("Any");
+  const [minBeds, setMinBeds] = useState("");
+  const [minBaths, setMinBaths] = useState("");
+  const [guests, setGuests] = useState("");
 
   // Determine if we're in For Sale section
   const isForSaleSection = allowedType?.toLowerCase() === "sale";
   
-  // When data changes, push initial results (filtered by allowedType if provided)
-  useEffect(() => {
-    const initial = (data || []).filter((it) => {
+  // First filter by allowedType (sale/rent)
+  const filteredByType = React.useMemo(() => {
+    return (data || []).filter((it) => {
       if (!allowedType) return true;
       const lt = String(it.listing_type ?? it.rateType ?? "").toLowerCase();
       return lt === allowedType.toLowerCase();
     });
-    onResults(initial);
   }, [data, allowedType]);
+
+  // When component mounts or data changes, show filteredByType data
+  useEffect(() => {
+    onResults(filteredByType);
+  }, [filteredByType]);
 
   const handlePriceChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -63,53 +67,155 @@ export default function FilterSystem({
     }
   };
 
+  // Handle number input change for beds, baths, guests
+  const handleNumberInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    const value = e.target.value;
+    
+    // Allow empty or valid positive integers
+    if (value === "" || /^\d+$/.test(value)) {
+      setter(value);
+    }
+    // If not a valid number, don't update (allow empty string)
+  };
+
+  // Parse a value to integer safely
+  const safeParseInt = (value: any): number => {
+    if (value === undefined || value === null || value === "") return 0;
+    if (typeof value === 'number') return Math.floor(value);
+    
+    const strValue = String(value).trim();
+    if (strValue === "") return 0;
+    
+    const num = parseInt(strValue);
+    return isNaN(num) ? 0 : Math.floor(num);
+  };
+
+  // Get guest count from villa data
+  const getGuestCount = (villa: AnyObj): number => {
+    // Try multiple possible guest fields
+    const guestFields = ['add_guest', 'guests', 'max_guests', 'max_guest', 'guest_capacity'];
+    
+    for (const field of guestFields) {
+      if (villa[field] !== undefined && villa[field] !== null && villa[field] !== "") {
+        const count = safeParseInt(villa[field]);
+        if (count > 0) return count;
+      }
+    }
+    
+    // If no guest field found, return 0
+    return 0;
+  };
+
+  // Get bed count from villa data
+  const getBedCount = (villa: AnyObj): number => {
+    const bedFields = ['bedrooms', 'beds', 'bed', 'bed_count'];
+    
+    for (const field of bedFields) {
+      if (villa[field] !== undefined && villa[field] !== null && villa[field] !== "") {
+        const count = safeParseInt(villa[field]);
+        if (count > 0) return count;
+      }
+    }
+    
+    return 0;
+  };
+
+  // Get bath count from villa data
+  const getBathCount = (villa: AnyObj): number => {
+    const bathFields = ['bathrooms', 'baths', 'bath', 'bath_count'];
+    
+    for (const field of bathFields) {
+      if (villa[field] !== undefined && villa[field] !== null && villa[field] !== "") {
+        const count = safeParseInt(villa[field]);
+        if (count > 0) return count;
+      }
+    }
+    
+    return 0;
+  };
+
   const runFilters = () => {
-    const minPriceVal = parseNumber(minPrice);
-    const maxPriceVal = parseNumber(maxPrice);
-    const minBedsNum = minBeds === "Any" ? NaN : Number(minBeds.replace("+", ""));
-    const minBathsNum = minBaths === "Any" ? NaN : Number(minBaths.replace("+", ""));
-    const guestsNum = guests === "Any" ? NaN : Number(guests.replace("+", ""));
+    const minPriceVal = minPrice ? parseFloat(minPrice.replace(/,/g, '')) : NaN;
+    const maxPriceVal = maxPrice ? parseFloat(maxPrice.replace(/,/g, '')) : NaN;
+    const minBedsNum = minBeds ? parseInt(minBeds) : NaN;
+    const minBathsNum = minBaths ? parseInt(minBaths) : NaN;
+    const guestsNum = guests ? parseInt(guests) : NaN;
 
-    const filtered = (data || []).filter((p) => {
-      // only include items that match allowedType (if provided)
-      if (allowedType) {
-        const lt = String(p.listing_type ?? p.rateType ?? "").toLowerCase();
-        if (lt !== allowedType.toLowerCase()) return false;
+    console.log("🔍 Filter values:", {
+      villaName,
+      minBedsNum,
+      minBathsNum,
+      guestsNum,
+      minPriceVal,
+      maxPriceVal,
+      isForSaleSection,
+      totalVillas: filteredByType.length
+    });
+
+    const filtered = filteredByType.filter((villa) => {
+      // 1. First priority: Villa Name filter
+      if (villaName) {
+        const title = String(villa.title ?? villa.name ?? "").toLowerCase();
+        const searchName = villaName.toLowerCase();
+        if (!title.includes(searchName)) {
+          return false;
+        }
       }
 
-      // name/title filter
-      const title = String(p.title ?? p.name ?? "").toLowerCase();
-      if (villaName && !title.includes(villaName.toLowerCase())) return false;
-
-      // beds
-      if (!Number.isNaN(minBedsNum)) {
-        const b = Number(p.bedrooms ?? p.beds ?? p.bed ?? 0);
-        if (Number.isNaN(b) || b < minBedsNum) return false;
+      // 2. Guest filter (only for rentals)
+      if (!isForSaleSection && !isNaN(guestsNum)) {
+        const guestCount = getGuestCount(villa);
+        console.log(`Villa: ${villa.title}, Guest Count: ${guestCount}, Required: ${guestsNum}`);
+        if (guestCount < guestsNum) {
+          console.log(`❌ Filtered out by guests: ${villa.title}`);
+          return false;
+        }
       }
 
-      // baths
-      if (!Number.isNaN(minBathsNum)) {
-        const b = Number(p.bathrooms ?? p.baths ?? 0);
-        if (Number.isNaN(b) || b < minBathsNum) return false;
+      // 3. Bed filter
+      if (!isNaN(minBedsNum)) {
+        const bedCount = getBedCount(villa);
+        if (bedCount < minBedsNum) {
+          console.log(`❌ Filtered out by beds: ${villa.title}`);
+          return false;
+        }
       }
 
-      // guests (only for rentals, not for sale)
-      if (!isForSaleSection && !Number.isNaN(guestsNum)) {
-        const g = Number(p.add_guest ?? p.guests ?? 0);
-        if (Number.isNaN(g) || g < guestsNum) return false;
+      // 4. Bath filter
+      if (!isNaN(minBathsNum)) {
+        const bathCount = getBathCount(villa);
+        if (bathCount < minBathsNum) {
+          console.log(`❌ Filtered out by baths: ${villa.title}`);
+          return false;
+        }
       }
 
-      // price: try price_display then price
-      const priceRaw = p.price_display ?? p.price ?? "";
+      // 5. Price filter
+      const priceRaw = villa.price_display ?? villa.price ?? "";
       const priceNum = parseNumber(priceRaw);
 
-      if (!Number.isNaN(minPriceVal) && !Number.isNaN(priceNum) && priceNum < minPriceVal) return false;
-      if (!Number.isNaN(maxPriceVal) && !Number.isNaN(priceNum) && priceNum > maxPriceVal) return false;
+      if (!isNaN(minPriceVal) && !isNaN(priceNum) && priceNum < minPriceVal) {
+        console.log(`❌ Filtered out by min price: ${villa.title}`);
+        return false;
+      }
+      if (!isNaN(maxPriceVal) && !isNaN(priceNum) && priceNum > maxPriceVal) {
+        console.log(`❌ Filtered out by max price: ${villa.title}`);
+        return false;
+      }
 
-      // Note: checkIn/checkOut not used for local filtering (availability needs server)
+      console.log(`✅ Passed all filters: ${villa.title}`);
       return true;
     });
 
+    console.log("📊 Final filtered results:", {
+      total: filtered.length,
+      original: filteredByType.length,
+      filteredOut: filteredByType.length - filtered.length
+    });
+    
     onResults(filtered);
   };
 
@@ -122,19 +228,36 @@ export default function FilterSystem({
       setCheckIn("");
       setCheckOut("");
       setVillaName("");
-      setMinBeds("Any");
-      setMinBaths("Any");
-      setGuests("Any");
+      setMinBeds("");
+      setMinBaths("");
+      setGuests("");
 
-      // return initial dataset filtered by allowedType
-      const initial = (data || []).filter((it) => {
-        if (!allowedType) return true;
-        const lt = String(it.listing_type ?? it.rateType ?? "").toLowerCase();
-        return lt === allowedType.toLowerCase();
-      });
-      onResults(initial);
+      // Reset to initial data (filtered by type)
+      onResults(filteredByType);
+      console.log("🔄 Filters reset to initial state");
     }, 700);
   };
+
+  // Get maximum values from data for input placeholder
+  const getMaxValues = () => {
+    let maxBeds = 0;
+    let maxBaths = 0;
+    let maxGuests = 0;
+
+    filteredByType.forEach(item => {
+      const beds = getBedCount(item);
+      const baths = getBathCount(item);
+      const guestCount = getGuestCount(item);
+      
+      if (beds > maxBeds) maxBeds = beds;
+      if (baths > maxBaths) maxBaths = baths;
+      if (guestCount > maxGuests) maxGuests = guestCount;
+    });
+
+    return { maxBeds, maxBaths, maxGuests };
+  };
+
+  const { maxBeds, maxBaths, maxGuests } = getMaxValues();
 
   return (
     <div className="pt-6 px-4">
@@ -158,42 +281,58 @@ export default function FilterSystem({
             />
           </div>
 
-          {/* Min Beds - Always show at position 2 */}
+          {/* Min Beds - Number Input at position 2 */}
           <div>
             <label htmlFor="min-beds" className="block text-sm font-semibold text-gray-800 mb-2">
               Min Beds
             </label>
-            <select
-              id="min-beds"
-              name="min-beds"
-              value={minBeds}
-              onChange={(e) => setMinBeds(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-            >
-              <option>Any</option>
-              <option>1</option>
-              <option>2</option>
-              <option>3+</option>
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                id="min-beds"
+                name="min-beds"
+                value={minBeds}
+                onChange={(e) => handleNumberInputChange(e, setMinBeds)}
+                placeholder={`Enter min beds`}
+                className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+              {minBeds && (
+                <button
+                  type="button"
+                  onClick={() => setMinBeds("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Min Baths - Always show at position 3 */}
+          {/* Min Baths - Number Input at position 3 */}
           <div>
             <label htmlFor="min-baths" className="block text-sm font-semibold text-gray-800 mb-2">
               Min Baths
             </label>
-            <select
-              id="min-baths"
-              name="min-baths"
-              value={minBaths}
-              onChange={(e) => setMinBaths(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-            >
-              <option>Any</option>
-              <option>1</option>
-              <option>2</option>
-              <option>3+</option>
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                id="min-baths"
+                name="min-baths"
+                value={minBaths}
+                onChange={(e) => handleNumberInputChange(e, setMinBaths)}
+                placeholder={`Enter min baths`}
+                className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+              {minBaths && (
+                <button
+                  type="button"
+                  onClick={() => setMinBaths("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Conditionally render Check-In or Min Price */}
@@ -290,19 +429,26 @@ export default function FilterSystem({
               <label htmlFor="guests" className="block text-sm font-semibold text-gray-800 mb-2">
                 Guests
               </label>
-              <select
-                id="guests"
-                name="guests"
-                value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
-              >
-                <option>Any</option>
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4+</option>
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="guests"
+                  name="guests"
+                  value={guests}
+                  onChange={(e) => handleNumberInputChange(e, setGuests)}
+                  placeholder={`Enter min guests`}
+                  className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                />
+                {guests && (
+                  <button
+                    type="button"
+                    onClick={() => setGuests("")}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -370,7 +516,9 @@ export default function FilterSystem({
             </div>
           )}
 
-          {/* Rentals: Reset Button at position 10 */}
+          
+
+         
           {!isForSaleSection && (
             <div className="flex items-end">
               <button
@@ -393,6 +541,9 @@ export default function FilterSystem({
             </>
           )}
         </div>
+
+        {/* Helper text */}
+        
       </div>
     </div>
   );
