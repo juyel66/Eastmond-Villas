@@ -183,8 +183,8 @@ const CreatePropertyRentals = ({
 
   const [submitting, setSubmitting] = useState(false);
   const [mediaError, setMediaError] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(null); // New state for upload progress
-  const [uploadStatus, setUploadStatus] = useState(''); // New state for status messages
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState('');
 
   const interiorRefs = useRef([]);
   const outdoorRefs = useRef([]);
@@ -198,7 +198,6 @@ const CreatePropertyRentals = ({
   const getAbsoluteUrl = (url) => {
     if (!url) return '';
 
-    // If it's already an absolute URL
     if (
       url.startsWith('http://') ||
       url.startsWith('https://') ||
@@ -207,12 +206,10 @@ const CreatePropertyRentals = ({
       return url;
     }
 
-    // If it's a relative URL, prepend API base URL
     if (url.startsWith('/')) {
       return `${API_BASE.replace('/api', '')}${url}`;
     }
 
-    // If it's just a path, prepend API base
     return `${API_BASE.replace('/api', '')}/${url}`;
   };
 
@@ -225,6 +222,7 @@ const CreatePropertyRentals = ({
         price: editData.price || editData.price_display || '',
         property_type: editData.property_type || 'rentals',
         status: editData.status || 'Draft',
+        priority: editData.priority || 'medium', // New priority field
         add_guest: editData.add_guest || '',
         bedrooms: editData.bedrooms || '',
         bathrooms: editData.bathrooms || '',
@@ -333,7 +331,7 @@ const CreatePropertyRentals = ({
         );
       }
 
-      // Handle media images (only store for reference, won't display in edit mode)
+      // Handle media images
       const processMediaImages = () => {
         let mediaImgs = [];
 
@@ -369,7 +367,7 @@ const CreatePropertyRentals = ({
         setMediaImages(mediaImgs);
       };
 
-      // Handle bedroom images (only store for reference, won't display in edit mode)
+      // Handle bedroom images
       const processBedroomImages = () => {
         let bedroomImgs = [];
 
@@ -411,7 +409,7 @@ const CreatePropertyRentals = ({
       processMediaImages();
       processBedroomImages();
 
-      // Handle videos (only store for reference, won't display in edit mode)
+      // Handle videos
       if (
         editData.videos &&
         Array.isArray(editData.videos) &&
@@ -427,6 +425,7 @@ const CreatePropertyRentals = ({
         price: '',
         property_type: 'rentals',
         status: 'Draft',
+        priority: 'medium', // Default priority
         add_guest: '',
         bedrooms: '',
         bathrooms: '',
@@ -494,10 +493,8 @@ const CreatePropertyRentals = ({
 
     setMediaImages((prev) => {
       const updated = [...prev, ...newImgs];
-      // Ensure only one primary
       const primaryCount = updated.filter((img) => img.isPrimary).length;
       if (primaryCount > 1) {
-        // Keep the first one as primary
         let foundFirst = false;
         return updated.map((img) => {
           if (img.isPrimary) {
@@ -550,13 +547,10 @@ const CreatePropertyRentals = ({
   const removeImage = (id, setState, type = 'media') => {
     setState((prev) => {
       const filtered = prev.filter((i) => i.id !== id);
-
-      // If we removed the primary image, set the first image as primary
       const removedImage = prev.find((i) => i.id === id);
       if (removedImage?.isPrimary && filtered.length > 0) {
         filtered[0].isPrimary = true;
       }
-
       return filtered;
     });
 
@@ -710,15 +704,12 @@ const CreatePropertyRentals = ({
       order: startOrder + idx,
     }));
 
-  // এই function টি সম্পুর্ণভাবে সরিয়ে দিন - কোন validation নেই
   const validateBeforeSubmit = () => {
     clearErrors();
     setMediaError('');
-    // কোন validation নেই - সব field optional
     return true;
   };
 
-  // Function to simulate smooth progress with intervals
   const simulateSmoothProgress = (targetProgress, duration = 1000) => {
     return new Promise((resolve) => {
       const startProgress = uploadProgress || 0;
@@ -746,21 +737,17 @@ const CreatePropertyRentals = ({
   };
 
   const onSubmit = async (values, isDraft = false) => {
-    // শুধু errors clear করুন, কোন validation নেই
     clearErrors();
     setMediaError('');
     
-    // Validate function call করুন (এখন কোন validation নেই)
     if (!validateBeforeSubmit()) return;
 
     setSubmitting(true);
     
-    // Start with smooth progress
     setUploadStatus('Processing form data...');
     setUploadProgress(0);
     
     try {
-      // Step 1: Smooth progress to 10%
       await simulateSmoothProgress(10, 500);
       setUploadStatus('Preparing property details...');
       
@@ -774,6 +761,7 @@ const CreatePropertyRentals = ({
         status: isDraft
           ? 'draft'
           : (values.status || 'Draft').toLowerCase().replace(/\s+/g, '_'),
+        priority: values.priority || 'medium', // Added priority field
         address: values.address || location.address,
         city: values.city || '',
         add_guest: Number(values.add_guest) || 0,
@@ -824,7 +812,6 @@ const CreatePropertyRentals = ({
       console.log('--- Processed payload to send ---');
       console.log(JSON.stringify(processed, null, 2));
 
-      // Step 2: Smooth progress to 25%
       await simulateSmoothProgress(25, 500);
       setUploadStatus('Preparing upload data...');
       
@@ -850,6 +837,7 @@ const CreatePropertyRentals = ({
       append('booking_rate', processed.booking_rate);
       append('listing_type', processed.listing_type);
       append('status', processed.status);
+      append('priority', processed.priority); // Added priority
       append('address', processed.address);
       append('city', processed.city);
       append('add_guest', processed.add_guest);
@@ -891,40 +879,33 @@ const CreatePropertyRentals = ({
       }));
       append('bedrooms_meta', bedroomsMeta);
 
-      // Step 3: Smooth progress to 40%
       await simulateSmoothProgress(40, 500);
       
-      // Only append new files, not existing URLs
       const newMediaFiles = mediaImages.filter(img => img.file);
       const newBedroomFiles = bedroomImages.filter(img => img.file);
       const totalFiles = newMediaFiles.length + newBedroomFiles.length + videos.length;
       
       let uploadedFiles = 0;
       
-      // Upload media images
       newMediaFiles.forEach((img) => {
         fd.append('media_images', img.file);
         uploadedFiles++;
       });
 
-      // Upload bedroom images
       newBedroomFiles.forEach((img) => {
         fd.append('bedrooms_images', img.file);
         uploadedFiles++;
       });
 
-      // Upload videos
       videos.forEach((file) => {
         fd.append('videos', file);
         uploadedFiles++;
       });
 
-      // Step 4: File upload simulation
       if (totalFiles > 0) {
         setUploadStatus(`Uploading files... (${uploadedFiles}/${totalFiles})`);
         
-        // Simulate file upload progress
-        const uploadDuration = totalFiles * 300; // 300ms per file
+        const uploadDuration = totalFiles * 300;
         const uploadStartTime = Date.now();
         
         const uploadInterval = setInterval(() => {
@@ -939,14 +920,11 @@ const CreatePropertyRentals = ({
           }
         }, 100);
         
-        // Wait for simulated upload
         await new Promise(resolve => setTimeout(resolve, uploadDuration));
       } else {
-        // No files to upload, jump to 80%
         await simulateSmoothProgress(80, 300);
       }
 
-      // Step 5: Smooth progress to 90%
       await simulateSmoothProgress(90, 400);
       setUploadStatus('Finalizing property details...');
 
@@ -960,7 +938,6 @@ const CreatePropertyRentals = ({
       const headers = {};
       if (access) headers['Authorization'] = `Bearer ${access}`;
 
-      // Step 6: Send request
       setUploadStatus('Creating property...');
       
       const res = await fetch(
@@ -983,7 +960,6 @@ const CreatePropertyRentals = ({
             ? body.error || JSON.stringify(body)
             : `HTTP ${res.status}`;
         
-        // Reset progress
         setUploadProgress(null);
         setUploadStatus('');
         
@@ -992,13 +968,11 @@ const CreatePropertyRentals = ({
         return;
       }
 
-      // Success - Smooth progress to 100%
       await simulateSmoothProgress(100, 500);
       setUploadStatus('Property created successfully!');
       
       console.log('Created property response:', body);
       
-      // Show success message
       Swal.fire({
         title: isEdit ? 'Updated!' : 'Created!',
         text: isEdit
@@ -1026,7 +1000,6 @@ const CreatePropertyRentals = ({
         ]);
       }
       
-      // Clear progress after 2 seconds
       setTimeout(() => {
         setUploadProgress(null);
         setUploadStatus('');
@@ -1037,7 +1010,6 @@ const CreatePropertyRentals = ({
     } catch (err) {
       console.error('Submission error', err);
       
-      // Reset progress on error
       setUploadProgress(null);
       setUploadStatus('');
       
@@ -1119,153 +1091,176 @@ const CreatePropertyRentals = ({
         className="max-w-full mx-auto space-y-6"
       >
         {/* Basic Info */}
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Title
-            </label>
-            <input
-              name="title"
-              {...register('title')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property title"
-            />
-          </div>
+       <div className="grid grid-cols-12 gap-6">
 
-          <div className="col-span-12">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              {...register('description')}
-              rows="3"
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property description"
-            />
-          </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
-            </label>
-            <input
-              name="price"
-              type="number"
-              {...register('price')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter price"
-            />
-          </div>
+  <div className="col-span-12">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Property Title
+    </label>
+    <input
+      {...register("title")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property title"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Property Type
-            </label>
-            <input type="text" disabled value="rentals" className='w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500' />
-          </div>
+  
+  <div className="col-span-12">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Description
+    </label>
+    <textarea
+      {...register("description")}
+      rows={3}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property description"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <div className="relative">
-              <select
-                {...register("status")}
-                defaultValue="draft"
-                className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
-              >
-                <option value="draft">Draft</option>
-                <option value="pending_review">Pending Review</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
 
-              {/* Custom Dropdown Arrow */}
-              <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
-                ▼
-              </span>
-            </div>
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Price
+    </label>
+    <input
+      type="number"
+      {...register("price")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter price"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Add Guest
-            </label>
-            <input
-              name="add_guest"
-              type="number"
-              placeholder="Number of guests"
-              {...register('add_guest')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Property Type
+    </label>
+    <input
+      type="text"
+      disabled
+      value="rentals"
+      className="w-full border rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-500"
+    />
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bedrooms
-            </label>
-            <input
-              name="bedrooms"
-              type="number"
-              step="0.1"
-              {...register('bedrooms')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of bedrooms"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Status
+    </label>
+    <div className="relative">
+      <select
+        {...register("status")}
+        defaultValue="draft"
+        className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+      >
+        <option value="draft">Draft</option>
+        <option value="pending_review">Pending Review</option>
+        <option value="published">Published</option>
+        <option value="archived">Archived</option>
+      </select>
+      <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+    </div>
+  </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bathrooms
-            </label>
-            <input
-              name="bathrooms"
-              type="number"
-              step="0.1"
-              {...register('bathrooms')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of bathrooms"
-            />
-          </div>
 
-          <div className="col-span-12 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pools
-            </label>
-            <input
-              name="pool"
-              type="number"
-              {...register('pool')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Number of pools"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Priority
+    </label>
+    <div className="relative">
+      <select
+        {...register("priority")}
+        defaultValue="medium"
+        className="w-full appearance-none border rounded-lg p-3 pr-[44px] bg-gray-50"
+      >
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+    </div>
+  </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              name="address"
-              {...register('address')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter property address"
-            />
-          </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Add Guest
+    </label>
+    <input
+      type="number"
+      {...register("add_guest")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Number of guests"
+    />
+  </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
-            </label>
-            <input
-              name="city"
-              {...register('city')}
-              className="w-full border rounded-lg p-3 bg-gray-50"
-              placeholder="Enter city"
-            />
-          </div>
-        </div>
+  <div className="col-span-12 sm:col-span-6 md:col-span-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Bedrooms
+    </label>
+    <input
+      type="number"
+      step="0.1"
+      {...register("bedrooms")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Bedrooms"
+    />
+  </div>
+
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-3">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Bathrooms
+    </label>
+    <input
+      type="number"
+      step="0.1"
+      {...register("bathrooms")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Bathrooms"
+    />
+  </div>
+
+  <div className="col-span-12 sm:col-span-6 md:col-span-3">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Pools
+    </label>
+    <input
+      type="number"
+      {...register("pool")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Pools"
+    />
+  </div>
+
+ 
+  <div className="col-span-12 md:col-span-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Address
+    </label>
+    <input
+      {...register("address")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter property address"
+    />
+  </div>
+
+  <div className="col-span-12 md:col-span-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      City
+    </label>
+    <input
+      {...register("city")}
+      className="w-full border rounded-lg p-3 bg-gray-50"
+      placeholder="Enter city"
+    />
+  </div>
+
+</div>
+
 
         {/* Media Images Section */}
         <div>
@@ -1277,6 +1272,9 @@ const CreatePropertyRentals = ({
               {mediaImages.length} image(s) uploaded
             </div>
           </div>
+
+
+        
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {mediaImages.map((img, index) => (
