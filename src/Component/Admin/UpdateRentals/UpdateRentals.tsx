@@ -1716,6 +1716,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
             />
           </div>
 
+        
 
 
           <div className="col-span-12 ">
