@@ -1143,7 +1143,7 @@ Description: ${property.description.substring(0, 200)}...
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-2 text-sm text-indigo-600 font-semibold hover:text-indigo-800 transition"
+            className="mt-2 text-sm text-teal-600 font-semibold hover:text-teal-800 transition"
           >
             {isExpanded ? 'See less…' : 'See more…'}
           </button>
