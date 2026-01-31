@@ -147,18 +147,25 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     slug,
   } = property;
 
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   const StatusBadge = ({ status }: { status: Property['status'] }) => {
     let bgColor = 'bg-gray-100 text-gray-700';
-    if (status.toLocaleLowerCase() === 'published') bgColor = 'bg-green-100 text-green-700';
+    if (status.toLocaleLowerCase() === 'published')
+      bgColor = 'bg-green-100 text-green-700';
     else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
-    else if (status === 'pending_review' || status === 'pending') bgColor = 'bg-blue-100 text-blue-700';
+    else if (status === 'pending_review' || status === 'pending')
+      bgColor = 'bg-blue-100 text-blue-700';
     return (
       <span
         className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
       >
         {status.replace('_', ' ')}
-        
-        
       </span>
     );
   };
@@ -171,15 +178,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^\w\-]+/g, '');
-      
+
       return `https://www.eastmondvillas.com/dashboard/properties/ical-link/${formattedSlug}/bookings.ics`;
     }
     return '';
   };
-
-
-
-
 
   const copyToClipboard = async (text: string, action: string) => {
     try {
@@ -238,143 +241,139 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100 
-flex flex-col md:flex-row gap-5 mb-6 w-full">
-
-  {/* Image */}
-  <div className="w-full md:w-48 lg:w-52 h-44 flex-shrink-0 mx-auto md:mx-0">
-    <img
-      src={imageUrl ?? PLACEHOLDER_IMAGE}
-      alt={title}
-      className="w-full h-full object-cover rounded-xl"
-      onError={(e) => {
-        (e.target as HTMLImageElement).src =
-          'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
-      }}
-    />
-  </div>
-
-  {/* Details */}
-  <div className="flex-grow flex flex-col justify-between">
-
-    <div className="text-center md:text-left">
-
-      {/* Title + Status */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 gap-2">
-        <h2 className="text-lg font-bold text-gray-900 truncate">
-          {title}
-        </h2>
-
-        <div className="flex justify-center md:justify-end">
-          <StatusBadge
-            status={status.charAt(0).toUpperCase() + status.slice(1)}
-          />
-        </div>
-      </div>
-
-      {/* Address */}
-      <p className="text-sm text-gray-500 flex items-center justify-center md:justify-start mb-3">
-        <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-        {address}
-      </p>
-
-      {/* Property Info */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 text-sm">
-        <div>
-          <p className="text-gray-500 text-xs uppercase">Price</p>
-          <p className="font-semibold text-gray-800">
-            USD{formatPrice(price)}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-gray-500 text-xs uppercase">Bedrooms</p>
-          <p className="font-semibold text-gray-800">{bedrooms}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500 text-xs uppercase">Bathrooms</p>
-          <p className="font-semibold text-gray-800">{bathrooms}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500 text-xs uppercase">Pools</p>
-          <p className="font-semibold text-gray-800">{pool}</p>
-        </div>
-      </div>
-    </div>
-
-    {/* Buttons */}
     <div
-      className="flex flex-col lg:flex-row items-stretch justify-between gap-3 mt-4 pt-4 border-t border-gray-100"
+      className="bg-white p-5 rounded-xl shadow-md border border-gray-100 
+flex flex-col md:flex-row gap-5 mb-6 w-full"
     >
-      <Link
-        to={`/dashboard/agent-property-rentals-details/${id}`}
-        className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
-        text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
-        hover:bg-gray-50 transition"
-      >
+      {/* Image */}
+      <div className="w-full md:w-48 lg:w-52 h-44 flex-shrink-0 mx-auto md:mx-0">
         <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_29_mqukty.png"
-          className="h-4 w-4"
+          src={imageUrl ?? PLACEHOLDER_IMAGE}
+          alt={title}
+          className="w-full h-full object-cover rounded-xl"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src =
+              'https://placehold.co/400x300/D1D5DB/4B5563?text=NO+IMAGE';
+          }}
         />
-        View Details
-      </Link>
+      </div>
 
-      <button
-        onClick={() =>
-          copyToClipboard(
-            property.description ?? `${title} - ${address}`,
-            'Description'
-          )
-        }
-        className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
-        text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
-        hover:bg-gray-50 transition"
-      >
-        <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_30_lfzqbf.png"
-          className="h-4 w-4"
-        />
-        Copy Description
-      </button>
+      {/* Details */}
+      <div className="flex-grow flex flex-col justify-between">
+        <div className="text-center md:text-left">
+          {/* Title + Status */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 gap-2">
+            <h2 className="text-lg font-bold text-gray-900 truncate">
+              {title}
+            </h2>
 
-      <button
-        onClick={() => {
-          const calendarLink = generateCalendarLink();
-          if (calendarLink) {
-            copyToClipboard(calendarLink, 'Calendar Link');
-          } else {
-            alert(`Calendar link is not available for ${title}.`);
-          }
-        }}
-        className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
-        text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
-        hover:bg-gray-50 transition"
-      >
-        <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_31_evyeki.png"
-          className="h-4 w-4"
-        />
-        Copy Calendar Link
-      </button>
+            <div className="flex justify-center md:justify-end">
+              <StatusBadge
+                status={status.charAt(0).toUpperCase() + status.slice(1)}
+              />
+            </div>
+          </div>
 
-      <button
-        onClick={() => downloadImage(property.imageUrl)}
-        className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
+          {/* Address */}
+          <p className="text-sm text-gray-500 flex items-center justify-center md:justify-start mb-3">
+            <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+            {address}
+          </p>
+
+          {/* Property Info */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 text-sm">
+            <div>
+              <p className="text-gray-500 text-xs uppercase">Price</p>
+              <p className="font-semibold text-gray-800">
+                ${formatPrice(price)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs uppercase">Bedrooms</p>
+              <p className="font-semibold text-gray-800">{bedrooms}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs uppercase">Bathrooms</p>
+              <p className="font-semibold text-gray-800">{bathrooms}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs uppercase">Pools</p>
+              <p className="font-semibold text-gray-800">{pool}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex flex-col lg:flex-row items-stretch justify-between gap-3 mt-4 pt-4 border-t border-gray-100">
+          <Link
+            to={`/dashboard/agent-property-rentals-details/${id}`}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
         text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
         hover:bg-gray-50 transition"
-      >
-        <img
-          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_32_a4vr39.png"
-          className="h-4 w-4"
-        />
-        Download Images
-      </button>
+          >
+            <img
+              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_29_mqukty.png"
+              className="h-4 w-4"
+            />
+            View Details
+          </Link>
+
+          <button
+            onClick={() =>
+              copyToClipboard(
+                property.description ?? `${title} - ${address}`,
+                'Description'
+              )
+            }
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
+        text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
+        hover:bg-gray-50 transition"
+          >
+            <img
+              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_30_lfzqbf.png"
+              className="h-4 w-4"
+            />
+            Copy Description
+          </button>
+
+          <button
+            onClick={() => {
+              const calendarLink = generateCalendarLink();
+              if (calendarLink) {
+                copyToClipboard(calendarLink, 'Calendar Link');
+              } else {
+                alert(`Calendar link is not available for ${title}.`);
+              }
+            }}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
+        text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
+        hover:bg-gray-50 transition"
+          >
+            <img
+              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_31_evyeki.png"
+              className="h-4 w-4"
+            />
+            Copy Calendar Link
+          </button>
+
+          <button
+            onClick={() => downloadImage(property.imageUrl)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium 
+        text-gray-700 w-full bg-white border border-gray-300 rounded-lg 
+        hover:bg-gray-50 transition"
+          >
+            <img
+              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760915210/Icon_32_a4vr39.png"
+              className="h-4 w-4"
+            />
+            Download Images
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
   );
 };
 
@@ -448,9 +447,7 @@ const Pagination: React.FC<PaginationProps> = ({
               >
                 1
               </button>
-              {startPage > 2 && (
-                <span className="px-2 text-gray-400">...</span>
-              )}
+              {startPage > 2 && <span className="px-2 text-gray-400">...</span>}
             </>
           )}
 
@@ -511,45 +508,51 @@ type Props = {
   agentId?: number | null;
 };
 
-const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => {
+const PropertiesRentals: React.FC<Props> = ({
+  agentId: propAgentId = null,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastFetchAt, setLastFetchAt] = useState<number | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
-  const loadProperties = async (page: number = 1, opts?: {
-    ignoreResults?: { current: boolean };
-  }) => {
+  const loadProperties = async (
+    page: number = 1,
+    opts?: {
+      ignoreResults?: { current: boolean };
+    }
+  ) => {
     setLoading(true);
     setLoadError(null);
 
     try {
       // ✅ FETCHING RENT PROPERTIES FROM AGENT SPECIFIC API WITH PAGINATION
       const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=rent&page=${page}`;
-      
+
       console.log('[Rentals] Fetching from URL:', url);
-      
+
       // Add authorization headers
       const headers: HeadersInit = {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       };
-      
+
       try {
-        const token = localStorage.getItem('auth_access') || 
-                     localStorage.getItem('access_token') || 
-                     localStorage.getItem('token');
+        const token =
+          localStorage.getItem('auth_access') ||
+          localStorage.getItem('access_token') ||
+          localStorage.getItem('token');
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
       } catch (e) {
         console.warn('Token error:', e);
       }
-      
+
       const res = await fetch(url, {
         headers,
       });
@@ -580,23 +583,27 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
       const mapped: Property[] = list.map((p: any) => {
         // Get first media image
         let img = PLACEHOLDER_IMAGE;
-        if (p.media_images && Array.isArray(p.media_images) && p.media_images.length > 0) {
+        if (
+          p.media_images &&
+          Array.isArray(p.media_images) &&
+          p.media_images.length > 0
+        ) {
           img = p.media_images[0]?.image || PLACEHOLDER_IMAGE;
         }
-        
+
         // Parse price - handle string like "751.00"
-        const priceVal = parseFloat(p.price || p.price_display || "0") || 0;
-        
+        const priceVal = parseFloat(p.price || p.price_display || '0') || 0;
+
         // Parse bedrooms and bathrooms - handle string like "76.0"
-        const bedroomsVal = parseFloat(p.bedrooms || "0") || 0;
-        const bathroomsVal = parseFloat(p.bathrooms || "0") || 0;
-        
+        const bedroomsVal = parseFloat(p.bedrooms || '0') || 0;
+        const bathroomsVal = parseFloat(p.bathrooms || '0') || 0;
+
         // Pool as number
-        const poolVal = parseInt(p.pool || "0", 10) || 0;
-        
+        const poolVal = parseInt(p.pool || '0', 10) || 0;
+
         // Address
         const address = p.address || p.city || 'No address provided';
-        
+
         // Status normalization
         let statusVal: Property['status'] = 'draft';
         const rawStatus = (p.status || '').toLowerCase();
@@ -604,13 +611,13 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
         else if (rawStatus === 'pending_review') statusVal = 'pending_review';
         else if (rawStatus === 'pending') statusVal = 'pending';
         else statusVal = 'draft';
-        
+
         // Listing type
         const listingTypeRaw = String(p.listing_type || '').toLowerCase();
         let listingType: Property['listing_type'] = 'other';
         if (listingTypeRaw === 'rent') listingType = 'rent';
         else if (listingTypeRaw === 'sale') listingType = 'sale';
-        
+
         // Extract slug - check multiple possible fields
         const slug = p.slug || p.name_slug || p.property_slug || null;
 
@@ -686,7 +693,7 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
 
     return properties.filter((p) => {
       // ✅ Already filtered by backend to show only agent's properties
-      
+
       if (!lower) return true;
 
       return (
@@ -739,7 +746,7 @@ const PropertiesRentals: React.FC<Props> = ({ agentId: propAgentId = null }) => 
             {filteredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
-            
+
             {/* Pagination Component */}
             <Pagination
               pagination={pagination}
