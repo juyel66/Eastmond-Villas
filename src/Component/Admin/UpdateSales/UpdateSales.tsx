@@ -922,6 +922,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
     </label>
     <input
       type="number"
+      step="any"
       {...register("price")}
       className="w-full border rounded-lg p-3 bg-gray-50"
       placeholder="Enter price"
@@ -1377,7 +1378,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 md:col-span-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Indoor Amenities
+              Interior Amenities
             </label>
             <div className="space-y-3">
               {interiorAmenities.map((v, i) => (
@@ -1431,7 +1432,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
               ))}
             </div>
             <p className="text-sm text-gray-500 mt-2">
-              Add indoor amenities. At least one field will always be available.
+              Add Interior amenities. At least one field will always be available.
             </p>
           </div>
 
