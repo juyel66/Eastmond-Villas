@@ -88,7 +88,7 @@
 //       if (e.key === 'ArrowRight') onNext();
 //       if (e.key === 'ArrowLeft') onPrev();
 //     };
-    
+
 //     document.addEventListener('keydown', handleKeyDown);
 //     return () => document.removeEventListener('keydown', handleKeyDown);
 //   }, [onClose, onNext, onPrev]);
@@ -110,7 +110,7 @@
 //       >
 //         ×
 //       </button>
-      
+
 //       <button
 //         onClick={onPrev}
 //         disabled={currentImgIndex === 0}
@@ -118,14 +118,14 @@
 //       >
 //         ‹
 //       </button>
-      
+
 //       <div className="relative max-w-4xl max-h-[80vh]">
 //         <img
 //           src={images[currentImgIndex]?.url}
 //           alt={`Gallery image ${currentImgIndex + 1}`}
 //           className="w-full h-full object-contain rounded-lg"
 //         />
-        
+
 //         <div className="absolute bottom-4 left-0 right-0 flex justify-center">
 //           <div className="flex space-x-2 overflow-x-auto max-w-full px-4">
 //             {images.map((img, index) => (
@@ -146,7 +146,7 @@
 //           </div>
 //         </div>
 //       </div>
-      
+
 //       <button
 //         onClick={onNext}
 //         disabled={currentImgIndex === images.length - 1}
@@ -154,7 +154,7 @@
 //       >
 //         ›
 //       </button>
-      
+
 //       <div className="absolute bottom-2 left-0 right-0 text-center text-white text-sm">
 //         Image {currentImgIndex + 1} of {images.length}
 //       </div>
@@ -303,10 +303,10 @@
 //     if (!booking_rate || booking_rate.length === 0) {
 //       return [];
 //     }
-    
+
 //     // Check if the data is in the format you provided (flat array)
 //     const sampleItem = booking_rate[0];
-    
+
 //     if (typeof sampleItem === 'string' || sampleItem === null) {
 //       // Data is in flat array format: ["Jan 10 - Jan 20", "11 Nights", "80000", ...]
 //       // Transform it into object format
@@ -329,13 +329,13 @@
 //         rate_per_night: item.rate_per_night || item.rate || item.price || "N/A"
 //       }));
 //     }
-    
+
 //     return [];
 //   };
 
 //   // Get transformed booking rate data
 //   const transformedBookingRate = transformBookingRateData();
-  
+
 //   console.log("Transformed booking rate data:", transformedBookingRate);
 
 //   // -------- ENHANCED PDF DOWNLOAD --------
@@ -414,14 +414,14 @@
 //           pdf.addPage();
 //           yPos = margin;
 //         }
-        
+
 //         pdf.setFontSize(fontSize);
 //         if (isBold) pdf.setFont(undefined, 'bold');
 //         else pdf.setFont(undefined, 'normal');
-        
+
 //         if (color) pdf.setTextColor(color[0], color[1], color[2]);
 //         else pdf.setTextColor(0, 0, 0);
-        
+
 //         const textX = align === "center" ? pageWidth / 2 : margin;
 //         pdf.text(text, textX, yPos, { align });
 //         yPos += fontSize / 3 + 2;
@@ -435,28 +435,28 @@
 //       if (media_images.length > 0) {
 //         addText("Property Images", 16, true, "center", [0, 105, 92]);
 //         yPos += 8;
-        
+
 //         // Take maximum 6 images
 //         const imagesToUse = media_images.slice(0, 6);
 //         const cols = 3;
 //         const rows = Math.ceil(imagesToUse.length / cols);
-        
+
 //         const imgWidth = (pageWidth - margin * 2 - (cols - 1) * 5) / cols;
 //         const imgHeight = imgWidth * 0.75; // 4:3 aspect ratio
-        
+
 //         // Check if we have enough space for images
 //         if (yPos + (rows * (imgHeight + 5)) > pageHeight - margin) {
 //           pdf.addPage();
 //           yPos = margin;
 //         }
-        
+
 //         for (let i = 0; i < imagesToUse.length; i++) {
 //           const row = Math.floor(i / cols);
 //           const col = i % cols;
-          
+
 //           const x = margin + col * (imgWidth + 5);
 //           const y = yPos + row * (imgHeight + 5);
-          
+
 //           try {
 //             const imgEl = await loadImageWithFallback(imagesToUse[i].url);
 //             if (imgEl) {
@@ -469,7 +469,7 @@
 //             console.warn("Failed to load image for PDF:", err);
 //           }
 //         }
-        
+
 //         // Update yPos after images
 //         yPos += rows * (imgHeight + 5);
 //         yPos += 15;
@@ -543,13 +543,13 @@
 //       if (isRentType && (check_in_out_time.check_in || check_in_out_time.check_out)) {
 //         addText("Check-in/out", 16, true, "left", [0, 0, 0]);
 //         yPos += 8;
-        
+
 //         if (check_in_out_time.check_in) {
 //           pdf.setFontSize(11);
 //           pdf.text(`Check-In: ${check_in_out_time.check_in}`, margin, yPos);
 //           yPos += 6;
 //         }
-        
+
 //         if (check_in_out_time.check_out) {
 //           if (yPos > pageHeight - margin) {
 //             pdf.addPage();
@@ -559,7 +559,7 @@
 //           pdf.text(`Check-Out: ${check_in_out_time.check_out}`, margin, yPos);
 //           yPos += 6;
 //         }
-        
+
 //         if (check_in_out_time.description) {
 //           if (yPos > pageHeight - margin) {
 //             pdf.addPage();
@@ -583,7 +583,7 @@
 //       if (isRentType && staffArray.length > 0) {
 //         addText("Staff", 16, true, "left", [0, 0, 0]);
 //         yPos += 8;
-        
+
 //         staffArray.forEach((staff, i) => {
 //           if (yPos > pageHeight - margin) {
 //             pdf.addPage();
@@ -593,7 +593,7 @@
 //           pdf.setFont(undefined, 'bold');
 //           pdf.text(staff.name, margin, yPos);
 //           yPos += 5;
-          
+
 //           if (staff.details) {
 //             pdf.setFont(undefined, 'normal');
 //             const detailsLines = pdf.splitTextToSize(staff.details, pageWidth - margin * 2 - 10);
@@ -641,7 +641,7 @@
 //       if (isRentType && transformedBookingRate.length > 0) {
 //         addText("Rates & Booking Information", 18, true, "center", [0, 105, 92]);
 //         yPos += 12;
-        
+
 //         // Check if we need new page for table
 //         if (yPos > pageHeight - margin - 50) {
 //           pdf.addPage();
@@ -649,7 +649,7 @@
 //           addText("Rates & Booking Information", 18, true, "center", [0, 105, 92]);
 //           yPos += 12;
 //         }
-        
+
 //         // Prepare table data from transformedBookingRate
 //         const tableData = transformedBookingRate.map(rate => {
 //           // Format rate_per_night properly
@@ -666,36 +666,36 @@
 //               formattedRate = rate.rate_per_night;
 //             }
 //           }
-          
+
 //           return [
 //             rate.rental_period || "N/A",
 //             rate.minimum_stay || "N/A",
 //             formattedRate
 //           ];
 //         });
-        
+
 //         console.log("PDF Table Data:", tableData);
-        
+
 //         // Add table with proper headers as shown in screenshot
 //         const headers = [["", "Minimum Stay", "Rate Per Night"]];
 //         const startX = margin;
 //         const columnWidths = [70, 40, 50];
 //         const rowHeight = 8;
 //         const headerHeight = 8;
-        
+
 //         // Draw table border
 //         const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0);
 //         const tableHeight = (tableData.length + 1) * rowHeight;
-        
+
 //         // Draw header background
 //         pdf.setFillColor(0, 105, 92); // Teal background
 //         pdf.rect(startX, yPos, tableWidth, headerHeight, 'F');
-        
+
 //         // Draw header text
 //         pdf.setFontSize(10);
 //         pdf.setFont(undefined, 'bold');
 //         pdf.setTextColor(255, 255, 255);
-        
+
 //         let currentX = startX;
 //         headers[0].forEach((header, i) => {
 //           // For first column (Rental Period), we'll leave it empty in header as per screenshot
@@ -706,13 +706,13 @@
 //           }
 //           currentX += columnWidths[i];
 //         });
-        
+
 //         yPos += headerHeight;
-        
+
 //         // Draw table rows
 //         pdf.setTextColor(0, 0, 0);
 //         pdf.setFont(undefined, 'normal');
-        
+
 //         tableData.forEach((row, rowIndex) => {
 //           if (yPos > pageHeight - margin - rowHeight) {
 //             pdf.addPage();
@@ -736,9 +736,9 @@
 //             pdf.setTextColor(0, 0, 0);
 //             pdf.setFont(undefined, 'normal');
 //           }
-          
+
 //           currentX = startX;
-          
+
 //           // Draw row background (alternating colors)
 //           if (rowIndex % 2 === 0) {
 //             pdf.setFillColor(245, 245, 245);
@@ -746,7 +746,7 @@
 //             pdf.setFillColor(255, 255, 255);
 //           }
 //           pdf.rect(startX, yPos, tableWidth, rowHeight, 'F');
-          
+
 //           // Draw cell borders
 //           pdf.setDrawColor(200, 200, 200);
 //           let borderX = startX;
@@ -756,21 +756,21 @@
 //             }
 //             borderX += columnWidths[i];
 //           }
-          
+
 //           // Draw cell content
 //           row.forEach((cell, cellIndex) => {
 //             pdf.setFontSize(9);
 //             pdf.text(cell, currentX + 5, yPos + 5);
 //             currentX += columnWidths[cellIndex];
 //           });
-          
+
 //           yPos += rowHeight;
 //         });
-        
+
 //         // Draw bottom border
 //         pdf.setDrawColor(200, 200, 200);
 //         pdf.line(startX, yPos, startX + tableWidth, yPos);
-        
+
 //         yPos += 15;
 //       } else if (isRentType) {
 //         // Show message if no rates available
@@ -800,7 +800,7 @@
 //           .replace(/\s+/g, "_")
 //           .trim()}_Brochure.pdf`
 //       );
-      
+
 //       Swal.fire({
 //         icon: "success",
 //         title: "Brochure Downloaded",
@@ -1031,28 +1031,22 @@
 
 // export default ImageGallerySection;
 
-
-
-
-
-
-
 // ImageGallerySections.tsx
-import React, { useState, useEffect } from "react";
-import jsPDF from "jspdf";
+import React, { useState, useEffect } from 'react';
+import jsPDF from 'jspdf';
 
-import VideoExperience from "./VideoExperience";
-import Description from "./Descriptions";
-import Locations from "./Locations";
-import Calendar from "./Calendar";
-import AddReviewForm from "./AddReviewForm";
-import BedRoomsSliders from "./BedRoomsSliders";
-import RatesBookingInformation from "./RatesBookingInformation";
-import Swal from "sweetalert2";
+import VideoExperience from './VideoExperience';
+import Description from './Descriptions';
+import Locations from './Locations';
+import Calendar from './Calendar';
+import AddReviewForm from './AddReviewForm';
+import BedRoomsSliders from './BedRoomsSliders';
+import RatesBookingInformation from './RatesBookingInformation';
+import Swal from 'sweetalert2';
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "https://api.eastmondvillas.com/api";
-const LOCAL_FALLBACK = "/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png";
+  import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com/api';
+const LOCAL_FALLBACK = '/mnt/data/28e6a12e-2530-41c9-bdcc-03c9610049e3.png';
 
 // --------- Sub-item Components ----------
 const AmenityItem = ({ name }) => (
@@ -1082,33 +1076,33 @@ const StaffItem = ({ name, details }) => (
 
 // Helper function to format numbers with commas
 const formatNumberWithCommas = (value) => {
-  if (!value) return "";
-  
+  if (!value) return '';
+
   // Convert to string and remove any existing commas
   const strValue = String(value).replace(/,/g, '');
-  
+
   // Check if it's a number with decimal
   if (strValue.includes('.')) {
     const parts = strValue.split('.');
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const decimalPart = parts[1] || '';
     return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
   }
-  
+
   // For whole numbers
-  return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 // Simple helper to load images with crossOrigin and fallback
 const loadImageWithFallback = (src) =>
   new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = "Anonymous";
+    img.crossOrigin = 'Anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => {
       // try fallback
       const f = new Image();
-      f.crossOrigin = "Anonymous";
+      f.crossOrigin = 'Anonymous';
       f.onload = () => resolve(f);
       f.onerror = () => resolve(null);
       f.src = LOCAL_FALLBACK;
@@ -1118,7 +1112,7 @@ const loadImageWithFallback = (src) =>
 
 // center-crop draw: draw image onto canvas sized cw x ch, cropping to cover
 const drawImageCoverToCanvas = (imgEl, canvas, targetW, targetH) => {
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
   const iw = imgEl.naturalWidth || imgEl.width;
   const ih = imgEl.naturalHeight || imgEl.height;
 
@@ -1146,7 +1140,7 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
       if (e.key === 'ArrowRight') onNext();
       if (e.key === 'ArrowLeft') onPrev();
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose, onNext, onPrev]);
@@ -1168,7 +1162,7 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
       >
         ×
       </button>
-      
+
       <button
         onClick={onPrev}
         disabled={currentImgIndex === 0}
@@ -1176,14 +1170,14 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
       >
         ‹
       </button>
-      
+
       <div className="relative max-w-4xl max-h-[80vh]">
         <img
           src={images[currentImgIndex]?.url}
           alt={`Gallery image ${currentImgIndex + 1}`}
           className="w-full h-full object-contain rounded-lg"
         />
-        
+
         <div className="absolute bottom-4 left-0 right-0 flex justify-center">
           <div className="flex space-x-2 overflow-x-auto max-w-full px-4">
             {images.map((img, index) => (
@@ -1191,7 +1185,9 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
                 key={img.id}
                 onClick={() => setCurrentImgIndex(index)}
                 className={`w-16 h-16 flex-shrink-0 rounded overflow-hidden ${
-                  index === currentImgIndex ? 'border-2 border-teal-500' : 'border border-gray-300'
+                  index === currentImgIndex
+                    ? 'border-2 border-teal-500'
+                    : 'border border-gray-300'
                 }`}
               >
                 <img
@@ -1204,7 +1200,7 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
           </div>
         </div>
       </div>
-      
+
       <button
         onClick={onNext}
         disabled={currentImgIndex === images.length - 1}
@@ -1212,7 +1208,7 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
       >
         ›
       </button>
-      
+
       <div className="absolute bottom-2 left-0 right-0 text-center text-white text-sm">
         Image {currentImgIndex + 1} of {images.length}
       </div>
@@ -1261,7 +1257,7 @@ const ImageGallerySection = ({ villa }) => {
       </div>
     );
 
-  console.log("🔎 Single Villa Data (Image Gallery Component):", villa);
+  console.log('🔎 Single Villa Data (Image Gallery Component):', villa);
 
   // -------- Extract Data Safely ----------
   const media_images =
@@ -1274,8 +1270,8 @@ const ImageGallerySection = ({ villa }) => {
     villa.bedrooms_images?.map((img) => ({
       id: img.id,
       url: img.image || img.file_url || LOCAL_FALLBACK,
-      name: img.name || "",
-      description: img.description || "",
+      name: img.name || '',
+      description: img.description || '',
     })) || [];
 
   const signature_distinctions = Array.isArray(villa.signature_distinctions)
@@ -1296,29 +1292,28 @@ const ImageGallerySection = ({ villa }) => {
 
   // Accept both nested check_in_out_time or root-level check_in / check_out
   const check_in_out_time = villa.check_in_out_time || {
-    check_in: villa.check_in || "",
-    check_out: villa.check_out || "",
-    description: villa.check_in_out_time?.description || "",
+    check_in: villa.check_in || '',
+    check_out: villa.check_out || '',
+    description: villa.check_in_out_time?.description || '',
   };
 
   const staffArray = Array.isArray(villa.staff)
     ? villa.staff
     : villa.staff?.name
-    ? [{ name: villa.staff.name, details: villa.staff.details || "" }]
-    : [];
+      ? [{ name: villa.staff.name, details: villa.staff.details || '' }]
+      : [];
 
   // Concierge Services (dynamic only)
   const concierge_service = Array.isArray(villa.concierge_services)
     ? villa.concierge_services
     : Array.isArray(villa.concierge_service)
-    ? villa.concierge_service
-    : [];
+      ? villa.concierge_service
+      : [];
 
-  const security_deposit = villa.security_deposit || "";
+  const security_deposit = villa.security_deposit || '';
 
-  const description = villa.description || "";
-  const description_image_url =
-    villa.description_image_url || LOCAL_FALLBACK;
+  const description = villa.description || '';
+  const description_image_url = villa.description_image_url || LOCAL_FALLBACK;
 
   const booking_rate_start = villa.booking_rate_start || [];
 
@@ -1331,31 +1326,31 @@ const ImageGallerySection = ({ villa }) => {
   const videos = Array.isArray(villa.videos)
     ? villa.videos.map((v) => ({
         id: v.id,
-        url: v.video || v.file_url || v.url || "",
+        url: v.video || v.file_url || v.url || '',
       }))
     : [];
 
   const location = {
     lat:
-      typeof villa.latitude === "number"
+      typeof villa.latitude === 'number'
         ? villa.latitude
-        : villa.location_coords?.lat ?? null,
+        : (villa.location_coords?.lat ?? null),
     lng:
-      typeof villa.longitude === "number"
+      typeof villa.longitude === 'number'
         ? villa.longitude
-        : villa.location_coords?.lng ?? null,
-    address: villa.address || villa.city || "",
+        : (villa.location_coords?.lng ?? null),
+    address: villa.address || villa.city || '',
   };
 
-  const villaName = villa.title || villa.name || "";
-  const listingType = String(villa.listing_type ?? "").toLowerCase();
+  const villaName = villa.title || villa.name || '';
+  const listingType = String(villa.listing_type ?? '').toLowerCase();
   const isRentType =
-    listingType === "rent" ||
-    listingType === "rental" ||
-    listingType === "rentals" ||
-    listingType === "let";
+    listingType === 'rent' ||
+    listingType === 'rental' ||
+    listingType === 'rentals' ||
+    listingType === 'let';
 
-  console.log("→ Location values:", {
+  console.log('→ Location values:', {
     lat: location.lat,
     lng: location.lng,
     address: location.address,
@@ -1385,13 +1380,13 @@ const ImageGallerySection = ({ villa }) => {
 
   const goToNextImage = () => {
     if (selectedImageIndex < media_images.length - 1) {
-      setSelectedImageIndex(prev => prev + 1);
+      setSelectedImageIndex((prev) => prev + 1);
     }
   };
 
   const goToPrevImage = () => {
     if (selectedImageIndex > 0) {
-      setSelectedImageIndex(prev => prev - 1);
+      setSelectedImageIndex((prev) => prev - 1);
     }
   };
 
@@ -1400,10 +1395,10 @@ const ImageGallerySection = ({ villa }) => {
     if (!booking_rate || booking_rate.length === 0) {
       return [];
     }
-    
+
     // Check if the data is in the format you provided (flat array)
     const sampleItem = booking_rate[0];
-    
+
     if (typeof sampleItem === 'string' || sampleItem === null) {
       // Data is in flat array format: ["Jan 10 - Jan 20", "11 Nights", "80000", ...]
       // Transform it into object format
@@ -1411,41 +1406,41 @@ const ImageGallerySection = ({ villa }) => {
       for (let i = 0; i < booking_rate.length; i += 3) {
         if (i + 2 < booking_rate.length) {
           transformed.push({
-            rental_period: booking_rate[i] || "N/A",
-            minimum_stay: booking_rate[i + 1] || "N/A",
-            rate_per_night: booking_rate[i + 2] || "N/A"
+            rental_period: booking_rate[i] || 'N/A',
+            minimum_stay: booking_rate[i + 1] || 'N/A',
+            rate_per_night: booking_rate[i + 2] || 'N/A',
           });
         }
       }
       return transformed;
     } else if (typeof sampleItem === 'object') {
       // Data is already in object format
-      return booking_rate.map(item => ({
-        rental_period: item.rental_period || item.period || "N/A",
-        minimum_stay: item.minimum_stay || item.stay || "N/A",
-        rate_per_night: item.rate_per_night || item.rate || item.price || "N/A"
+      return booking_rate.map((item) => ({
+        rental_period: item.rental_period || item.period || 'N/A',
+        minimum_stay: item.minimum_stay || item.stay || 'N/A',
+        rate_per_night: item.rate_per_night || item.rate || item.price || 'N/A',
       }));
     }
-    
+
     return [];
   };
 
   // Get transformed booking rate data
   const transformedBookingRate = transformBookingRateData();
-  
-  console.log("Transformed booking rate data:", transformedBookingRate);
+
+  console.log('Transformed booking rate data:', transformedBookingRate);
 
   // -------- ENHANCED PDF DOWNLOAD --------
   const handleDownloadPDF = async () => {
     const villaId = villa.id;
     const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("auth_access")
+      typeof window !== 'undefined'
+        ? localStorage.getItem('auth_access')
         : null;
     const downloadEndpoint = `${API_BASE}/villas/properties/${villaId}/downloaded/`;
 
     const tryRequest = async (method) => {
-      const headers = { "Content-Type": "application/json" };
+      const headers = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = `Bearer ${token}`;
       const options = {
         method,
@@ -1459,17 +1454,17 @@ const ImageGallerySection = ({ villa }) => {
       // Record download in API
       let res;
       try {
-        res = await tryRequest("POST");
+        res = await tryRequest('POST');
         if (res.status === 405) {
           console.warn(
-            "Download POST returned 405; falling back to GET as backend expects GET."
+            'Download POST returned 405; falling back to GET as backend expects GET.'
           );
-          res = await tryRequest("GET");
+          res = await tryRequest('GET');
         }
       } catch (e) {
-        console.warn("POST failed, attempting GET as fallback:", e);
+        console.warn('POST failed, attempting GET as fallback:', e);
         try {
-          res = await tryRequest("GET");
+          res = await tryRequest('GET');
         } catch (e2) {
           throw e2;
         }
@@ -1480,93 +1475,99 @@ const ImageGallerySection = ({ villa }) => {
           ? res.text().catch(() => null)
           : Promise.resolve(null));
         console.error(
-          "Download recording failed:",
-          res ? res.status : "no-response",
+          'Download recording failed:',
+          res ? res.status : 'no-response',
           text
         );
         Swal.fire({
-          icon: "error",
-          title: "Download record failed",
+          icon: 'error',
+          title: 'Download record failed',
           text:
             (text && String(text).slice(0, 500)) ||
             `Server responded with status ${
-              res ? res.status : "unknown"
+              res ? res.status : 'unknown'
             }. Aborting download.`,
         });
         return;
       }
 
-      console.log("Download recorded successfully for property:", villaId);
+      console.log('Download recorded successfully for property:', villaId);
 
       // Create PDF with all data in serial format
-      const pdf = new jsPDF("p", "mm", "a4");
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
       let yPos = margin;
 
       // Function to add text with page break check
-      const addText = (text, fontSize = 12, isBold = false, align = "left", color = null) => {
+      const addText = (
+        text,
+        fontSize = 12,
+        isBold = false,
+        align = 'left',
+        color = null
+      ) => {
         if (yPos > pageHeight - margin) {
           pdf.addPage();
           yPos = margin;
         }
-        
+
         pdf.setFontSize(fontSize);
         if (isBold) pdf.setFont(undefined, 'bold');
         else pdf.setFont(undefined, 'normal');
-        
+
         if (color) pdf.setTextColor(color[0], color[1], color[2]);
         else pdf.setTextColor(0, 0, 0);
-        
-        const textX = align === "center" ? pageWidth / 2 : margin;
+
+        const textX = align === 'center' ? pageWidth / 2 : margin;
         pdf.text(text, textX, yPos, { align });
         yPos += fontSize / 3 + 2;
       };
 
       // Add main title
-      addText(villaName, 22, true, "center", [0, 105, 92]);
+      addText(villaName, 22, true, 'center', [0, 105, 92]);
       yPos += 10;
 
       // Add 6 media images in 3x2 grid
       if (media_images.length > 0) {
-        addText("Property Images", 16, true, "center", [0, 105, 92]);
+        addText('Property Images', 16, true, 'center', [0, 105, 92]);
         yPos += 8;
-        
+
         // Take maximum 6 images
         const imagesToUse = media_images.slice(0, 6);
         const cols = 3;
         const rows = Math.ceil(imagesToUse.length / cols);
-        
+
         const imgWidth = (pageWidth - margin * 2 - (cols - 1) * 5) / cols;
         const imgHeight = imgWidth * 0.75; // 4:3 aspect ratio
-        
+
         // Check if we have enough space for images
-        if (yPos + (rows * (imgHeight + 5)) > pageHeight - margin) {
+        if (yPos + rows * (imgHeight + 5) > pageHeight - margin) {
           pdf.addPage();
           yPos = margin;
         }
-        
+
         for (let i = 0; i < imagesToUse.length; i++) {
           const row = Math.floor(i / cols);
           const col = i % cols;
-          
+
           const x = margin + col * (imgWidth + 5);
           const y = yPos + row * (imgHeight + 5);
-          
+
           try {
             const imgEl = await loadImageWithFallback(imagesToUse[i].url);
             if (imgEl) {
-              const canvas = document.createElement("canvas");
+              const canvas = document.createElement('canvas');
               drawImageCoverToCanvas(imgEl, canvas, 300, 225); // 300x225 pixels
-              const imgData = canvas.toDataURL("image/jpeg", 0.85);
-              pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
+              const imgData = canvas.toDataURL('image/jpeg', 0.85);
+              pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
             }
           } catch (err) {
-            console.warn("Failed to load image for PDF:", err);
+            console.warn('Failed to load image for PDF:', err);
           }
         }
-        
+
         // Update yPos after images
         yPos += rows * (imgHeight + 5);
         yPos += 15;
@@ -1574,48 +1575,48 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Description Section (image and text)
       if (description || description_image_url) {
-        addText("About This Property", 18, true, "center", [0, 105, 92]);
+        addText('About This Property', 18, true, 'center', [0, 105, 92]);
         yPos += 12;
-        
+
         // Add description image if available
         if (description_image_url && description_image_url !== LOCAL_FALLBACK) {
           if (yPos > pageHeight - margin - 100) {
             pdf.addPage();
             yPos = margin;
           }
-          
+
           try {
             const imgEl = await loadImageWithFallback(description_image_url);
             if (imgEl) {
-              const canvas = document.createElement("canvas");
+              const canvas = document.createElement('canvas');
               drawImageCoverToCanvas(imgEl, canvas, 400, 250);
-              const imgData = canvas.toDataURL("image/jpeg", 0.85);
-              
+              const imgData = canvas.toDataURL('image/jpeg', 0.85);
+
               // Calculate image dimensions
               const imgWidth = pageWidth - margin * 2;
               const imgHeight = imgWidth * 0.6;
-              
-              pdf.addImage(imgData, "JPEG", margin, yPos, imgWidth, imgHeight);
+
+              pdf.addImage(imgData, 'JPEG', margin, yPos, imgWidth, imgHeight);
               yPos += imgHeight + 10;
             }
           } catch (err) {
-            console.warn("Failed to load description image for PDF:", err);
+            console.warn('Failed to load description image for PDF:', err);
           }
         }
-        
+
         // Add description text
         if (description) {
           if (yPos > pageHeight - margin - 30) {
             pdf.addPage();
             yPos = margin;
           }
-          
+
           pdf.setFontSize(11);
           pdf.setTextColor(0, 0, 0);
           const maxLineWidth = pageWidth - margin * 2;
           const lines = pdf.splitTextToSize(description, maxLineWidth);
-          
-          lines.forEach(line => {
+
+          lines.forEach((line) => {
             if (yPos > pageHeight - margin) {
               pdf.addPage();
               yPos = margin;
@@ -1629,7 +1630,7 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Signature Distinctions - BLACK COLOR
       if (signature_distinctions.length > 0) {
-        addText("Signature Distinctions", 18, true, "left", [0, 0, 0]); // BLACK COLOR
+        addText('Signature Distinctions', 18, true, 'left', [0, 0, 0]); // BLACK COLOR
         yPos += 8;
         signature_distinctions.forEach((item, i) => {
           if (yPos > pageHeight - margin) {
@@ -1645,7 +1646,13 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Finer Details - Interior Amenities
       if (interior_amenities.length > 0) {
-        addText("Finer Details - Interior Amenities", 16, true, "left", [0, 0, 0]);
+        addText(
+          'Finer Details - Interior Amenities',
+          16,
+          true,
+          'left',
+          [0, 0, 0]
+        );
         yPos += 8;
         interior_amenities.forEach((item, i) => {
           if (yPos > pageHeight - margin) {
@@ -1661,7 +1668,13 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Finer Details - Outdoor Amenities
       if (outdoor_amenities.length > 0) {
-        addText("Finer Details - Outdoor Amenities", 16, true, "left", [0, 0, 0]);
+        addText(
+          'Finer Details - Outdoor Amenities',
+          16,
+          true,
+          'left',
+          [0, 0, 0]
+        );
         yPos += 8;
         outdoor_amenities.forEach((item, i) => {
           if (yPos > pageHeight - margin) {
@@ -1677,7 +1690,7 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Rules & Etiquette (only for rent type)
       if (isRentType && rules_and_etiquette.length > 0) {
-        addText("Rules & Etiquette", 16, true, "left", [0, 0, 0]);
+        addText('Rules & Etiquette', 16, true, 'left', [0, 0, 0]);
         yPos += 8;
         rules_and_etiquette.forEach((item, i) => {
           if (yPos > pageHeight - margin) {
@@ -1692,16 +1705,19 @@ const ImageGallerySection = ({ villa }) => {
       }
 
       // Add Check-in/out
-      if (isRentType && (check_in_out_time.check_in || check_in_out_time.check_out)) {
-        addText("Check-in/out", 16, true, "left", [0, 0, 0]);
+      if (
+        isRentType &&
+        (check_in_out_time.check_in || check_in_out_time.check_out)
+      ) {
+        addText('Check-in/out', 16, true, 'left', [0, 0, 0]);
         yPos += 8;
-        
+
         if (check_in_out_time.check_in) {
           pdf.setFontSize(11);
           pdf.text(`Check-In: ${check_in_out_time.check_in}`, margin, yPos);
           yPos += 6;
         }
-        
+
         if (check_in_out_time.check_out) {
           if (yPos > pageHeight - margin) {
             pdf.addPage();
@@ -1711,15 +1727,18 @@ const ImageGallerySection = ({ villa }) => {
           pdf.text(`Check-Out: ${check_in_out_time.check_out}`, margin, yPos);
           yPos += 6;
         }
-        
+
         if (check_in_out_time.description) {
           if (yPos > pageHeight - margin) {
             pdf.addPage();
             yPos = margin;
           }
           pdf.setFontSize(10);
-          const descLines = pdf.splitTextToSize(check_in_out_time.description, pageWidth - margin * 2);
-          descLines.forEach(line => {
+          const descLines = pdf.splitTextToSize(
+            check_in_out_time.description,
+            pageWidth - margin * 2
+          );
+          descLines.forEach((line) => {
             if (yPos > pageHeight - margin) {
               pdf.addPage();
               yPos = margin;
@@ -1733,9 +1752,9 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Staff
       if (isRentType && staffArray.length > 0) {
-        addText("Staff", 16, true, "left", [0, 0, 0]);
+        addText('Staff', 16, true, 'left', [0, 0, 0]);
         yPos += 8;
-        
+
         staffArray.forEach((staff, i) => {
           if (yPos > pageHeight - margin) {
             pdf.addPage();
@@ -1745,11 +1764,14 @@ const ImageGallerySection = ({ villa }) => {
           pdf.setFont(undefined, 'bold');
           pdf.text(staff.name, margin, yPos);
           yPos += 5;
-          
+
           if (staff.details) {
             pdf.setFont(undefined, 'normal');
-            const detailsLines = pdf.splitTextToSize(staff.details, pageWidth - margin * 2 - 10);
-            detailsLines.forEach(line => {
+            const detailsLines = pdf.splitTextToSize(
+              staff.details,
+              pageWidth - margin * 2 - 10
+            );
+            detailsLines.forEach((line) => {
               if (yPos > pageHeight - margin) {
                 pdf.addPage();
                 yPos = margin;
@@ -1765,7 +1787,7 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Concierge Service
       if (isRentType && concierge_service.length > 0) {
-        addText("Concierge Service", 16, true, "left", [0, 0, 0]);
+        addText('Concierge Service', 16, true, 'left', [0, 0, 0]);
         yPos += 8;
         concierge_service.forEach((item, i) => {
           if (yPos > pageHeight - margin) {
@@ -1781,12 +1803,13 @@ const ImageGallerySection = ({ villa }) => {
 
       // Add Security Deposit
       if (isRentType && security_deposit) {
-        addText("Security Deposit", 16, true, "left", [0, 0, 0]);
+        addText('Security Deposit', 16, true, 'left', [0, 0, 0]);
         yPos += 8;
         pdf.setFontSize(12);
-        
+
         // Format security deposit with commas
-        const formattedSecurityDeposit = formatNumberWithCommas(security_deposit);
+        const formattedSecurityDeposit =
+          formatNumberWithCommas(security_deposit);
         pdf.text(`USD$ ${formattedSecurityDeposit}`, margin, yPos);
         yPos += 12;
       }
@@ -1794,80 +1817,92 @@ const ImageGallerySection = ({ villa }) => {
       // Add Rental Rates Table with "Rates & Booking Information" heading
       // Use transformedBookingRate instead of booking_rate
       if (isRentType && transformedBookingRate.length > 0) {
-        addText("Rates & Booking Information", 18, true, "center", [0, 105, 92]);
+        addText(
+          'Rates & Booking Information',
+          18,
+          true,
+          'center',
+          [0, 105, 92]
+        );
         yPos += 12;
-        
+
         // Check if we need new page for table
         if (yPos > pageHeight - margin - 50) {
           pdf.addPage();
           yPos = margin;
-          addText("Rates & Booking Information", 18, true, "center", [0, 105, 92]);
+          addText(
+            'Rates & Booking Information',
+            18,
+            true,
+            'center',
+            [0, 105, 92]
+          );
           yPos += 12;
         }
-        
+
         // Prepare table data from transformedBookingRate
-        const tableData = transformedBookingRate.map(rate => {
+        const tableData = transformedBookingRate.map((rate) => {
           // Format rate_per_night properly
-          let formattedRate = "N/A";
-          if (rate.rate_per_night && rate.rate_per_night !== "N/A") {
+          let formattedRate = 'N/A';
+          if (rate.rate_per_night && rate.rate_per_night !== 'N/A') {
             // Convert to number if possible and format with commas
             const rateNum = parseFloat(rate.rate_per_night);
             if (!isNaN(rateNum)) {
               formattedRate = `$${rateNum.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                maximumFractionDigits: 2,
               })}`;
             } else {
               formattedRate = `$${formatNumberWithCommas(rate.rate_per_night)}`;
             }
           }
-          
+
           return [
-            rate.rental_period || "N/A",
-            rate.minimum_stay || "N/A",
-            formattedRate
+            rate.rental_period || 'N/A',
+            rate.minimum_stay || 'N/A',
+            formattedRate,
           ];
         });
-        
-        console.log("PDF Table Data:", tableData);
-        
+
+        console.log('PDF Table Data:', tableData);
+
         // Add table with proper headers as shown in screenshot
-        const headers = [["", "Minimum Stay", "Rate Per Night"]];
+        const headers = [['', 'Minimum Stay', 'Rate Per Night']];
         const startX = margin;
         const columnWidths = [70, 40, 50];
         const rowHeight = 8;
         const headerHeight = 8;
-        
+
         // Draw table border
         const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0);
         const tableHeight = (tableData.length + 1) * rowHeight;
-        
+
         // Draw header background
         pdf.setFillColor(0, 105, 92); // Teal background
         pdf.rect(startX, yPos, tableWidth, headerHeight, 'F');
-        
+
         // Draw header text
         pdf.setFontSize(10);
         pdf.setFont(undefined, 'bold');
         pdf.setTextColor(255, 255, 255);
-        
+
         let currentX = startX;
         headers[0].forEach((header, i) => {
           // For first column (Rental Period), we'll leave it empty in header as per screenshot
           if (i === 0) {
-            pdf.text("Rental Period", currentX + 5, yPos + 5);
+            pdf.text('Rental Period', currentX + 5, yPos + 5);
           } else {
             pdf.text(header, currentX + 5, yPos + 5);
           }
           currentX += columnWidths[i];
         });
-        
+
         yPos += headerHeight;
-        
+
         // Draw table rows
         pdf.setTextColor(0, 0, 0);
         pdf.setFont(undefined, 'normal');
-        
+
         tableData.forEach((row, rowIndex) => {
           if (yPos > pageHeight - margin - rowHeight) {
             pdf.addPage();
@@ -1881,7 +1916,7 @@ const ImageGallerySection = ({ villa }) => {
             currentX = startX;
             headers[0].forEach((header, i) => {
               if (i === 0) {
-                pdf.text("Rental Period", currentX + 5, yPos + 5);
+                pdf.text('Rental Period', currentX + 5, yPos + 5);
               } else {
                 pdf.text(header, currentX + 5, yPos + 5);
               }
@@ -1891,9 +1926,9 @@ const ImageGallerySection = ({ villa }) => {
             pdf.setTextColor(0, 0, 0);
             pdf.setFont(undefined, 'normal');
           }
-          
+
           currentX = startX;
-          
+
           // Draw row background (alternating colors)
           if (rowIndex % 2 === 0) {
             pdf.setFillColor(245, 245, 245);
@@ -1901,37 +1936,48 @@ const ImageGallerySection = ({ villa }) => {
             pdf.setFillColor(255, 255, 255);
           }
           pdf.rect(startX, yPos, tableWidth, rowHeight, 'F');
-          
+
           // Draw cell borders
           pdf.setDrawColor(200, 200, 200);
           let borderX = startX;
           for (let i = 0; i < columnWidths.length; i++) {
             if (i < columnWidths.length - 1) {
-              pdf.line(borderX + columnWidths[i], yPos, borderX + columnWidths[i], yPos + rowHeight);
+              pdf.line(
+                borderX + columnWidths[i],
+                yPos,
+                borderX + columnWidths[i],
+                yPos + rowHeight
+              );
             }
             borderX += columnWidths[i];
           }
-          
+
           // Draw cell content
           row.forEach((cell, cellIndex) => {
             pdf.setFontSize(9);
             pdf.text(cell, currentX + 5, yPos + 5);
             currentX += columnWidths[cellIndex];
           });
-          
+
           yPos += rowHeight;
         });
-        
+
         // Draw bottom border
         pdf.setDrawColor(200, 200, 200);
         pdf.line(startX, yPos, startX + tableWidth, yPos);
-        
+
         yPos += 15;
       } else if (isRentType) {
         // Show message if no rates available
-        addText("Rates & Booking Information", 18, true, "center", [0, 105, 92]);
+        addText(
+          'Rates & Booking Information',
+          18,
+          true,
+          'center',
+          [0, 105, 92]
+        );
         yPos += 12;
-        addText("No rate information available", 12, false, "center");
+        addText('No rate information available', 12, false, 'center');
         yPos += 15;
       }
 
@@ -1945,40 +1991,39 @@ const ImageGallerySection = ({ villa }) => {
           `Page ${i} of ${totalPages} • Generated on ${new Date().toLocaleDateString()}`,
           pageWidth / 2,
           pageHeight - 10,
-          { align: "center" }
+          { align: 'center' }
         );
       }
 
       // Save PDF
       pdf.save(
-        `${(villaName || "EV_Brochure")
-          .replace(/\s+/g, "_")
+        `${(villaName || 'EV_Brochure')
+          .replace(/\s+/g, '_')
           .trim()}_Brochure.pdf`
       );
-      
-      Swal.fire({
-        icon: "success",
-        title: "Brochure Downloaded",
-        text: "Property brochure has been generated successfully!",
-        timer: 2000
-      });
 
-    } catch (err) {
-      console.error("PDF/download flow error:", err);
       Swal.fire({
-        icon: "error",
-        title: "Export failed",
-        text: "Could not record download or generate brochure. See console for details.",
+        icon: 'success',
+        title: 'Brochure Downloaded',
+        text: 'Property brochure has been generated successfully!',
+        timer: 2000,
+      });
+    } catch (err) {
+      console.error('PDF/download flow error:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export failed',
+        text: 'Could not record download or generate brochure. See console for details.',
       });
     }
   };
 
   const villaId = villa.id;
 
-  // Format security deposit value with commas
+ 
   const formattedSecurityDeposit = formatNumberWithCommas(security_deposit);
 
-  // -------- UI Rendering --------
+ 
   return (
     <section className="container mx-auto mb-[920px] px-4 py-16 relative">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -2023,7 +2068,7 @@ const ImageGallerySection = ({ villa }) => {
               </button>
             )}
 
-            <BedRoomsSliders bedrooms_images={bedrooms_images}/>
+            <BedRoomsSliders bedrooms_images={bedrooms_images} />
 
             <VideoExperience videos={videos} villa={villa} />
 
@@ -2057,9 +2102,7 @@ const ImageGallerySection = ({ villa }) => {
           {/* Finer Details - only show if interior or outdoor amenities exist */}
           {(interior_amenities.length > 0 || outdoor_amenities.length > 0) && (
             <>
-              <h3 className="text-2xl font-bold mt-10 mb-4">
-                Finer Details
-              </h3>
+              <h3 className="text-2xl font-bold mt-10 mb-4">Finer Details</h3>
 
               {interior_amenities.length > 0 && (
                 <>
@@ -2093,7 +2136,10 @@ const ImageGallerySection = ({ villa }) => {
           {isRentType && (
             <>
               {/* Check-In / Out Policy & Information - only show if data exists */}
-              {(check_in_out_time.check_in || check_in_out_time.check_out || check_in_out_time.description || villa.check_in_check_out_policy) && (
+              {(check_in_out_time.check_in ||
+                check_in_out_time.check_out ||
+                check_in_out_time.description ||
+                villa.check_in_check_out_policy) && (
                 <>
                   <h3 className="text-2xl font-bold mt-10 mb-4">
                     Check-In / Out Policy & Information
@@ -2111,16 +2157,17 @@ const ImageGallerySection = ({ villa }) => {
                   {check_in_out_time.description && (
                     <p>{check_in_out_time.description}</p>
                   )}
-                  
+
                   {villa.check_in_check_out_policy && (
                     <div className="mt-3">
-                      <p className="text-gray-700">{villa.check_in_check_out_policy}</p>
+                      <p className="text-gray-700">
+                        {villa.check_in_check_out_policy}
+                      </p>
                     </div>
                   )}
                 </>
               )}
 
-              {/* Rules & Etiquette - only show if data exists */}
               {rules_and_etiquette.length > 0 && (
                 <>
                   <h3 className="text-2xl font-bold mt-10 mb-4">
@@ -2134,16 +2181,17 @@ const ImageGallerySection = ({ villa }) => {
                 </>
               )}
 
-              {/* Staff Complement - only show if data exists */}
               {staffArray.length > 0 && (
                 <>
                   <h3 className="text-2xl font-bold mt-10 mb-4">
                     Staff Complement
                   </h3>
                   <ul>
-                    {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map((s, i) => (
-                      <StaffItem key={i} name={s.name} details={s.details} />
-                    ))}
+                    {(showAllStaff ? staffArray : staffArray.slice(0, 2)).map(
+                      (s, i) => (
+                        <StaffItem key={i} name={s.name} details={s.details} />
+                      )
+                    )}
                   </ul>
 
                   {staffArray.length > 2 && (
@@ -2151,7 +2199,7 @@ const ImageGallerySection = ({ villa }) => {
                       onClick={toggleStaffView}
                       className="mt-2 text-sm text-teal-600 "
                     >
-                      {showAllStaff ? "Show Less" : "Show More"}
+                      {showAllStaff ? 'Show Less' : 'Show More'}
                     </button>
                   )}
                 </>
@@ -2159,15 +2207,12 @@ const ImageGallerySection = ({ villa }) => {
             </>
           )}
 
-          {/* Bedrooms slider ALWAYS shown */}
-          <div className="mt-8">
-            {/* <BedRoomsSliders bedrooms_images={bedrooms_images} /> */}
-          </div>
+          <div className="mt-8"></div>
 
           {isRentType && (
             <>
-              {/* Concierge Service - only show if data exists */}
-              {(concierge_service.length > 0 || villa.concierge_description) && (
+              {(concierge_service.length > 0 ||
+                villa.concierge_description) && (
                 <>
                   <h3 className="text-2xl font-bold mt-10 mb-4">
                     Concierge Services
@@ -2175,7 +2220,9 @@ const ImageGallerySection = ({ villa }) => {
 
                   {villa.concierge_description && (
                     <div className="mb-4">
-                      <p className="text-gray-700">{villa.concierge_description}</p>
+                      <p className="text-gray-700">
+                        {villa.concierge_description}
+                      </p>
                     </div>
                   )}
 
@@ -2188,7 +2235,7 @@ const ImageGallerySection = ({ villa }) => {
                   )}
                 </>
               )}
-              
+
               {/* Security Deposit - only show if data exists */}
               {security_deposit && (
                 <>
@@ -2196,7 +2243,7 @@ const ImageGallerySection = ({ villa }) => {
                     Security Deposit
                   </h3>
                   <p className="text-2xl font-semibold">
-                    USD$ {formattedSecurityDeposit || "10,000.00"}
+                    USD$ {formattedSecurityDeposit || '10,000.00'}
                   </p>
                 </>
               )}
