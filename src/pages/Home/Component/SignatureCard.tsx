@@ -746,9 +746,13 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           </div>
 
           {/* Price */}
-          <p className="text-teal-600 font-semibold lg:text-xl md:text-2xl mb-4">
-            From USD${price}/night
-          </p>
+         <p className="text-teal-600 font-semibold lg:text-xl md:text-2xl mb-4">
+  From USD ${Number(price).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}/Night
+</p>
+
 
           {/* Specs */}
           <div className="flex flex-wrap md:flex-nowrap gap-4 border-y border-gray-100 py-3 mb-4 text-sm md:text-base">
