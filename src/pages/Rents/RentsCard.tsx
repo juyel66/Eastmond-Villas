@@ -1,15 +1,15 @@
 // RentsCard.tsx
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-import { useSelector } from "react-redux";
-import Swal from "sweetalert2";
-import toast from "react-hot-toast";
-import bathImg from "../../assets/bath.svg"
-import polImg from "../../assets/pol.svg"
-import mapImg from "../../assets/map.svg"
-import bedsImg from "../../assets/beddds.svg"
-import shareIcons from "../../assets/shareIcons.svg"
+import { useSelector } from 'react-redux';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
+import bathImg from '../../assets/bath.svg';
+import polImg from '../../assets/pol.svg';
+import mapImg from '../../assets/map.svg';
+import bedsImg from '../../assets/beddds.svg';
+import shareIcons from '../../assets/shareIcons.svg';
 
 import {
   FaFacebookF,
@@ -21,14 +21,14 @@ import {
   FaTelegramPlane,
   FaEnvelope,
   FaRegCopy,
-} from "react-icons/fa";
-import { FaTiktok } from "react-icons/fa6";
+} from 'react-icons/fa';
+import { FaTiktok } from 'react-icons/fa6';
 
 import {
   selectIsAuthenticated,
   selectCurrentUser,
   getAccessToken,
-} from "@/features/Auth/authSlice";
+} from '@/features/Auth/authSlice';
 
 /* -------------------- Types -------------------- */
 interface Property {
@@ -55,7 +55,7 @@ interface Property {
 const getFavoritesKey = (email: string) => `ev_favorites_${email}`;
 
 const readFavorites = (email: string): string[] => {
-  if (typeof window === "undefined") return [];
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(getFavoritesKey(email));
     if (!raw) return [];
@@ -67,7 +67,7 @@ const readFavorites = (email: string): string[] => {
 };
 
 const writeFavorites = (email: string, list: string[]) => {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(getFavoritesKey(email), JSON.stringify(list));
   } catch {
@@ -79,7 +79,7 @@ const writeFavorites = (email: string, list: string[]) => {
 
 const API_BASE =
   (import.meta.env.VITE_API_BASE as string) ||
-  "https://api.eastmondvillas.com/api";
+  'https://api.eastmondvillas.com/api';
 const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
 
 /* -------------------- Share Modal -------------------- */
@@ -111,7 +111,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     const top = window.screenTop + (window.innerHeight - h) / 2;
     window.open(
       url,
-      "_blank",
+      '_blank',
       `toolbar=0,status=0,width=${w},height=${h},top=${top},left=${left}`
     );
   };
@@ -119,13 +119,13 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(propertyUrl);
-      toast.success("Link copied to clipboard!");
+      toast.success('Link copied to clipboard!');
     } catch {
-      prompt("Copy this link:", propertyUrl);
+      prompt('Copy this link:', propertyUrl);
     }
     Swal.fire({
-      icon: "success",
-      title: "Link copied to clipboard!",
+      icon: 'success',
+      title: 'Link copied to clipboard!',
       showConfirmButton: false,
       timer: 1200,
     });
@@ -133,7 +133,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
   const platforms = [
     {
-      name: "Facebook",
+      name: 'Facebook',
       icon: <FaFacebookF />,
       onClick: () =>
         openSharePopup(
@@ -141,13 +141,13 @@ const ShareModal: React.FC<ShareModalProps> = ({
         ),
     },
     {
-      name: "WhatsApp",
+      name: 'WhatsApp',
       icon: <FaWhatsapp />,
       onClick: () =>
         openSharePopup(`https://wa.me/?text=${encodedTitle}%20${encoded}`),
     },
     {
-      name: "Twitter",
+      name: 'Twitter',
       icon: <FaTwitter />,
       onClick: () =>
         openSharePopup(
@@ -155,7 +155,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
         ),
     },
     {
-      name: "LinkedIn",
+      name: 'LinkedIn',
       icon: <FaLinkedinIn />,
       onClick: () =>
         openSharePopup(
@@ -163,15 +163,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
         ),
     },
     {
-      name: "Telegram",
-      icon: <FaTelegramPlane />,
-      onClick: () =>
-        openSharePopup(
-          `https://t.me/share/url?url=${encoded}&text=${encodedTitle}`
-        ),
-    },
-    {
-      name: "Pinterest",
+      name: 'Pinterest',
       icon: <FaPinterestP />,
       onClick: () =>
         openSharePopup(
@@ -179,7 +171,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
         ),
     },
     {
-      name: "Reddit",
+      name: 'Reddit',
       icon: <FaRedditAlien />,
       onClick: () =>
         openSharePopup(
@@ -187,18 +179,18 @@ const ShareModal: React.FC<ShareModalProps> = ({
         ),
     },
     {
-      name: "Email",
+      name: 'Email',
       icon: <FaEnvelope />,
       onClick: () =>
         (window.location.href = `mailto:?subject=${encodedTitle}&body=${encoded}`),
     },
     {
-      name: "TikTok",
+      name: 'TikTok',
       icon: <FaTiktok />,
       onClick: async () => {
         await copyLink();
-        toast("Open TikTok and paste the link.", {
-          icon: "🎵",
+        toast('Open TikTok and paste the link.', {
+          icon: '🎵',
         });
       },
     },
@@ -235,7 +227,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             <div className="font-semibold text-gray-800">{propertyTitle}</div>
             <div className="text-sm text-gray-500">
               {propertyUrl.length > 12
-                ? propertyUrl.slice(0, 12) + "..."
+                ? propertyUrl.slice(0, 12) + '...'
                 : propertyUrl}
             </div>
           </div>
@@ -278,7 +270,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       false;
 
     try {
-      if (typeof window === "undefined") return apiInitial;
+      if (typeof window === 'undefined') return apiInitial;
       const email = (currentUser as any)?.email;
       if (!email || !property.id) return apiInitial;
 
@@ -298,59 +290,44 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     if (stored.includes(String(property.id))) setIsFavorite(true);
   }, [currentUser, property.id]);
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-  }).format(property.price);
+  const formatPrice = (price: number): string => {
+    const numPrice = Number(price);
+
+    if (isNaN(numPrice)) {
+      return '0.00';
+    }
+
+    return numPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formattedPrice = formatPrice(property.price);
 
   const amenities = [
     {
-      icon: (
-        <img
-          src={bedsImg}
-          alt="bed"
-          className="w-5 h-5"
-        />
-      ),
-      value: `${property.beds} ${
-        property.beds === 1 ? "Bed" : "Beds"
-      }`,
+      icon: <img src={bedsImg} alt="bed" className="w-5 h-5" />,
+      value: `${property.beds} ${property.beds === 1 ? 'Bed' : 'Beds'}`,
     },
     {
-      icon: (
-        <img
-          src={bathImg}
-          alt="bath"
-          className="w-5 h-5"
-        />
-      ),
-      value: `${property.baths} ${
-        property.baths === 1 ? "Bath" : "Baths"
-      }`,
+      icon: <img src={bathImg} alt="bath" className="w-5 h-5" />,
+      value: `${property.baths} ${property.baths === 1 ? 'Bath' : 'Baths'}`,
     },
     {
-      icon: (
-        <img
-          src={polImg}
-          alt="pool"
-          className="w-5 h-5"
-        />
-      ),
-      value: `${property.pool} ${
-        property.pool === 1 ? "Pool" : "Pools"
-      }`,
+      icon: <img src={polImg} alt="pool" className="w-5 h-5" />,
+      value: `${property.pool} ${property.pool === 1 ? 'Pool' : 'Pools'}`,
     },
   ];
 
   const origin =
-    typeof window !== "undefined"
+    typeof window !== 'undefined'
       ? window.location.origin
-      : "https://example.com";
+      : 'https://example.com';
   const propertyUrl = `${origin}/property/${property.slug}`;
 
   // Favorite toggle handler - API requires "property" field
-  const handleToggleFavorite = async (
-    e: React.MouseEvent<HTMLDivElement>
-  ) => {
+  const handleToggleFavorite = async (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -361,16 +338,16 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
     if (!isAuthenticated) {
       const res = await Swal.fire({
-        icon: "info",
-        title: "Login required",
-        text: "Please login to add this property to your favorites.",
+        icon: 'info',
+        title: 'Login required',
+        text: 'Please login to add this property to your favorites.',
         showCancelButton: true,
-        confirmButtonText: "Go to Login",
-        cancelButtonText: "Cancel",
-        confirmButtonColor: "#0f766e",
+        confirmButtonText: 'Go to Login',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#0f766e',
       });
       if (res.isConfirmed) {
-        window.location.href = "/login";
+        window.location.href = '/login';
       }
       return;
     }
@@ -378,16 +355,16 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     const token = getAccessToken();
     if (!token) {
       const res = await Swal.fire({
-        icon: "info",
-        title: "Session expired",
-        text: "Your session has expired. Please login again.",
+        icon: 'info',
+        title: 'Session expired',
+        text: 'Your session has expired. Please login again.',
         showCancelButton: true,
-        confirmButtonText: "Go to Login",
-        cancelButtonText: "Cancel",
-        confirmButtonColor: "#0f766e",
+        confirmButtonText: 'Go to Login',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#0f766e',
       });
       if (res.isConfirmed) {
-        window.location.href = "/login";
+        window.location.href = '/login';
       }
       return;
     }
@@ -398,14 +375,14 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     try {
       // API expects "property" field, not "property_id" or "property_slug"
       const requestBody = { property: property.id };
-      
+
       console.log('Sending favorite request:', requestBody);
-      
+
       const res = await fetch(FAVORITE_TOGGLE_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(requestBody),
@@ -420,20 +397,20 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       }
 
       if (!res.ok) {
-        console.error("Favorite toggle failed:", res.status, json);
+        console.error('Favorite toggle failed:', res.status, json);
 
         if (res.status === 401) {
           const r = await Swal.fire({
-            icon: "error",
-            title: "Unauthorized",
-            text: "Authentication failed. Please login again.",
+            icon: 'error',
+            title: 'Unauthorized',
+            text: 'Authentication failed. Please login again.',
             showCancelButton: true,
-            confirmButtonText: "Go to Login",
-            cancelButtonText: "Cancel",
-            confirmButtonColor: "#0f766e",
+            confirmButtonText: 'Go to Login',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#0f766e',
           });
           if (r.isConfirmed) {
-            window.location.href = "/login";
+            window.location.href = '/login';
           }
         } else if (res.status === 400) {
           console.log('Bad request details:', json);
@@ -447,7 +424,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       // API থেকে expected response: { "is_favorited": true/false }
       const nextState = json?.is_favorited ?? !isFavorite;
 
-      console.log('Favorite state updated:', { nextState, current: isFavorite, response: json });
+      console.log('Favorite state updated:', {
+        nextState,
+        current: isFavorite,
+        response: json,
+      });
 
       setIsFavorite(nextState);
 
@@ -473,12 +454,12 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
       // Show success notification
       toast.success(
-        nextState ? "Added to favorites!" : "Removed from favorites!",
+        nextState ? 'Added to favorites!' : 'Removed from favorites!',
         { duration: 1200 }
       );
     } catch (err) {
-      console.error("Network error while toggling favorite:", err);
-      toast.error("Could not update favorite. Please try again.");
+      console.error('Network error while toggling favorite:', err);
+      toast.error('Could not update favorite. Please try again.');
     } finally {
       setFavoriteLoading(false);
     }
@@ -507,17 +488,15 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               {/* Favorite */}
               <div
                 className={`w-9 h-9 flex items-center justify-center bg-white rounded-full text-gray-700 hover:bg-gray-100 transition duration-150 cursor-pointer ${
-                  favoriteLoading ? "opacity-70 cursor-not-allowed" : ""
-                } ${
-                  isFavorite ? "text-red-500" : "text-gray-700"
-                }`}
+                  favoriteLoading ? 'opacity-70 cursor-not-allowed' : ''
+                } ${isFavorite ? 'text-red-500' : 'text-gray-700'}`}
                 onClick={favoriteLoading ? undefined : handleToggleFavorite}
               >
                 <svg
                   className={`w-5 h-5 transition-colors duration-200 ${
-                    isFavorite ? "text-red-500" : "text-gray-700"
+                    isFavorite ? 'text-red-500' : 'text-gray-700'
                   }`}
-                  fill={isFavorite ? "currentColor" : "none"}
+                  fill={isFavorite ? 'currentColor' : 'none'}
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -557,16 +536,12 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 {property.title}
               </h3>
               <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
-                <img
-                  src={mapImg}
-                  alt="location"
-                  className="w-5 h-5 mr-1"
-                />{" "}
+                <img src={mapImg} alt="location" className="w-5 h-5 mr-1" />{' '}
                 {property.location}
               </p>
 
               <p className="text-[16px] sm:text-xl md:text-2xl text-emerald-700 font-bold mt-4">
-                From <span>USD${formattedPrice}</span>/night
+                From <span>USD${formattedPrice}</span>/Night
               </p>
 
               {/* Amenities */}
