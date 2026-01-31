@@ -148,6 +148,15 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     imageUrl,
   } = property;
 
+
+ const formatPrice = (price: number) => {
+  return price.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+
   const StatusBadge = ({ status }: { status: Property['status'] }) => {
     let bgColor = 'bg-gray-100 text-gray-700';
     if (status === 'Published') bgColor = 'bg-green-100 text-green-700';
@@ -265,8 +274,9 @@ flex flex-col md:flex-row gap-5 mb-6 w-full">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 text-sm">
         <div>
           <p className="text-gray-500 text-xs uppercase">Price</p>
+        
           <p className="font-semibold text-gray-800">
-            USD{formatPrice(price)}
+            ${formatPrice(price)}
           </p>
         </div>
 
