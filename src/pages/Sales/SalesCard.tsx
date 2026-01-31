@@ -30,7 +30,6 @@ import {
   getAccessToken,
 } from "@/features/Auth/authSlice";
 
-
 interface Property {
   id: number;
   slug: string;
@@ -296,9 +295,25 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     if (stored.includes(String(property.id))) setIsFavorite(true);
   }, [currentUser, property.id]);
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-  }).format(property.price);
+  // Fix: Format price with comma and 2 decimal places always
+  const formatPrice = (price: number): string => {
+    // Convert to number if it's not already
+    const numPrice = Number(price);
+    
+    // Check if it's a valid number
+    if (isNaN(numPrice)) {
+      return "0.00";
+    }
+    
+    // Format with commas for thousands and 2 decimal places
+    return numPrice.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  // Use the formatted price
+  const formattedPrice = formatPrice(property.price);
 
   // Determine price display based on rateType
   const getPriceDisplay = () => {
@@ -311,40 +326,16 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
   const amenities = [
     {
-      icon: (
-        <img
-          src={bedsImg}
-          alt="bed"
-          className="w-5 h-5"
-        />
-      ),
-      value: `${property.beds} ${
-        property.beds === 1 ? "Bed" : "Beds"
-      }`,
+      icon: <img src={bedsImg} alt="bed" className="w-5 h-5" />,
+      value: `${property.beds} ${property.beds === 1 ? "Bed" : "Beds"}`,
     },
     {
-      icon: (
-        <img
-          src={bathImg}
-          alt="bath"
-          className="w-5 h-5"
-        />
-      ),
-      value: `${property.baths} ${
-        property.baths === 1 ? "Bath" : "Baths"
-      }`,
+      icon: <img src={bathImg} alt="bath" className="w-5 h-5" />,
+      value: `${property.baths} ${property.baths === 1 ? "Bath" : "Baths"}`,
     },
     {
-      icon: (
-        <img
-          src={polImg}
-          alt="pool"
-          className="w-5 h-5"
-        />
-      ),
-      value: `${property.pool} ${
-        property.pool === 1 ? "Pool" : "Pools"
-      }`,
+      icon: <img src={polImg} alt="pool" className="w-5 h-5" />,
+      value: `${property.pool} ${property.pool === 1 ? "Pool" : "Pools"}`,
     },
   ];
 
@@ -355,14 +346,12 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const propertyUrl = `${origin}/sales/${property.slug}`;
 
   // Favorite toggle handler - API requires "property" field with id
-  const handleToggleFavorite = async (
-    e: React.MouseEvent<HTMLDivElement>
-  ) => {
+  const handleToggleFavorite = async (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     e.preventDefault();
 
     if (!property.id) {
-      console.warn('Missing property id, cannot toggle favorite');
+      console.warn("Missing property id, cannot toggle favorite");
       return;
     }
 
@@ -405,9 +394,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     try {
       // API expects "property" field with property id
       const requestBody = { property: property.id };
-      
-      console.log('Sending favorite request:', requestBody);
-      
+
+      console.log("Sending favorite request:", requestBody);
+
       const res = await fetch(FAVORITE_TOGGLE_URL, {
         method: "POST",
         headers: {
@@ -443,10 +432,10 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             window.location.href = "/login";
           }
         } else if (res.status === 400) {
-          console.log('Bad request details:', json);
-          toast.error(json.detail || 'Invalid request format');
+          console.log("Bad request details:", json);
+          toast.error(json.detail || "Invalid request format");
         } else {
-          toast.error('Failed to update favorite. Please try again.');
+          toast.error("Failed to update favorite. Please try again.");
         }
         return;
       }
@@ -454,7 +443,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
       // API থেকে expected response: { "is_favorited": true/false }
       const nextState = json?.is_favorited ?? !isFavorite;
 
-      console.log('Favorite state updated:', { nextState, current: isFavorite, response: json });
+      console.log("Favorite state updated:", {
+        nextState,
+        current: isFavorite,
+        response: json,
+      });
 
       setIsFavorite(nextState);
 
@@ -515,9 +508,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               <div
                 className={`w-9 h-9 flex items-center justify-center bg-white rounded-full text-gray-700 hover:bg-gray-100 transition duration-150 cursor-pointer ${
                   favoriteLoading ? "opacity-70 cursor-not-allowed" : ""
-                } ${
-                  isFavorite ? "text-red-500" : "text-gray-700"
-                }`}
+                } ${isFavorite ? "text-red-500" : "text-gray-700"}`}
                 onClick={favoriteLoading ? undefined : handleToggleFavorite}
               >
                 <svg
@@ -564,11 +555,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 {property.title}
               </h3>
               <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
-                <img
-                  src={mapImg}
-                  alt="location"
-                  className="w-5 h-5 mr-1"
-                />{" "}
+                <img src={mapImg} alt="location" className="w-5 h-5 mr-1" />{" "}
                 {property.location}
               </p>
 
