@@ -8,17 +8,40 @@ interface FilterSystemProps {
   allowedType?: string | null; // "sale" | "rent" | null => if provided, only that type is considered
 }
 
-const formatNumber = (value: string) => {
+// Fix: Proper decimal and comma formatting function
+const formatDecimalWithCommas = (value: string): string => {
   if (!value && value !== "0") return "";
-  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  
+  // Check if input has decimal point
+  if (value.includes('.')) {
+    const [integerPart, decimalPart] = value.split('.');
+    
+    // Format integer part with commas
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    // Return with decimal part (up to 2 digits)
+    const limitedDecimal = decimalPart.length > 2 ? decimalPart.substring(0, 2) : decimalPart;
+    return `${formattedInteger}.${limitedDecimal}`;
+  } else {
+    // No decimal point, just format with commas
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
 };
 
-const parseNumber = (s?: string | number) => {
+const parseDecimalNumber = (s?: string | number) => {
   if (s === undefined || s === null) return NaN;
   if (typeof s === "number") return s;
-  const raw = String(s).replace(/,/g, "").replace(/[^\d.-]/g, "").trim();
+  
+  // Remove commas and any non-digit/decimal characters except minus sign
+  const raw = String(s)
+    .replace(/,/g, "")
+    .replace(/[^\d.-]/g, "")
+    .trim();
+    
   if (raw === "") return NaN;
-  return Number(raw);
+  
+  const num = Number(raw);
+  return isNaN(num) ? NaN : num;
 };
 
 export default function FilterSystem({
@@ -53,55 +76,85 @@ export default function FilterSystem({
     onResults(filteredByType);
   }, [filteredByType]);
 
+  // Handle decimal input for beds, baths, guests (no commas)
+  const handleDecimalInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    let rawValue = e.target.value;
+    
+    // Allow only digits and one decimal point
+    // Remove all non-digit/non-decimal characters
+    let cleaned = rawValue.replace(/[^\d.]/g, "");
+    
+    // Allow only one decimal point
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Allow only up to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    setter(cleaned);
+  };
+
+  // Fix: Handle price input with proper decimal and comma support
   const handlePriceChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<string>>
   ) => {
-    const rawValue = e.target.value.replace(/,/g, "");
-    // allow empty or digits
-    if (rawValue === "" || /^-?\d*$/.test(rawValue)) {
-      setter(formatNumber(rawValue));
+    let rawValue = e.target.value;
+    
+    // Step 1: Remove existing commas for processing
+    const withoutCommas = rawValue.replace(/,/g, "");
+    
+    // Step 2: Allow only digits and decimal points (max one decimal point)
+    let cleaned = withoutCommas.replace(/[^\d.]/g, "");
+    
+    // Step 3: Ensure only one decimal point
+    const decimalParts = cleaned.split('.');
+    if (decimalParts.length > 2) {
+      cleaned = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+    }
+    
+    // Step 4: Limit decimal places to 2
+    if (decimalParts.length === 2 && decimalParts[1].length > 2) {
+      cleaned = decimalParts[0] + '.' + decimalParts[1].substring(0, 2);
+    }
+    
+    // Step 5: Format with commas (only for integer part)
+    if (cleaned) {
+      const formatted = formatDecimalWithCommas(cleaned);
+      setter(formatted);
     } else {
-      // keep user input when not a number (same UX as before)
-      setter(e.target.value);
+      setter("");
     }
   };
 
-  // Handle number input change for beds, baths, guests
-  const handleNumberInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>
-  ) => {
-    const value = e.target.value;
+  // Parse a value to float safely (for all decimal numbers)
+  const safeParseFloat = (value: any): number => {
+    if (value === undefined || value === null || value === "") return NaN;
+    if (typeof value === 'number') return value;
     
-    // Allow empty or valid positive integers
-    if (value === "" || /^\d+$/.test(value)) {
-      setter(value);
-    }
-    // If not a valid number, don't update (allow empty string)
+    const strValue = String(value).replace(/,/g, "").trim();
+    if (strValue === "") return NaN;
+    
+    const num = parseFloat(strValue);
+    return isNaN(num) ? NaN : num;
   };
 
-  // Parse a value to integer safely
-  const safeParseInt = (value: any): number => {
-    if (value === undefined || value === null || value === "") return 0;
-    if (typeof value === 'number') return Math.floor(value);
-    
-    const strValue = String(value).trim();
-    if (strValue === "") return 0;
-    
-    const num = parseInt(strValue);
-    return isNaN(num) ? 0 : Math.floor(num);
-  };
-
-  // Get guest count from villa data
+  // Get guest count from villa data (can be decimal)
   const getGuestCount = (villa: AnyObj): number => {
     // Try multiple possible guest fields
     const guestFields = ['add_guest', 'guests', 'max_guests', 'max_guest', 'guest_capacity'];
     
     for (const field of guestFields) {
       if (villa[field] !== undefined && villa[field] !== null && villa[field] !== "") {
-        const count = safeParseInt(villa[field]);
-        if (count > 0) return count;
+        const count = safeParseFloat(villa[field]);
+        if (!isNaN(count) && count > 0) return count;
       }
     }
     
@@ -109,28 +162,28 @@ export default function FilterSystem({
     return 0;
   };
 
-  // Get bed count from villa data
+  // Get bed count from villa data (can be decimal)
   const getBedCount = (villa: AnyObj): number => {
     const bedFields = ['bedrooms', 'beds', 'bed', 'bed_count'];
     
     for (const field of bedFields) {
       if (villa[field] !== undefined && villa[field] !== null && villa[field] !== "") {
-        const count = safeParseInt(villa[field]);
-        if (count > 0) return count;
+        const count = safeParseFloat(villa[field]);
+        if (!isNaN(count) && count > 0) return count;
       }
     }
     
     return 0;
   };
 
-  // Get bath count from villa data
+  // Get bath count from villa data (can be decimal)
   const getBathCount = (villa: AnyObj): number => {
     const bathFields = ['bathrooms', 'baths', 'bath', 'bath_count'];
     
     for (const field of bathFields) {
       if (villa[field] !== undefined && villa[field] !== null && villa[field] !== "") {
-        const count = safeParseInt(villa[field]);
-        if (count > 0) return count;
+        const count = safeParseFloat(villa[field]);
+        if (!isNaN(count) && count > 0) return count;
       }
     }
     
@@ -138,11 +191,11 @@ export default function FilterSystem({
   };
 
   const runFilters = () => {
-    const minPriceVal = minPrice ? parseFloat(minPrice.replace(/,/g, '')) : NaN;
-    const maxPriceVal = maxPrice ? parseFloat(maxPrice.replace(/,/g, '')) : NaN;
-    const minBedsNum = minBeds ? parseInt(minBeds) : NaN;
-    const minBathsNum = minBaths ? parseInt(minBaths) : NaN;
-    const guestsNum = guests ? parseInt(guests) : NaN;
+    const minPriceVal = safeParseFloat(minPrice);
+    const maxPriceVal = safeParseFloat(maxPrice);
+    const minBedsNum = safeParseFloat(minBeds);
+    const minBathsNum = safeParseFloat(minBaths);
+    const guestsNum = safeParseFloat(guests);
 
     console.log("🔍 Filter values:", {
       villaName,
@@ -175,38 +228,38 @@ export default function FilterSystem({
         }
       }
 
-      // 3. Bed filter
+      // 3. Bed filter (with decimal support)
       if (!isNaN(minBedsNum)) {
         const bedCount = getBedCount(villa);
         if (bedCount < minBedsNum) {
-          console.log(`❌ Filtered out by beds: ${villa.title}`);
+          console.log(`❌ Filtered out by beds: ${villa.title}, Beds: ${bedCount}, Min: ${minBedsNum}`);
           return false;
         }
       }
 
-      // 4. Bath filter
+      // 4. Bath filter (with decimal support)
       if (!isNaN(minBathsNum)) {
         const bathCount = getBathCount(villa);
         if (bathCount < minBathsNum) {
-          console.log(`❌ Filtered out by baths: ${villa.title}`);
+          console.log(`❌ Filtered out by baths: ${villa.title}, Baths: ${bathCount}, Min: ${minBathsNum}`);
           return false;
         }
       }
 
-      // 5. Price filter
+      // 5. Price filter (with decimal support)
       const priceRaw = villa.price_display ?? villa.price ?? "";
-      const priceNum = parseNumber(priceRaw);
+      const priceNum = parseDecimalNumber(priceRaw);
 
       if (!isNaN(minPriceVal) && !isNaN(priceNum) && priceNum < minPriceVal) {
-        console.log(`❌ Filtered out by min price: ${villa.title}`);
+        console.log(`❌ Filtered out by min price: ${villa.title}, Price: ${priceNum}, Min: ${minPriceVal}`);
         return false;
       }
       if (!isNaN(maxPriceVal) && !isNaN(priceNum) && priceNum > maxPriceVal) {
-        console.log(`❌ Filtered out by max price: ${villa.title}`);
+        console.log(`❌ Filtered out by max price: ${villa.title}, Price: ${priceNum}, Max: ${maxPriceVal}`);
         return false;
       }
 
-      console.log(`✅ Passed all filters: ${villa.title}`);
+      console.log(`✅ Passed all filters: ${villa.title}, Price: ${priceNum}, Beds: ${getBedCount(villa)}, Baths: ${getBathCount(villa)}`);
       return true;
     });
 
@@ -281,7 +334,7 @@ export default function FilterSystem({
             />
           </div>
 
-          {/* Min Beds - Number Input at position 2 */}
+          {/* Min Beds - Decimal Input at position 2 */}
           <div>
             <label htmlFor="min-beds" className="block text-sm font-semibold text-gray-800 mb-2">
               Min Beds
@@ -292,8 +345,8 @@ export default function FilterSystem({
                 id="min-beds"
                 name="min-beds"
                 value={minBeds}
-                onChange={(e) => handleNumberInputChange(e, setMinBeds)}
-                placeholder={`Enter min beds`}
+                onChange={(e) => handleDecimalInputChange(e, setMinBeds)}
+                placeholder="Enter min beds"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
               {minBeds && (
@@ -308,7 +361,7 @@ export default function FilterSystem({
             </div>
           </div>
 
-          {/* Min Baths - Number Input at position 3 */}
+          {/* Min Baths - Decimal Input at position 3 */}
           <div>
             <label htmlFor="min-baths" className="block text-sm font-semibold text-gray-800 mb-2">
               Min Baths
@@ -319,8 +372,8 @@ export default function FilterSystem({
                 id="min-baths"
                 name="min-baths"
                 value={minBaths}
-                onChange={(e) => handleNumberInputChange(e, setMinBaths)}
-                placeholder={`Enter min baths`}
+                onChange={(e) => handleDecimalInputChange(e, setMinBaths)}
+                placeholder="Enter min baths"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
               {minBaths && (
@@ -348,7 +401,7 @@ export default function FilterSystem({
                 name="min-price"
                 value={minPrice}
                 onChange={(e) => handlePriceChange(e, setMinPrice)}
-                placeholder="e.g., 1,000"
+                placeholder="e.g., 1,000.50"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
@@ -384,7 +437,7 @@ export default function FilterSystem({
                 name="max-price"
                 value={maxPrice}
                 onChange={(e) => handlePriceChange(e, setMaxPrice)}
-                placeholder="e.g., 10,000"
+                placeholder="e.g., 10,000.99"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
@@ -435,8 +488,8 @@ export default function FilterSystem({
                   id="guests"
                   name="guests"
                   value={guests}
-                  onChange={(e) => handleNumberInputChange(e, setGuests)}
-                  placeholder={`Enter min guests`}
+                  onChange={(e) => handleDecimalInputChange(e, setGuests)}
+                  placeholder="Enter min guests "
                   className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
                 />
                 {guests && (
@@ -476,7 +529,7 @@ export default function FilterSystem({
                 name="min-price"
                 value={minPrice}
                 onChange={(e) => handlePriceChange(e, setMinPrice)}
-                placeholder="e.g., 1,000"
+                placeholder="e.g., 1,000.50"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
@@ -494,7 +547,7 @@ export default function FilterSystem({
                 name="max-price"
                 value={maxPrice}
                 onChange={(e) => handlePriceChange(e, setMaxPrice)}
-                placeholder="e.g., 10,000"
+                placeholder="e.g., 10,000.99"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
@@ -516,9 +569,7 @@ export default function FilterSystem({
             </div>
           )}
 
-          
-
-         
+          {/* Rentals: Reset Button at position 10 */}
           {!isForSaleSection && (
             <div className="flex items-end">
               <button
@@ -542,8 +593,8 @@ export default function FilterSystem({
           )}
         </div>
 
-        {/* Helper text */}
-        
+ 
+      
       </div>
     </div>
   );
