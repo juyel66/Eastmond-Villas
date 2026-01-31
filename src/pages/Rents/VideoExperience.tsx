@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import youtubeImg from "../../assets/youtube.svg";
+import React, { useMemo, useState } from 'react';
+import youtubeImg from '../../assets/youtube.svg';
 
 type VideoItem = {
   url: string;
@@ -16,24 +16,18 @@ interface VideoExperienceProps {
   villa?: Villa;
 }
 
-/* =========================
-   HELPERS
-========================= */
 
-// Convert YouTube watch / short link → embed link
 const toYoutubeEmbed = (url: string): string => {
-  if (!url) return "";
+  if (!url) return '';
 
-  // already embed
-  if (url.includes("youtube.com/embed")) return url;
+  if (url.includes('youtube.com/embed')) return url;
 
-  // watch?v=
+  // watch?
   const watchMatch = url.match(/v=([^&]+)/);
   if (watchMatch) {
     return `https://www.youtube.com/embed/${watchMatch[1]}`;
   }
 
-  // youtu.be/
   const shortMatch = url.match(/youtu\.be\/([^?]+)/);
   if (shortMatch) {
     return `https://www.youtube.com/embed/${shortMatch[1]}`;
@@ -42,8 +36,7 @@ const toYoutubeEmbed = (url: string): string => {
   return url;
 };
 
-const isYoutube = (url: string) =>
-  /youtube\.com|youtu\.be/.test(url);
+const isYoutube = (url: string) => /youtube\.com|youtu\.be/.test(url);
 
 const VideoExperience: React.FC<VideoExperienceProps> = ({
   videos = [],
@@ -51,32 +44,28 @@ const VideoExperience: React.FC<VideoExperienceProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  /* =========================
-     VIDEO PRIORITY
-  ========================= */
-
   const rawVideo =
     videos?.[0]?.url ||
     villa?.youtube_link ||
-    "https://www.youtube.com/watch?v=1dxrO79dbCg";
+    'https://www.youtube.com/watch?v=1dxrO79dbCg';
 
   const video = useMemo(() => {
     if (isYoutube(rawVideo)) {
       return {
-        type: "youtube" as const,
+        type: 'youtube' as const,
         src: toYoutubeEmbed(rawVideo),
       };
     }
 
     return {
-      type: "mp4" as const,
+      type: 'mp4' as const,
       src: rawVideo,
     };
   }, [rawVideo]);
 
   const thumbnail =
     villa?.cover_image ||
-    "https://images.unsplash.com/photo-1505691938895-1758d7feb511";
+    'https://res.cloudinary.com/dqkczdjjs/image/upload/v1769877908/los_angelis_ccsfhb.jpg';
 
   return (
     <div className="w-full mt-10">
@@ -89,7 +78,7 @@ const VideoExperience: React.FC<VideoExperienceProps> = ({
           <>
             <img
               src={thumbnail}
-              alt={villa?.title || "Villa Video Thumbnail"}
+              alt={villa?.title || 'Villa Video Thumbnail'}
               className="w-full h-full object-cover"
             />
 
@@ -98,18 +87,14 @@ const VideoExperience: React.FC<VideoExperienceProps> = ({
                 onClick={() => setIsPlaying(true)}
                 className="w-24 h-24 rounded-full flex items-center justify-center hover:scale-105 transition"
               >
-                <img
-                  src={youtubeImg}
-                  alt="Play"
-                  className="w-full h-full"
-                />
+                <img src={youtubeImg} alt="Play" className="w-full h-full" />
               </button>
             </div>
           </>
-        ) : video.type === "youtube" ? (
+        ) : video.type === 'youtube' ? (
           <iframe
             src={`${video.src}?autoplay=1`}
-            title={villa?.title || "Villa Video Experience"}
+            title={villa?.title || 'Villa Video Experience'}
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
             className="absolute inset-0 w-full h-full"
