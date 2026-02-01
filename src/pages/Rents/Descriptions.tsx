@@ -16,8 +16,8 @@ const Description: React.FC<DescriptionProps> = ({
   const text = descriptionData;
 const words = text.split(" ");
 
-const shortText = words.slice(0, 100).join(" ") + "";
-const remainingText = words.slice(100).join(" ");
+const shortText = words.slice(0, 110).join(" ") + "";
+const remainingText = words.slice(110).join(" ");
 
   const title = "Description";
 
@@ -28,7 +28,7 @@ const remainingText = words.slice(100).join(" ");
       <div className="flex gap-5 flex-col md:flex-row items-start justify-center">
         
         <div className="w-full md:w-1/2 bg-white rounded-lg">
-          <div className="min-h-[440px] w-full p-4 text-left">
+          <div className="min-h-[440px] w-full text-left">
             <h2 className="text-2xl font-bold text-[#0F172A] mb-4 text-left">
               {title}
             </h2>
@@ -89,7 +89,7 @@ const remainingText = words.slice(100).join(" ");
 
    
       {showFull && (
-        <div className="w-full bg-white rounded-lg p-6">
+        <div className="w-full bg-white rounded-lg ">
           <div className="text-gray-600 text-base leading-relaxed whitespace-pre-line text-left">
             {remainingText}
           </div>
