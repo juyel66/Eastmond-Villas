@@ -352,7 +352,7 @@ const NewsLetterManagement = () => {
     if (newsletter.include_agent) roles.push('Agent');
     if (newsletter.include_customer) roles.push('Customer');
     if (newsletter.extra_emails && newsletter.extra_emails.length > 0)
-      roles.push(`${newsletter.extra_emails.length} extra email(s)`);
+      roles.push(`${newsletter.extra_emails.length} Extra Email(s)`);
 
     return roles.length > 0 ? roles.join(', ') : 'None';
   };
