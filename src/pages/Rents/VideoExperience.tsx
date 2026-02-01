@@ -65,7 +65,7 @@ const VideoExperience: React.FC<VideoExperienceProps> = ({
 
   const thumbnail =
     villa?.cover_image ||
-    'https://res.cloudinary.com/dqkczdjjs/image/upload/v1769877908/los_angelis_ccsfhb.jpg';
+    'https://res.cloudinary.com/dqkczdjjs/image/upload/v1769899735/vecteezy_ai-generated-luxury-house-with-swimming-pool-at-night_35995925_jofve0.jpg';
 
   return (
     <div className="w-full mt-10">
