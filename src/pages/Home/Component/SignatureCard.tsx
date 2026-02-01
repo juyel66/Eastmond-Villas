@@ -134,7 +134,7 @@ const API_BASE =
   (import.meta.env.VITE_API_BASE as string) ||
   'https://api.eastmondvillas.com/api';
 
-// ⭐ Helper: breakdown থেকে average rating হিসাব
+
 const computeAverageRatingFromBreakdown = (villa: any) => {
   if (!villa || typeof villa !== 'object')
     return { average: null, total: null };
@@ -163,7 +163,7 @@ const computeAverageRatingFromBreakdown = (villa: any) => {
     }
   }
 
-  // Case 3: আলাদা ফিল্ড: rating_1, rating_2, ..., ইত্যাদি হলে
+ 
   for (let star = 1; star <= 5; star++) {
     const possibleKeys = [
       `rating_${star}`,
@@ -387,6 +387,14 @@ interface SignatureCardProps {
 }
 
 const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
+  // Check priority first - if not "high", return null
+  const priority = villa?.priority?.toLowerCase()?.trim();
+  
+  // If priority is not "high", don't render anything
+  if (priority !== "high") {
+    return null;
+  }
+
   // default for skeleton
   const defaultVilla = {
     title: 'Loading Villa',
@@ -404,6 +412,8 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
     media_images: [],
     is_favorite: false,
   };
+
+  console.log("Priority", villa?.priority);
 
   const v = villa || defaultVilla;
   const vId = v.id; // Use id for API calls
@@ -598,7 +608,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
     try {
       const FAVORITE_TOGGLE_URL = `${API_BASE}/villas/favorites/toggle/`;
       
-      // API expects "property" field, not "property_id"
+     
       const requestBody = { property: vId };
       
       console.log('Sending favorite request:', requestBody);
@@ -650,7 +660,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
         return;
       }
 
-      // API থেকে expected response: { "is_favorited": true/false }
+  
       const nextState = json?.is_favorited ?? !isFavorite;
 
       console.log('Favorite state updated:', { nextState, current: isFavorite, response: json });
