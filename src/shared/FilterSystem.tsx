@@ -401,7 +401,7 @@ export default function FilterSystem({
                 name="min-price"
                 value={minPrice}
                 onChange={(e) => handlePriceChange(e, setMinPrice)}
-                placeholder="e.g., 1,000.50"
+                placeholder="e.g., 1,000.00"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
@@ -529,7 +529,7 @@ export default function FilterSystem({
                 name="min-price"
                 value={minPrice}
                 onChange={(e) => handlePriceChange(e, setMinPrice)}
-                placeholder="e.g., 1,000.50"
+                placeholder="e.g., 1,000.00"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
@@ -547,7 +547,7 @@ export default function FilterSystem({
                 name="max-price"
                 value={maxPrice}
                 onChange={(e) => handlePriceChange(e, setMaxPrice)}
-                placeholder="e.g., 10,000.99"
+                placeholder="e.g., 10,000.00"
                 className="w-full px-4 py-2 border border-[#135E76] rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
