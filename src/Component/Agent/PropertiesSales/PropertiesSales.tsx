@@ -126,9 +126,13 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
       </div>
 
       {isError && (
-        <div className="mt-4 text-xs text-gray-400 max-w-md mx-auto">
-          <strong>Technical details:</strong> {loadError}
-        </div>
+       <div className="mt-4 text-xs text-gray-400 max-w-md mx-auto">
+                 <strong>Unauthorize Access</strong>   
+                 <Link to="" className="underline">
+                   {' '}
+                   Please Logout and login again.
+                 </Link>
+               </div>
       )}
     </div>
   );
@@ -281,17 +285,17 @@ flex flex-col md:flex-row gap-5 mb-6 w-full">
         </div>
 
         <div>
-          <p className="text-gray-500 text-xs uppercase">Bedrooms</p>
+          <p className="text-gray-500 text-xs uppercase">{bedrooms == 1 ? "Bedroom" : "Bedrooms"}</p>
           <p className="font-semibold text-gray-800">{bedrooms}</p>
         </div>
 
         <div>
-          <p className="text-gray-500 text-xs uppercase">Bathrooms</p>
+          <p className="text-gray-500 text-xs uppercase">{bathrooms == 1 ? "Bathroom" : "Bathrooms"}</p>
           <p className="font-semibold text-gray-800">{bathrooms}</p>
         </div>
 
         <div>
-          <p className="text-gray-500 text-xs uppercase">Pools</p>
+          <p className="text-gray-500 text-xs uppercase">{pool == 1 ? "Pool" : "Pools"}</p>
           <p className="font-semibold text-gray-800">{pool}</p>
         </div>
       </div>
