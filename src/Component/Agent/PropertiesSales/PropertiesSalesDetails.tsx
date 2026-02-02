@@ -1087,7 +1087,9 @@ Description: ${property.description.substring(0, 200)}...
               </div>
 
               {/* Commission & Damage deposit */}
-              <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
+             {
+              property?.commission_rate &&(
+                 <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
                   <img
                     src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760920561/discount-percent-fill_fc6s5e.png"
@@ -1102,15 +1104,21 @@ Description: ${property.description.substring(0, 200)}...
                 </div>
             
               </div>
+              )
+             }
 
               {/* Booking status + calendar accuracy */}
-              <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                <div className='text-[23px]'><FaHandshakeSimple /></div>
-                  <span>Booking TBC by {property.tbc_by || 'Owner'}</span>
-                </div>
-              
-              </div>
+             {property?.tbc_by && (
+  <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
+    <div className="flex items-center gap-2">
+      <div className="text-[23px]">
+        <FaHandshakeSimple />
+      </div>
+      <span>{property.tbc_by}</span>
+    </div>
+  </div>
+)}
+
             </div>
           </div>
         </div>
@@ -1235,6 +1243,9 @@ Description: ${property.description.substring(0, 200)}...
         </div>
 
         {/* Viewing Calendar / Schedule a Viewing */}
+        <div>
+          Something is more the 
+        </div>
     
 
         {/* Availability Calendar Section */}
@@ -1244,7 +1255,7 @@ Description: ${property.description.substring(0, 200)}...
               Availability Calendar
             </h2>
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-              <Calendar villaId={property.id} />
+              <Calendar villaId={property.id} /> 
             </div>
           </div>
         )}
