@@ -1,14 +1,16 @@
 // src/features/Properties/PropertiesSalesDetails.tsx
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft, Copy, X } from 'lucide-react';
-import { FaHandshakeSimple } from "react-icons/fa6";
-import { AiFillDollarCircle } from "react-icons/ai";
+import { FaHandshakeSimple } from 'react-icons/fa6';
+import { AiFillDollarCircle } from 'react-icons/ai';
 import JSZip from 'jszip';
 import Swal from 'sweetalert2';
+import locationss from '../../../assets/locationss.svg';
 
 // Import the Calendar component (make sure the path is correct)
-import Calendar from "../../../pages/Rents/Calendar";
+import Calendar from '../../../pages/Rents/Calendar';
+import { FaMapMarkerAlt } from 'react-icons/fa';
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -19,7 +21,7 @@ interface Property {
   location: string;
   image_url: string;
   description: string;
-  
+
   // slug for dynamic calendar link
   slug?: string;
 
@@ -98,15 +100,15 @@ interface ImageGalleryModalProps {
   isDownloading?: boolean;
 }
 
-const ImageGalleryModal: FC<ImageGalleryModalProps> = ({ 
-  images, 
-  isOpen, 
-  onClose, 
-  onDownload, 
+const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
+  images,
+  isOpen,
+  onClose,
+  onDownload,
   propertyTitle,
   loading = false,
   downloadProgress = 0,
-  isDownloading = false
+  isDownloading = false,
 }) => {
   if (!isOpen) return null;
 
@@ -149,8 +151,8 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((img, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:shadow-md transition-shadow duration-200"
                 >
                   {/* Image */}
@@ -170,7 +172,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Image Info */}
                   <div className="p-3 bg-white">
                     <p className="text-sm font-medium text-gray-900 truncate">
@@ -222,7 +224,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                   <span>{downloadProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
+                  <div
                     className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${downloadProgress}%` }}
                   ></div>
@@ -240,9 +242,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                 <p className="text-gray-700">
                   <strong>Total images:</strong> {images.length}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  All images will be downloaded as a ZIP file
-                </p>
+               
               </div>
               <div className="flex gap-3">
                 <button
@@ -263,8 +263,18 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
                       </svg>
                       Download All Images
                     </>
@@ -297,7 +307,9 @@ const copyToClipboard = (text: string, successMessage: string) => {
       return;
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(() => showActionMessage(successMessage));
+      navigator.clipboard
+        .writeText(text)
+        .then(() => showActionMessage(successMessage));
     } else {
       const el = document.createElement('textarea');
       el.value = text;
@@ -314,7 +326,11 @@ const copyToClipboard = (text: string, successMessage: string) => {
 };
 
 // Function to get pluralized text
-const getPluralText = (count: number, singular: string, plural: string): string => {
+const getPluralText = (
+  count: number,
+  singular: string,
+  plural: string
+): string => {
   if (count === 1) {
     return `${count} ${singular}`;
   }
@@ -328,11 +344,15 @@ interface QuickActionButtonProps {
   onClick?: () => void;
   disabled?: boolean;
 }
-const QuickActionButton: FC<QuickActionButtonProps> = ({ imgSrc, label, onClick, disabled }) => (
+const QuickActionButton: FC<QuickActionButtonProps> = ({
+  imgSrc,
+  label,
+  onClick,
+  disabled,
+}) => (
   <button
     onClick={onClick}
     type="button"
-    
     className="flex items-center space-x-2 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 border border-gray-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
   >
     <img src={imgSrc} alt={label} className="w-5 h-5" />
@@ -345,14 +365,14 @@ interface CopyButtonProps {
   onClick: () => void;
   label?: string;
 }
-const CopyButton: FC<CopyButtonProps> = ({ onClick, label = "Copy" }) => (
+const CopyButton: FC<CopyButtonProps> = ({ onClick, label = 'Copy' }) => (
   <button
     onClick={onClick}
     type="button"
     className="flex items-center gap-1 px-3 py-1.5 bg-gray-200 text-black text-xs font-medium rounded-lg hover:bg-gray-300 transition duration-150 cursor-pointer"
   >
     <Copy className="w-3 h-3" />
-    <span className=''>{label}</span>
+    <span className="">{label}</span>
   </button>
 );
 
@@ -365,6 +385,85 @@ const formatMoney = (value?: string | number) => {
   });
 };
 
+// Video download progress component
+interface VideoDownloadProgressProps {
+  progress: number;
+  isDownloading: boolean;
+  isCompleted: boolean;
+  onReset?: () => void;
+}
+
+const VideoDownloadProgress: FC<VideoDownloadProgressProps> = ({
+  progress,
+  isDownloading,
+  isCompleted,
+  onReset,
+}) => {
+  return (
+    <div className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-gray-900">Video Download</h3>
+        {isCompleted && (
+          <button
+            onClick={onReset}
+            className="text-gray-500 hover:text-gray-700"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {/* Progress Bar */}
+        <div>
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>
+              {isCompleted
+                ? 'Download Complete!'
+                : isDownloading
+                  ? 'Downloading...'
+                  : 'Preparing...'}
+            </span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className={`h-2.5 rounded-full transition-all duration-300 ease-out ${
+                isCompleted ? 'bg-green-600' : 'bg-blue-600'
+              }`}
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Status Messages */}
+        <div className="text-xs text-gray-500">
+          {progress < 20 && 'Connecting to server...'}
+          {progress >= 20 && progress < 40 && 'Preparing video files...'}
+          {progress >= 40 && progress < 60 && 'Downloading videos...'}
+          {progress >= 60 && progress < 80 && 'Processing downloaded files...'}
+          {progress >= 80 && progress < 100 && 'Finalizing download...'}
+          {progress === 100 &&
+            isCompleted &&
+            'Download ready! Check your downloads folder.'}
+        </div>
+
+        {/* Download Stats */}
+        {isDownloading && progress > 0 && progress < 100 && (
+          <div className="text-xs text-gray-600 flex justify-between">
+            <span>
+              Estimated time remaining:{' '}
+              {Math.max(0, Math.round((100 - progress) * 0.3))}s
+            </span>
+            <span>{Math.round(progress * 2.5)} KB / 250 KB</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const PropertiesSalesDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
@@ -374,17 +473,24 @@ const PropertiesSalesDetails: FC = () => {
   const [localStatus, setLocalStatus] = useState<string>('draft');
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
   const [propertyVideos, setPropertyVideos] = useState<PropertyVideo[]>([]);
-  
+
   // State for image gallery modal
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [imageDownloadProgress, setImageDownloadProgress] = useState(0);
   const [isImageDownloading, setIsImageDownloading] = useState(false);
-  
-  // State for video downloading
+
+  // State for video downloading with real progress tracking
   const [isVideoDownloading, setIsVideoDownloading] = useState(false);
   const [videoDownloadProgress, setVideoDownloadProgress] = useState(0);
-  
+  const [downloadCompleted, setDownloadCompleted] = useState(false);
+  const [showDownloadProgress, setShowDownloadProgress] = useState(false);
+
+  // Refs for tracking download
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const downloadStartTimeRef = useRef<number | null>(null);
+
   // State to control calendar visibility
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -393,55 +499,69 @@ const PropertiesSalesDetails: FC = () => {
     if (!property?.slug) {
       return property?.viewing_link || '';
     }
-    
+
     const formattedSlug = property.slug
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^\w\-]+/g, '');
-    
+
     return `https://www.eastmondvillas.com/dashboard/properties/ical-link/${formattedSlug}/bookings.ics`;
   };
 
   // Function to fetch all images for the property
-  const fetchAllImages = async (propertyId: number, propertyData: any): Promise<PropertyImage[]> => {
+  const fetchAllImages = async (
+    propertyId: number,
+    propertyData: any
+  ): Promise<PropertyImage[]> => {
     const images: PropertyImage[] = [];
-    
+
     if (propertyData.main_image_url) {
       images.push({
         image: propertyData.main_image_url,
         alt_text: `${propertyData.title || 'Property'} - Main Image`,
         is_main: true,
-        source: 'main_image_url'
+        source: 'main_image_url',
       });
     }
-    
-    if (propertyData.image_url && !images.some(img => img.image === propertyData.image_url)) {
+
+    if (
+      propertyData.image_url &&
+      !images.some((img) => img.image === propertyData.image_url)
+    ) {
       images.push({
         image: propertyData.image_url,
         alt_text: `${propertyData.title || 'Property'} - Image`,
         is_main: false,
-        source: 'image_url'
+        source: 'image_url',
       });
     }
-    
-    if (propertyData.imageUrl && !images.some(img => img.image === propertyData.imageUrl)) {
+
+    if (
+      propertyData.imageUrl &&
+      !images.some((img) => img.image === propertyData.imageUrl)
+    ) {
       images.push({
         image: propertyData.imageUrl,
         alt_text: `${propertyData.title || 'Property'} - Image`,
         is_main: false,
-        source: 'imageUrl'
+        source: 'imageUrl',
       });
     }
-    
+
     if (Array.isArray(propertyData.media_images)) {
       propertyData.media_images.forEach((img: any, index: number) => {
-        if (img.image && !images.some(existing => existing.image === img.image)) {
+        if (
+          img.image &&
+          !images.some((existing) => existing.image === img.image)
+        ) {
           images.push({
             id: img.id || index,
             image: img.image,
-            alt_text: img.alt_text || `${propertyData.title || 'Property'} - Image ${index + 1}`,
+            alt_text:
+              img.alt_text ||
+              `${propertyData.title || 'Property'} - Image ${index + 1}`,
             is_main: false,
-            source: 'media_images'
+            source: 'media_images',
           });
         }
       });
@@ -450,34 +570,53 @@ const PropertiesSalesDetails: FC = () => {
     const processImageField = (fieldName: string, value: any) => {
       if (Array.isArray(value)) {
         value.forEach((item: any, index: number) => {
-          if (typeof item === 'string' && !images.some(img => img.image === item)) {
+          if (
+            typeof item === 'string' &&
+            !images.some((img) => img.image === item)
+          ) {
             images.push({
               image: item,
               alt_text: `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
               is_main: false,
-              source: fieldName
+              source: fieldName,
             });
-          } else if (item && item.url && !images.some(img => img.image === item.url)) {
+          } else if (
+            item &&
+            item.url &&
+            !images.some((img) => img.image === item.url)
+          ) {
             images.push({
               image: item.url,
-              alt_text: item.alt_text || `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
+              alt_text:
+                item.alt_text ||
+                `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
               is_main: false,
-              source: fieldName
+              source: fieldName,
             });
           }
         });
-      } else if (typeof value === 'string' && !images.some(img => img.image === value)) {
+      } else if (
+        typeof value === 'string' &&
+        !images.some((img) => img.image === value)
+      ) {
         images.push({
           image: value,
           alt_text: `${propertyData.title || 'Property'} - ${fieldName}`,
           is_main: false,
-          source: fieldName
+          source: fieldName,
         });
       }
     };
 
-    const imageFields = ['thumbnail_url', 'banner_image', 'cover_image', 'gallery_images', 'photos', 'images'];
-    imageFields.forEach(field => {
+    const imageFields = [
+      'thumbnail_url',
+      'banner_image',
+      'cover_image',
+      'gallery_images',
+      'photos',
+      'images',
+    ];
+    imageFields.forEach((field) => {
       if (propertyData[field]) {
         processImageField(field, propertyData[field]);
       }
@@ -502,7 +641,9 @@ const PropertiesSalesDetails: FC = () => {
         const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(
           id
         )}/`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        const res = await fetch(url, {
+          headers: { Accept: 'application/json' },
+        });
         if (!res.ok) {
           if (res.status === 404) throw new Error('Property not found (404).');
           throw new Error(`Failed to fetch property (status ${res.status}).`);
@@ -513,12 +654,12 @@ const PropertiesSalesDetails: FC = () => {
         const images = await fetchAllImages(Number(p.id), p);
         console.log('=== All Images from API ===');
         console.log('Total images found:', images.length);
-        
+
         setPropertyImages(images);
 
         // Collect all videos
         const videos: PropertyVideo[] = [];
-        
+
         if (Array.isArray(p.videos)) {
           p.videos.forEach((video: any, index: number) => {
             if (video.video || video.url || video.file_url) {
@@ -526,14 +667,14 @@ const PropertiesSalesDetails: FC = () => {
                 id: video.id || index,
                 video: video.video || video.url || video.file_url,
                 title: video.title || `Video ${index + 1}`,
-                description: video.description || ''
+                description: video.description || '',
               });
             }
           });
         }
 
         const videoFields = ['video_url', 'video_link', 'media_videos'];
-        videoFields.forEach(field => {
+        videoFields.forEach((field) => {
           if (p[field]) {
             if (Array.isArray(p[field])) {
               p[field].forEach((video: any, index: number) => {
@@ -541,14 +682,14 @@ const PropertiesSalesDetails: FC = () => {
                   videos.push({
                     video: video,
                     title: `Video ${index + 1}`,
-                    description: ''
+                    description: '',
                   });
                 } else if (video && (video.url || video.video)) {
                   videos.push({
                     id: video.id || index,
                     video: video.url || video.video,
                     title: video.title || `Video ${index + 1}`,
-                    description: video.description || ''
+                    description: video.description || '',
                   });
                 }
               });
@@ -556,7 +697,7 @@ const PropertiesSalesDetails: FC = () => {
               videos.push({
                 video: p[field],
                 title: 'Main Video',
-                description: ''
+                description: '',
               });
             }
           }
@@ -573,7 +714,11 @@ const PropertiesSalesDetails: FC = () => {
         let normalizedLt: 'rent' | 'sale' | 'other' = 'other';
         if (rawLt === 'sale' || rawLt === 'sales') {
           normalizedLt = 'sale';
-        } else if (rawLt === 'rent' || rawLt === 'rental' || rawLt === 'rentals') {
+        } else if (
+          rawLt === 'rent' ||
+          rawLt === 'rental' ||
+          rawLt === 'rentals'
+        ) {
           normalizedLt = 'rent';
         } else {
           normalizedLt = 'other';
@@ -582,15 +727,18 @@ const PropertiesSalesDetails: FC = () => {
         const normalizeStringArray = (val: any): string[] => {
           if (!val) return [];
           if (Array.isArray(val)) return val.map(String);
-          if (typeof val === 'object') return Object.values(val).map((v) => String(v));
+          if (typeof val === 'object')
+            return Object.values(val).map((v) => String(v));
           return [];
         };
 
         const outdoorAmenities = normalizeStringArray(p.outdoor_amenities);
         const interiorAmenities = normalizeStringArray(p.interior_amenities);
-        const signatureDistinctions = normalizeStringArray(p.signature_distinctions);
+        const signatureDistinctions = normalizeStringArray(
+          p.signature_distinctions
+        );
         const conciergeServices = normalizeStringArray(p.concierge_services);
-        
+
         let staffName: string | undefined;
         if (Array.isArray(p.staff) && p.staff.length > 0) {
           staffName = p.staff[0]?.name ?? '';
@@ -598,11 +746,13 @@ const PropertiesSalesDetails: FC = () => {
           staffName = p.staff.name ?? '';
         }
 
-        const calendarAccuracy = p.calendar_accuracy || p.calendar_accuracy_percentage || '';
+        const calendarAccuracy =
+          p.calendar_accuracy || p.calendar_accuracy_percentage || '';
 
-        let mainImage = images.find(img => img.is_main)?.image || 
-                      images[0]?.image || 
-                      'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
+        let mainImage =
+          images.find((img) => img.is_main)?.image ||
+          images[0]?.image ||
+          'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
 
         if (mainImage.startsWith('/')) {
           mainImage = `${API_BASE.replace(/\/api\/?$/, '')}${mainImage}`;
@@ -610,7 +760,11 @@ const PropertiesSalesDetails: FC = () => {
 
         const address =
           p.address ??
-          (p.location ? (typeof p.location === 'string' ? p.location : '') : '') ??
+          (p.location
+            ? typeof p.location === 'string'
+              ? p.location
+              : ''
+            : '') ??
           p.city ??
           '—';
 
@@ -647,19 +801,22 @@ const PropertiesSalesDetails: FC = () => {
             meta_description:
               p.seo_description ?? p.seo_info?.meta_description ?? '',
             keywords:
-              p.signature_distinctions?.slice?.(0, 4)?.map((k: string) =>
-                String(k)
-              ) ?? p.seo_keywords ?? [],
+              p.signature_distinctions
+                ?.slice?.(0, 4)
+                ?.map((k: string) => String(k)) ??
+              p.seo_keywords ??
+              [],
           },
 
-          viewing_link: p.calendar_link ?? p.viewing_link ?? p.calendar_url ?? '',
+          viewing_link:
+            p.calendar_link ?? p.viewing_link ?? p.calendar_url ?? '',
           staff_name: staffName,
           concierge_services: conciergeServices,
-          
+
           calendar_accuracy: calendarAccuracy,
-          
+
           videos: videos,
-          
+
           _raw: p,
         };
 
@@ -700,25 +857,27 @@ const PropertiesSalesDetails: FC = () => {
 
     setIsImageDownloading(true);
     setImageDownloadProgress(0);
-    
+
     try {
       const zip = new JSZip();
-      const imageFolder = zip.folder(`${property.title.replace(/\s+/g, '_')}_images`);
-      
+      const imageFolder = zip.folder(
+        `${property.title.replace(/\s+/g, '_')}_images`
+      );
+
       if (!imageFolder) {
         throw new Error('Failed to create zip folder');
       }
 
       let completed = 0;
       const totalItems = propertyImages.length;
-      
+
       const downloadPromises = propertyImages.map(async (img, index) => {
         try {
           let imageUrl = img.image;
           if (imageUrl.startsWith('/')) {
             imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
           }
-          
+
           const response = await fetch(imageUrl);
           if (!response.ok) {
             console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
@@ -727,15 +886,15 @@ const PropertiesSalesDetails: FC = () => {
             setImageDownloadProgress(progress);
             return null;
           }
-          
+
           const blob = await response.blob();
           const extension = blob.type.split('/')[1] || 'jpg';
           const fileName = `${property.title.replace(/\s+/g, '_')}_image_${index + 1}.${extension}`;
-          
+
           completed++;
           const progress = Math.round((completed / totalItems) * 95) + 5;
           setImageDownloadProgress(progress);
-          
+
           return { fileName, blob };
         } catch (error) {
           console.error(`Error downloading image ${index + 1}:`, error);
@@ -747,7 +906,7 @@ const PropertiesSalesDetails: FC = () => {
       });
 
       const downloadedImages = await Promise.all(downloadPromises);
-      
+
       downloadedImages.forEach((item) => {
         if (item) {
           imageFolder.file(item.fileName, item.blob);
@@ -755,9 +914,9 @@ const PropertiesSalesDetails: FC = () => {
       });
 
       const content = await zip.generateAsync({ type: 'blob' });
-      
+
       setImageDownloadProgress(100);
-      
+
       const blobUrl = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = blobUrl;
@@ -766,23 +925,22 @@ const PropertiesSalesDetails: FC = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
-      
+
       setTimeout(() => {
         Swal.fire({
           icon: 'success',
           title: 'Success',
           text: `Downloaded ${propertyImages.length} images`,
           timer: 2000,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       }, 500);
-      
+
       setTimeout(() => {
         setShowImageGallery(false);
         setIsImageDownloading(false);
         setImageDownloadProgress(0);
       }, 2000);
-
     } catch (error) {
       console.error('Error creating zip file:', error);
       Swal.fire({
@@ -797,155 +955,267 @@ const PropertiesSalesDetails: FC = () => {
     }
   };
 
-  // Function to download videos via hidden server API - ONE CLICK DOWNLOAD
-  const downloadAllVideosAsZip = async () => {
+  // Cleanup function
+  const cleanupDownload = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+
+    downloadStartTimeRef.current = null;
+  };
+
+  // Function to reset download state
+  const resetVideoDownloadState = () => {
+    cleanupDownload();
+    setIsVideoDownloading(false);
+    setVideoDownloadProgress(0);
+    setDownloadCompleted(false);
+    setShowDownloadProgress(false);
+  };
+
+  // Function to simulate realistic progress based on actual download
+  const simulateRealisticProgress = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    let progress = 0;
+    const startTime = Date.now();
+    downloadStartTimeRef.current = startTime;
+
+    // Phase 1: Initial connection (0-20%)
+    const connectionDuration = 1500;
+    const connectionSteps = 20;
+    const connectionInterval = connectionDuration / connectionSteps;
+
+    let connectionStep = 0;
+    const connectionIntervalId = setInterval(() => {
+      connectionStep++;
+      progress = Math.min(20, (connectionStep / connectionSteps) * 20);
+      setVideoDownloadProgress(progress);
+
+      if (connectionStep >= connectionSteps) {
+        clearInterval(connectionIntervalId);
+        startDownloadPhase();
+      }
+    }, connectionInterval);
+
+    const startDownloadPhase = () => {
+      // Phase 2: Download phase (20-80%) - real progress tracking
+      let lastProgress = 20;
+
+      progressIntervalRef.current = setInterval(() => {
+        if (progress >= 100) {
+          cleanupDownload();
+          return;
+        }
+
+        // Simulate realistic download progress with some randomness
+        const timeElapsed = Date.now() - startTime;
+        const estimatedTotalTime = 8000; // 8 seconds estimated total
+        const timeBasedProgress = Math.min(
+          95,
+          (timeElapsed / estimatedTotalTime) * 100
+        );
+
+        // Add some randomness but ensure progress is increasing
+        const randomIncrement = Math.random() * 2;
+        progress = Math.min(
+          95,
+          Math.max(lastProgress + 0.5, timeBasedProgress + randomIncrement)
+        );
+
+        // Ensure smooth progress but never go backward
+        if (progress > lastProgress) {
+          setVideoDownloadProgress(progress);
+          lastProgress = progress;
+        }
+
+        // If we reach near completion, move to final phase
+        if (progress >= 95 && !downloadCompleted) {
+          cleanupDownload();
+          completeDownload();
+        }
+      }, 200);
+    };
+
+    const completeDownload = () => {
+      // Phase 3: Final processing (95-100%)
+      setVideoDownloadProgress(95);
+
+      setTimeout(() => {
+        setVideoDownloadProgress(98);
+      }, 300);
+
+      setTimeout(() => {
+        setVideoDownloadProgress(100);
+        setDownloadCompleted(true);
+        setIsVideoDownloading(false);
+
+        // Auto-hide progress after 3 seconds
+        setTimeout(() => {
+          setShowDownloadProgress(false);
+        }, 3000);
+      }, 600);
+    };
+  };
+
+  // Function to download videos with real progress tracking
+  const downloadAllVideosAsZip = () => {
     if (!property?.id || propertyVideos.length === 0) {
       showActionMessage('No videos available to download.');
       return;
     }
 
+    // Reset state
+    resetVideoDownloadState();
+
+    // Show progress UI
+    setShowDownloadProgress(true);
     setIsVideoDownloading(true);
-    setVideoDownloadProgress(10); // Start progress
-    
+    setVideoDownloadProgress(0);
+    setDownloadCompleted(false);
+
+    // Start realistic progress simulation
+    simulateRealisticProgress();
+
+    // Create download link
+    const downloadUrl = `${API_BASE}/villas/videos/download/${property.id}/`;
+
+    // Use XMLHttpRequest to track actual progress
     try {
-      // HIDDEN API ENDPOINT - DIRECT DOWNLOAD
-      const downloadUrl = `${API_BASE}/villas/videos/download/${property.id}/`;
-      console.log('Downloading videos from:', downloadUrl);
-      
-      // Create hidden iframe for direct download
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+
+      xhr.open('GET', downloadUrl, true);
+      xhr.responseType = 'blob';
+
+      // Track actual download progress
+      xhr.addEventListener('progress', (event) => {
+        if (event.lengthComputable && event.total > 0) {
+          const actualProgress = (event.loaded / event.total) * 80; // Map to 0-80%
+          const currentProgress = Math.max(
+            videoDownloadProgress,
+            actualProgress + 20
+          ); // Add 20% for connection phase
+          setVideoDownloadProgress(Math.min(95, currentProgress));
+        }
+      });
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          // Create download link
+          const blob = xhr.response;
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${property.title.replace(/\s+/g, '_')}_videos.zip`;
+          document.body.appendChild(a);
+          a.click();
+
+          // Cleanup
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }, 100);
+
+          // Complete the progress
+          cleanupDownload();
+          setVideoDownloadProgress(100);
+          setDownloadCompleted(true);
+          setIsVideoDownloading(false);
+
+          // Show success message
+          setTimeout(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Download Complete!',
+              text: `${propertyVideos.length} videos downloaded successfully.`,
+              timer: 2000,
+              showConfirmButton: false,
+            });
+          }, 500);
+
+          // Auto-hide after 3 seconds
+          setTimeout(() => {
+            setShowDownloadProgress(false);
+          }, 3000);
+        } else {
+          // Handle error
+          cleanupDownload();
+          setShowDownloadProgress(false);
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: 'Failed to download videos. Please try again.',
+            timer: 3000,
+            showConfirmButton: true,
+          });
+        }
+      };
+
+      xhr.onerror = () => {
+        cleanupDownload();
+        setShowDownloadProgress(false);
+
+        // Fallback to iframe method
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = downloadUrl;
+        document.body.appendChild(iframe);
+
+        // Still complete progress
+        setTimeout(() => {
+          setVideoDownloadProgress(100);
+          setDownloadCompleted(true);
+          setIsVideoDownloading(false);
+
+          setTimeout(() => {
+            setShowDownloadProgress(false);
+          }, 3000);
+        }, 1000);
+      };
+
+      // Start the download
+      xhr.send();
+    } catch (error) {
+      console.error('XHR download error:', error);
+
+      // Fallback to simple iframe method
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       iframe.src = downloadUrl;
-      
-      // Set progress to indicate download started
-      setVideoDownloadProgress(30);
-      
-      // Add iframe to document
       document.body.appendChild(iframe);
-      
-      // Show progress animation
-      const progressInterval = setInterval(() => {
-        setVideoDownloadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 300);
-      
-      // Wait for iframe to load
-      iframe.onload = () => {
-        clearInterval(progressInterval);
+
+      // Still show completion
+      setTimeout(() => {
+        cleanupDownload();
         setVideoDownloadProgress(100);
-        
-        // Clean up
+        setDownloadCompleted(true);
+        setIsVideoDownloading(false);
+
         setTimeout(() => {
-          if (document.body.contains(iframe)) {
-            document.body.removeChild(iframe);
-          }
-          
-          // Show success message
-          Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: `Started downloading ${propertyVideos.length} videos...`,
-            timer: 2000,
-            showConfirmButton: false
-          });
-          
-          // Reset states after a delay
-          setTimeout(() => {
-            setIsVideoDownloading(false);
-            setVideoDownloadProgress(0);
-          }, 2000);
-        }, 500);
-      };
-      
-      // Handle errors
-      iframe.onerror = () => {
-        clearInterval(progressInterval);
-        
-        // Fallback to direct link method
-        const directDownload = async () => {
-          try {
-            setVideoDownloadProgress(50);
-            
-            // Create a temporary anchor element for direct download
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = `${property.title.replace(/\s+/g, '_')}_videos.zip`;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            setVideoDownloadProgress(100);
-            
-            // Show success message
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: `Started downloading ${propertyVideos.length} videos...`,
-              timer: 2000,
-              showConfirmButton: false
-            });
-            
-            // Reset states
-            setTimeout(() => {
-              setIsVideoDownloading(false);
-              setVideoDownloadProgress(0);
-            }, 2000);
-            
-          } catch (error) {
-            console.error('Direct download error:', error);
-            
-            // Final fallback - open in new tab
-            window.open(downloadUrl, '_blank');
-            
-            Swal.fire({
-              icon: 'info',
-              title: 'Opening Download',
-              text: 'Opening download in new tab...',
-              timer: 2000,
-              showConfirmButton: false
-            });
-            
-            setIsVideoDownloading(false);
-            setVideoDownloadProgress(0);
-          }
-        };
-        
-        directDownload();
-      };
-      
-    } catch (error: any) {
-      console.error('Video download error:', error);
-      
-      // Fallback: Try direct link
-      try {
-        window.open(`${API_BASE}/villas/videos/download/${property.id}/`, '_blank');
-        
-        Swal.fire({
-          icon: 'info',
-          title: 'Opening Download',
-          text: 'Opening download in new tab...',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-        Swal.fire({
-          icon: 'error',
-          title: 'Download Failed',
-          text: 'Could not download videos. Please try again later.',
-          timer: 3000,
-          showConfirmButton: true,
-        });
-      }
-      
-      setIsVideoDownloading(false);
-      setVideoDownloadProgress(0);
+          setShowDownloadProgress(false);
+        }, 3000);
+      }, 1000);
+    }
+  };
+
+  // Function to handle download button click
+  const handleVideoDownloadClick = () => {
+    if (downloadCompleted) {
+      // If download is complete, reset state for new download
+      resetVideoDownloadState();
+    } else {
+      // Start new download
+      downloadAllVideosAsZip();
     }
   };
 
@@ -994,20 +1264,6 @@ Description: ${property.description.substring(0, 200)}...
     copyToClipboard(keywords, 'Keywords copied to clipboard!');
   };
 
-  // Function to copy dynamic calendar link
-  const handleCopyCalendarLink = () => {
-    if (!property) return;
-    
-    const calendarLink = generateCalendarLink();
-    
-    if (!calendarLink) {
-      showActionMessage('Calendar link is not available for this property.');
-      return;
-    }
-    
-    copyToClipboard(calendarLink, 'Calendar link copied!');
-  };
-
   // Function to copy description
   const handleCopyDescription = () => {
     if (!property) return;
@@ -1017,15 +1273,21 @@ Description: ${property.description.substring(0, 200)}...
   // Function to copy outdoor amenities
   const handleCopyOutdoorAmenities = () => {
     if (!property) return;
-    const amenitiesText = [...property.outdoor_amenities, ...property.interior_amenities].join(', ');
+    const amenitiesText = [
+      ...property.outdoor_amenities,
+      ...property.interior_amenities,
+    ].join(', ');
     if (amenitiesText) {
-      copyToClipboard(amenitiesText, 'Outdoor & Interior amenities copied to clipboard!');
+      copyToClipboard(
+        amenitiesText,
+        'Outdoor & Interior amenities copied to clipboard!'
+      );
     } else {
       showActionMessage('No amenities available to copy.');
     }
   };
 
-  // --- Quick Action Handlers (matching screenshot labels) ---
+  // Quick Action Handlers - REMOVED: handleShowStaff, handleShowAvailability, handleCopyCalendarLink
   const handleShowAmenities = () => {
     const el = document.getElementById('outdoor-amenities-section');
     if (el) {
@@ -1033,25 +1295,6 @@ Description: ${property.description.substring(0, 200)}...
     } else {
       showActionMessage('Amenities section not found on page.');
     }
-  };
-
-  const handleShowStaff = () => {
-    if (property?.staff_name) {
-      showActionMessage(`Staff: ${property.staff_name}`);
-    } else {
-      showActionMessage('No staff information available.');
-    }
-  };
-
-  const handleShowAvailability = () => {
-    setShowCalendar(true);
-    
-    setTimeout(() => {
-      const calendarSection = document.getElementById('availability-calendar-section');
-      if (calendarSection) {
-        calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
   };
 
   if (loading) {
@@ -1125,9 +1368,10 @@ Description: ${property.description.substring(0, 200)}...
   const allOutdoorAmenities = [
     ...property.outdoor_amenities,
     ...property.interior_amenities,
-    ...property.signature_distinctions
-  ].filter((item, index, self) => 
-    item && item.trim() !== '' && self.indexOf(item) === index
+    ...property.signature_distinctions,
+  ].filter(
+    (item, index, self) =>
+      item && item.trim() !== '' && self.indexOf(item) === index
   );
 
   return (
@@ -1143,7 +1387,7 @@ Description: ${property.description.substring(0, 200)}...
           <span className="text-sm font-medium">Back</span>
         </Link>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - REMOVED: Show Staff, Show Availability, Copy Calendar Link */}
         <div className="p-4 bg-white rounded-xl shadow-lg mb-6 border border-gray-200">
           <h2 className="text-sm font-semibold text-gray-900 mb-3">
             Quick Actions
@@ -1154,28 +1398,43 @@ Description: ${property.description.substring(0, 200)}...
               label="Amenities"
               onClick={handleShowAmenities}
             />
-          
-        
+
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1767906306/Icon_26_ejcmnk.png"
               label="Copy Description"
               onClick={handleCopyDescription}
             />
-        
+
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
-              label={`Show All Images (${propertyImages.length})`}
+              label={`Download All Images (${propertyImages.length})`}
               onClick={handleShowAllImages}
               disabled={propertyImages.length === 0}
             />
-            <QuickActionButton
-              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
-              label={`Download All Videos (${propertyVideos.length})`}
-              onClick={downloadAllVideosAsZip}
-              disabled={propertyVideos.length === 0 || isVideoDownloading}
-            />
-          </div>
 
+            <button
+              onClick={handleVideoDownloadClick}
+              disabled={propertyVideos.length === 0}
+              className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg shadow-sm transition duration-150 border cursor-pointer ${
+                downloadCompleted
+                  ? 'bg-green-600 text-white hover:bg-green-700 border-green-600'
+                  : isVideoDownloading
+                    ? 'bg-white text-gray-700 border-gray-200 cursor-wait'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+              } ${propertyVideos.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <img
+                src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
+                alt="Download Videos"
+                className="w-5 h-5"
+              />
+              <span>
+                {downloadCompleted
+                  ? 'Download Again'
+                  : `Download All Videos (${propertyVideos.length})`}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Property card */}
@@ -1198,14 +1457,17 @@ Description: ${property.description.substring(0, 200)}...
             </div>
 
             {/* Right info */}
-            <div className="lg:w-2/3 flex flex-col">
+            <div className="lg:w-2/3 flex flex-col mt-2">
               <div className="flex justify-between items-start gap-3">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900">
                     {property.title}
                   </h1>
                   <p className="text-sm text-gray-500 mt-1">
-                    {property.location}
+                    <div className="flex items-center gap-2">
+                      <img src={locationss} alt="" />
+                      {property.location}
+                    </div>
                   </p>
                 </div>
                 <span
@@ -1213,34 +1475,51 @@ Description: ${property.description.substring(0, 200)}...
                     localStatus
                   )}`}
                 >
-                  {localStatus.toUpperCase().slice(0,1) + localStatus.slice(1)}
+                  {localStatus.toUpperCase().slice(0, 1) + localStatus.slice(1)}
                 </span>
               </div>
 
               {/* Guests / beds / baths / pools */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-700">
                 <div className="flex items-center gap-1">
-                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/user-fill_tqy1wd.png" alt="" />
+                  <img
+                    className="w-5 h-5"
+                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png"
+                    alt=""
+                  />
                   <span>
-                    {getPluralText(property.add_guest ?? 0, 'Guest', 'Guests')}
+                    {getPluralText(property.bedrooms ?? 0, 'Bed', 'Beds')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <img className='w-5 h-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152495/Frame_nlg3eb.png" alt="" />
-                  <span>{getPluralText(property.bedrooms ?? 0, 'Bed', 'Beds')}</span>
+                  <img
+                    className="w-5 h-5"
+                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png"
+                    alt=""
+                  />
+                  <span>
+                    {getPluralText(property.bathrooms ?? 0, 'Bath', 'Baths')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_1_ivr5pt.png" alt="" />
-                  <span>{getPluralText(property.bathrooms ?? 0, 'Bath', 'Baths')}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <img className="w-5 h-5" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png" alt="" />
-                  <span>{getPluralText(property.pool ?? 0, 'Pool', 'Pools')}</span>
+                  <img
+                    className="w-5 h-5"
+                    src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152494/Frame_2_wnawev.png"
+                    alt=""
+                  />
+                  <span>
+                    {getPluralText(property.pool ?? 0, 'Pool', 'Pools')}
+                  </span>
                 </div>
               </div>
 
+
+
+
               {/* Commission & Damage deposit */}
-              <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
+              <div className="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-700">
+          
+
                 {property.commission_rate && (
                   <div className="flex items-center gap-2">
                     <img
@@ -1256,37 +1535,15 @@ Description: ${property.description.substring(0, 200)}...
                   </div>
                 )}
 
-                {property.security_deposit && (
-                  <div className="flex items-center gap-2">
-                    <div className='text-[22px]'><AiFillDollarCircle /></div>
-                    <span>
-                      {property.security_deposit
-                        ? `USD$${formatMoney(property.security_deposit)} Security Deposit`
-                        : 'Security Deposit'}
-                    </span>
-                  </div>
-                )}
-              </div>
 
-              {/* Booking status + calendar accuracy */}
-              <div className="flex flex-wrap items-center gap-6 mt-4 text-xs md:text-sm text-gray-600">
-                {property.tbc_by && (
-                  <div className="flex items-center gap-2">
-                    <div className='text-[23px]'><FaHandshakeSimple /></div>
-                    <span>{property.tbc_by}</span>
-                  </div>
-                )}
+                      {property.tbc_by && (
+                                  <div className="flex items-center gap-2">
+                                    <div className='text-[23px]'><FaHandshakeSimple /></div>
+                                    <span>{property.tbc_by}</span>
+                                  </div>
+                                )}
 
-                {property.calendar_accuracy && (
-                  <div className="flex items-center gap-2">
-                    <img className='h-5 w-5' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765152493/calendar-fill_h12equ.png" alt="" />
-                    <span>
-                      {property.calendar_accuracy 
-                        ? `${property.calendar_accuracy}% Calendar Accuracy`
-                        : 'Calendar Accuracy Not Set'}
-                    </span>
-                  </div>
-                )}
+            
               </div>
             </div>
           </div>
@@ -1295,7 +1552,10 @@ Description: ${property.description.substring(0, 200)}...
         {/* Description with Copy Button */}
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-bold text-gray-800">Description</h2>
-          <CopyButton onClick={handleCopyDescription} label="Copy Description" />
+          <CopyButton
+            onClick={handleCopyDescription}
+            label="Copy Description"
+          />
         </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           <div
@@ -1323,7 +1583,10 @@ Description: ${property.description.substring(0, 200)}...
           >
             Outdoor Amenities
           </h2>
-          <CopyButton onClick={handleCopyOutdoorAmenities} label="Copy Amenities" />
+          <CopyButton
+            onClick={handleCopyOutdoorAmenities}
+            label="Copy Amenities"
+          />
         </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           {allOutdoorAmenities.length === 0 ? (
@@ -1358,7 +1621,9 @@ Description: ${property.description.substring(0, 200)}...
           {/* Meta Title with Copy Button */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex-1">
-              <p className="text-gray-500 text-sm font-medium mb-1">Meta Title</p>
+              <p className="text-gray-500 text-sm font-medium mb-1">
+                Meta Title
+              </p>
               <p className="text-gray-800 font-semibold">
                 {property.seo_info?.meta_title || 'Not available'}
               </p>
@@ -1398,7 +1663,9 @@ Description: ${property.description.substring(0, 200)}...
                     </span>
                   ))
                 ) : (
-                  <span className="text-gray-500 text-sm">No keywords available</span>
+                  <span className="text-gray-500 text-sm">
+                    No keywords available
+                  </span>
                 )}
               </div>
             </div>
@@ -1407,8 +1674,6 @@ Description: ${property.description.substring(0, 200)}...
             </div>
           </div>
         </div>
-
-
 
         {/* Availability Calendar Section */}
         {showCalendar && property?.id && (
@@ -1434,6 +1699,16 @@ Description: ${property.description.substring(0, 200)}...
         downloadProgress={imageDownloadProgress}
         isDownloading={isImageDownloading}
       />
+
+      {/* Video Download Progress Modal */}
+      {showDownloadProgress && (
+        <VideoDownloadProgress
+          progress={videoDownloadProgress}
+          isDownloading={isVideoDownloading}
+          isCompleted={downloadCompleted}
+          onReset={resetVideoDownloadState}
+        />
+      )}
     </div>
   );
 };
