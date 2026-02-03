@@ -448,7 +448,16 @@ const AdminPropertiesSales: React.FC = () => {
                         })()}
                       </td>
                       <td className="px-4 md:px-6 py-4 text-sm text-gray-500 min-w-[100px]">
-                        {item.updated_at ?? item.updateDate ?? '-'}
+                        {(item.updated_at || item.updateDate)
+  ? new Date(item.updated_at || item.updateDate).toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  : '-'}
+
                       </td>
                       <td className="px-4 md:px-6 py-4 min-w-[90px]">
                         <span
