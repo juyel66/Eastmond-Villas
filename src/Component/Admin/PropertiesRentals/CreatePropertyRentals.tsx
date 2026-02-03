@@ -1052,7 +1052,7 @@ const CreatePropertyRentals = ({
       <div className="lg:flex space-x-10 justify-between items-center mb-6 mt-2 w-full">
         <div>
           <h1 className="text-3xl font-semibold text-gray-800">
-            {isEdit ? 'Edit Property Listing' : 'Create New Property Listing'}
+            {isEdit ? 'Edit Property Listing' : 'Create New Property (Rentals)'}
           </h1>
           <p className="text-gray-500 mt-2">
             {isEdit
@@ -1473,7 +1473,7 @@ const CreatePropertyRentals = ({
             </label>
             <input
               name="calendar_accuracy"
-              type="text"
+              type="number"
               step="0.01"
               {...register('calendar_accuracy')}
               placeholder="add calendar accuracy"
