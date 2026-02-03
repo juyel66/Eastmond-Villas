@@ -232,6 +232,7 @@
 
 
 
+import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
  
 type BookingRange = { start: string; end: string };
@@ -414,18 +415,18 @@ const Calendar: React.FC<Props> = ({ villaId, initialDate }) => {
         <div className="flex items-center justify-between mb-4 gap-3">
           <button
             onClick={handlePrev}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+            className="w-9 h-9 flex cursor-pointer items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
             aria-label="Previous month"
           >
-            &lt;
+            <ArrowLeftIcon className="w-5 h-5" />
           </button>
  
           <button
             onClick={handleNext}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+            className="w-9 h-9 flex cursor-pointer items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
             aria-label="Next month"
           > 
-            &gt;
+             <ArrowRightIcon className="w-5 h-5" />
           </button>
         </div>
  
