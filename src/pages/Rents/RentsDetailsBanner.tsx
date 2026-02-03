@@ -147,21 +147,10 @@ const BookingModal: React.FC<BookingModalProps> = ({
       }
     }
 
-    // If not logged in, redirect to login immediately
-    const token = getAccessToken();
-    if (!token) {
-      toast.error('Please log in to send your inquiry.');
-      // close modal and send user to login (preserve return url if desired)
-      onClose();
-      // redirect to login (simple redirect — adapt to router if needed)
-      window.location.assign('/login');
-      return;
-    }
-
     setLoading(true);
 
     if (isSaleType) {
-      // Sale property: Send inquiry message to /api/list_vila/contect/
+      // Sale property: Send Enquire message to /api/list_vila/contect/
       const payload = {
         name: formData.name,
         email: formData.email,
@@ -177,7 +166,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         });
@@ -185,10 +173,10 @@ const BookingModal: React.FC<BookingModalProps> = ({
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          console.error('Sale inquiry POST failed:', data);
+          console.error('Sale Enquire POST failed:', data);
           
           // Extract detailed error message
-          let errorMessage = 'Inquiry failed';
+          let errorMessage = 'Enquire failed';
           if (data?.detail) {
             errorMessage = data.detail;
           } else if (data?.message) {
@@ -201,7 +189,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             } else if (typeof firstError === 'string') {
               errorMessage = firstError;
             } else {
-              errorMessage = res.statusText || 'Inquiry failed';
+              errorMessage = res.statusText || 'Enquire failed';
             }
           } else if (typeof data === 'string') {
             errorMessage = data;
@@ -209,7 +197,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           
           Swal.fire({
             icon: 'error',
-            title: 'Inquiry failed',
+            title: 'Enquire failed',
             text: errorMessage,
           });
           toast.error(errorMessage);
@@ -217,9 +205,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
           return;
         }
 
-        console.log('Sale inquiry sent successfully:', data);
+        console.log('Sale Enquire sent successfully:', data);
         Swal.fire({
-          title: 'Inquiry sent successfully!',
+          title: 'Enquire sent successfully!',
           text: 'We will contact you soon regarding this property.',
           icon: 'success',
         });
@@ -233,10 +221,10 @@ const BookingModal: React.FC<BookingModalProps> = ({
           message: '',
         });
         onClose();
-        toast.success('Inquiry sent successfully!');
+        toast.success('Enquire sent successfully!');
         if (onSuccess) onSuccess(data);
       } catch (err) {
-        console.error('Sale inquiry error:', err);
+        console.error('Sale Enquire error:', err);
         Swal.fire({
           icon: 'error',
           title: 'Network Error',
@@ -265,7 +253,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         });
@@ -350,7 +337,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-semibold text-gray-800">
-            {isSaleType ? 'Inquire About Purchase' : 'Book Your Stay'}
+            {isSaleType ? 'Enquire About Purchase' : 'Book Your Stay'}
           </h3>
           <button
             onClick={onClose}
@@ -364,7 +351,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
+                Full Name *
               </label>
               <input
                 name="name"
@@ -378,7 +365,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                Email *
               </label>
               <input
                 name="email"
@@ -393,7 +380,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
+                Phone *
               </label>
               <input
                 name="phone"
@@ -411,7 +398,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="flex gap-3">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Check-In
+                      Check-In *
                     </label>
                     <input
                       name="check_in_data"
@@ -424,7 +411,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Check-Out
+                      Check-Out *
                     </label>
                     <input
                       name="check_out_data"
@@ -444,10 +431,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                 )}
                 
-                {/* Show calculated total price */}
-                {formData.check_in_data && formData.check_out_data && !dateError && (
-                  <div></div>
-                )}
+
               </>
             )}
 
@@ -480,8 +464,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
               }`}
             >
               {loading 
-                ? (isSaleType ? 'Sending Inquiry...' : 'Booking...') 
-                : (isSaleType ? 'Send Inquiry' : 'Request For Booking')
+                ? (isSaleType ? 'Sending Enquire...' : 'Booking...') 
+                : (isSaleType ? 'Send Enquire' : 'Request For Booking')
               }
             </button>
           </div>
@@ -833,24 +817,15 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
 
            
             <button
-              onClick={() => {
-                // if not logged in, redirect to login right away
-                const token = getAccessToken();
-                if (!token) {
-                  toast.error("Please log in to proceed.");
-                  window.location.assign("/login");
-                  return;
-                }
-                setIsModalOpen(true);
-              }}
+              onClick={() => setIsModalOpen(true)}
               className="flex flex-1 items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded hover:bg-teal-700 transition-colors"
             >
               <img
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1766790778/Component_2_1_gnvufv.png"
-                alt={isSaleType ? "inquire" : "book"}
+                alt={isSaleType ? "Enquire" : "book"}
                 className="w-5 h-5"
               />
-              <span>{isSaleType ? 'Inquire Now' : 'Book Now'}</span>
+              <span>{isSaleType ? 'Enquire Now' : 'Book Now'}</span>
             </button>
           </div>
 
@@ -862,7 +837,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
         </div>
       </div>
 
-      {/* Booking/Inquiry modal */}
+      {/* Booking/Enquire modal */}
       <BookingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -872,7 +847,7 @@ const RentsDetailsBanner: React.FC<RentsDetailsBannerProps> = ({ villa }) => {
         isSaleType={isSaleType}
         onSuccess={(resp) => {
           if (isSaleType) {
-            setFeedbackMsg('Inquiry sent successfully');
+            setFeedbackMsg('Enquire sent successfully');
           } else {
             setFeedbackMsg('Booking created successfully.');
           }
