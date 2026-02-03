@@ -175,36 +175,18 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
 
                   {/* Image Info */}
                   <div className="p-3 bg-white">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      Image {index + 1}
-                    </p>
-                    {img.source && (
-                      <p className="text-xs text-gray-500 mt-1 truncate">
-                        Source: {img.source}
-                      </p>
-                    )}
+                  
+                   
                     <div className="mt-2 flex justify-between items-center">
                       <a
                         href={img.image}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-xs text-teal-600 hover:text-teal-800 font-medium"
                       >
                         View Full
                       </a>
-                      <button
-                        onClick={() => {
-                          const a = document.createElement('a');
-                          a.href = img.image;
-                          a.download = `${propertyTitle.replace(/\s+/g, '_')}_image_${index + 1}.jpg`;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                        }}
-                        className="text-xs text-green-600 hover:text-green-800 font-medium"
-                      >
-                        Download
-                      </button>
+                   
                     </div>
                   </div>
                 </div>
