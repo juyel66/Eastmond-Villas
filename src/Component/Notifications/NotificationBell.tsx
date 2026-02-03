@@ -1,9 +1,10 @@
-// src/components/NotificationBell.tsx
+
 import React, { useState, useRef, useEffect } from "react";
-import { Bell } from "lucide-react";
+
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import type { RootState } from "@/store";
+import { IoMdNotificationsOutline } from "react-icons/io";
 import {
   markAsReadAsync,
   markAsReadLocal,
@@ -106,11 +107,13 @@ const NotificationBell: React.FC = () => {
   return (
     <div ref={ref} className="relative">
       <button
-        className="p-2 rounded hover:bg-gray-100 relative"
+        className="p-2 rounded-full hover:bg-gray-100 cursor-pointer relative"
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
       >
-        <Bell size={20} />
+        
+       
+        <IoMdNotificationsOutline size={25} />
         {unread > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1 rounded-full">
             {unread > 99 ? "99+" : unread}
