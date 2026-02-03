@@ -54,7 +54,7 @@ const BeforePage: React.FC<BeforePageProps> = ({ onStartClick }) => {
             {/* Start Application Button */}
             <button
               onClick={onStartClick}
-              className="bg-teal-600 hover:bg-teal-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out"
+              className="bg-teal-600  hover:bg-teal-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out"
             >
               Start Application
             </button>
