@@ -831,7 +831,7 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-teal-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading property data for ID: {propertyId}...</p>
+          <p className="text-gray-600">Loading Property...</p>
         </div>
       </div>
     );
