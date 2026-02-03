@@ -1031,6 +1031,15 @@
 
 // export default ImageGallerySection;
 
+
+
+
+
+
+
+
+
+
 // ImageGallerySections.tsx
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
@@ -1358,11 +1367,20 @@ const ImageGallerySection = ({ villa }) => {
   });
 
   const [showAll, setShowAll] = useState(false);
-
   const [showAllStaff, setShowAllStaff] = useState(false);
+  const [showAllInterior, setShowAllInterior] = useState(false);
+  const [showAllOutdoor, setShowAllOutdoor] = useState(false);
 
   const toggleStaffView = () => {
     setShowAllStaff((prev) => !prev);
+  };
+
+  const toggleInteriorView = () => {
+    setShowAllInterior((prev) => !prev);
+  };
+
+  const toggleOutdoorView = () => {
+    setShowAllOutdoor((prev) => !prev);
   };
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
@@ -2110,10 +2128,19 @@ const ImageGallerySection = ({ villa }) => {
                     Interior Amenities
                   </h4>
                   <ul className="grid grid-cols-2 gap-x-6">
-                    {interior_amenities.map((item, i) => (
+                    {(showAllInterior ? interior_amenities : interior_amenities.slice(0, 4)).map((item, i) => (
                       <AmenityItem key={i} name={item} />
                     ))}
                   </ul>
+                  
+                  {interior_amenities.length > 4 && (
+                    <button
+                      onClick={toggleInteriorView}
+                      className="mt-2 text-sm text-teal-600"
+                    >
+                      {showAllInterior ? 'Show Less' : 'Show More'}
+                    </button>
+                  )}
                 </>
               )}
 
@@ -2123,10 +2150,19 @@ const ImageGallerySection = ({ villa }) => {
                     Outdoor Amenities
                   </h4>
                   <ul>
-                    {outdoor_amenities.map((item, i) => (
+                    {(showAllOutdoor ? outdoor_amenities : outdoor_amenities.slice(0, 2)).map((item, i) => (
                       <AmenityItem key={i} name={item} />
                     ))}
                   </ul>
+                  
+                  {outdoor_amenities.length > 2 && (
+                    <button
+                      onClick={toggleOutdoorView}
+                      className="mt-2 text-sm text-teal-600"
+                    >
+                      {showAllOutdoor ? 'Show Less' : 'Show More'}
+                    </button>
+                  )}
                 </>
               )}
             </>
@@ -2197,7 +2233,7 @@ const ImageGallerySection = ({ villa }) => {
                   {staffArray.length > 2 && (
                     <button
                       onClick={toggleStaffView}
-                      className="mt-2 text-sm text-teal-600 "
+                      className="mt-2 text-sm text-teal-600"
                     >
                       {showAllStaff ? 'Show Less' : 'Show More'}
                     </button>
