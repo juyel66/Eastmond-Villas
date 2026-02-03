@@ -265,11 +265,18 @@ const AllContact = () => {
                     <td className="py-3 px-4 truncate max-w-[150px]">
                       {contact.message}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-500">
-                      {contact.created_at
-                        ? new Date(contact.created_at).toLocaleString()
-                        : "N/A"}
-                    </td>
+                   <td className="py-3 px-4 text-sm text-gray-500">
+  {contact?.created_at
+    ? new Date(contact.created_at).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'N/A'}
+</td>
+
 
                     <td className="py-3 px-4">
                       <div className="flex gap-2">
@@ -340,7 +347,16 @@ const AllContact = () => {
               <div>
                 <p className="font-semibold text-gray-700 mb-1">Date:</p>
                 <p className="text-gray-500">
-                  {new Date(selectedMessage.created_at).toLocaleString()}
+                 {selectedMessage?.created_at
+  ? new Date(selectedMessage.created_at).toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  : '-'}
+
                 </p>
               </div>
             </div>
