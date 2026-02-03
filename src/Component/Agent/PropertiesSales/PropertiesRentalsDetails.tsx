@@ -1324,7 +1324,7 @@ Description: ${property.description.substring(0, 200)}...
   // Prepare outdoor amenities data for display
   const allOutdoorAmenities = [
     ...property.outdoor_amenities,
-    ...property.interior_amenities,
+    
     ...property.signature_distinctions
   ].filter((item, index, self) => 
     item && item.trim() !== '' && self.indexOf(item) === index
