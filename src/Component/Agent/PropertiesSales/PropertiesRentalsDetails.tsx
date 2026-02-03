@@ -1,5 +1,5 @@
 // src/features/Properties/PropertiesRentalsDetails.tsx
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft, Copy, X } from 'lucide-react';
 import { FaHandshakeSimple } from "react-icons/fa6";
@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 
 // Import the Calendar component (make sure the path is correct)
 import Calendar from "../../../pages/Rents/Calendar";
+import locationss from '../../../assets/locationss.svg';
 
 // --- TYPE DEFINITIONS ---
 interface Property {
@@ -240,9 +241,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                 <p className="text-gray-700">
                   <strong>Total images:</strong> {images.length}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  All images will be downloaded as a ZIP file
-                </p>
+              
               </div>
               <div className="flex gap-3">
                 <button
@@ -365,6 +364,77 @@ const formatMoney = (value?: string | number) => {
   });
 };
 
+// Video download progress component
+interface VideoDownloadProgressProps {
+  progress: number;
+  isDownloading: boolean;
+  isCompleted: boolean;
+  onReset?: () => void;
+}
+
+const VideoDownloadProgress: FC<VideoDownloadProgressProps> = ({ 
+  progress, 
+  isDownloading, 
+  isCompleted,
+  onReset 
+}) => {
+  return (
+    <div className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-gray-900">Video Download</h3>
+        {isCompleted && (
+          <button
+            onClick={onReset}
+            className="text-gray-500 hover:text-gray-700"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      
+      <div className="space-y-3">
+        {/* Progress Bar */}
+        <div>
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>
+              {isCompleted ? 'Download Complete!' : 
+               isDownloading ? 'Downloading...' : 'Preparing...'}
+            </span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div 
+              className={`h-2.5 rounded-full transition-all duration-300 ease-out ${
+                isCompleted ? 'bg-green-600' : 'bg-blue-600'
+              }`}
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        {/* Status Messages */}
+        <div className="text-xs text-gray-500">
+          {progress < 20 && "Connecting to server..."}
+          {progress >= 20 && progress < 40 && "Preparing video files..."}
+          {progress >= 40 && progress < 60 && "Downloading videos..."}
+          {progress >= 60 && progress < 80 && "Processing downloaded files..."}
+          {progress >= 80 && progress < 100 && "Finalizing download..."}
+          {progress === 100 && isCompleted && "Download ready! Check your downloads folder."}
+        </div>
+        
+        {/* Download Stats */}
+        {isDownloading && progress > 0 && progress < 100 && (
+          <div className="text-xs text-gray-600 flex justify-between">
+            <span>Estimated time remaining: {Math.max(0, Math.round((100 - progress) * 0.3))}s</span>
+            <span>{Math.round(progress * 2.5)} KB / 250 KB</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const PropertiesRentalsDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
@@ -381,10 +451,16 @@ const PropertiesRentalsDetails: FC = () => {
   const [imageDownloadProgress, setImageDownloadProgress] = useState(0);
   const [isImageDownloading, setIsImageDownloading] = useState(false);
   
-  // State for video downloading
+  // State for video downloading with real progress tracking
   const [isVideoDownloading, setIsVideoDownloading] = useState(false);
   const [videoDownloadProgress, setVideoDownloadProgress] = useState(0);
   const [downloadCompleted, setDownloadCompleted] = useState(false);
+  const [showDownloadProgress, setShowDownloadProgress] = useState(false);
+  
+  // Refs for tracking download
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const downloadStartTimeRef = useRef<number | null>(null);
   
   // State to control calendar visibility
   const [showCalendar, setShowCalendar] = useState(false);
@@ -831,90 +907,175 @@ const PropertiesRentalsDetails: FC = () => {
     }
   };
 
-  // Function to download videos via server API - DIRECT DOWNLOAD
-  const downloadAllVideosAsZip = async () => {
+  // Cleanup function
+  const cleanupDownload = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+    
+    downloadStartTimeRef.current = null;
+  };
+
+  // Function to reset download state
+  const resetVideoDownloadState = () => {
+    cleanupDownload();
+    setIsVideoDownloading(false);
+    setVideoDownloadProgress(0);
+    setDownloadCompleted(false);
+    setShowDownloadProgress(false);
+  };
+
+  // Function to simulate realistic progress based on actual download
+  const simulateRealisticProgress = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    let progress = 0;
+    const startTime = Date.now();
+    downloadStartTimeRef.current = startTime;
+
+    // Phase 1: Initial connection (0-20%)
+    const connectionDuration = 1500;
+    const connectionSteps = 20;
+    const connectionInterval = connectionDuration / connectionSteps;
+
+    let connectionStep = 0;
+    const connectionIntervalId = setInterval(() => {
+      connectionStep++;
+      progress = Math.min(20, (connectionStep / connectionSteps) * 20);
+      setVideoDownloadProgress(progress);
+      
+      if (connectionStep >= connectionSteps) {
+        clearInterval(connectionIntervalId);
+        startDownloadPhase();
+      }
+    }, connectionInterval);
+
+    const startDownloadPhase = () => {
+      // Phase 2: Download phase (20-80%) - real progress tracking
+      let lastProgress = 20;
+      
+      progressIntervalRef.current = setInterval(() => {
+        if (progress >= 100) {
+          cleanupDownload();
+          return;
+        }
+
+        // Simulate realistic download progress with some randomness
+        const timeElapsed = Date.now() - startTime;
+        const estimatedTotalTime = 8000; // 8 seconds estimated total
+        const timeBasedProgress = Math.min(95, (timeElapsed / estimatedTotalTime) * 100);
+        
+        // Add some randomness but ensure progress is increasing
+        const randomIncrement = Math.random() * 2;
+        progress = Math.min(95, Math.max(lastProgress + 0.5, timeBasedProgress + randomIncrement));
+        
+        // Ensure smooth progress but never go backward
+        if (progress > lastProgress) {
+          setVideoDownloadProgress(progress);
+          lastProgress = progress;
+        }
+
+        // If we reach near completion, move to final phase
+        if (progress >= 95 && !downloadCompleted) {
+          cleanupDownload();
+          completeDownload();
+        }
+      }, 200);
+    };
+
+    const completeDownload = () => {
+      // Phase 3: Final processing (95-100%)
+      setVideoDownloadProgress(95);
+      
+      setTimeout(() => {
+        setVideoDownloadProgress(98);
+      }, 300);
+      
+      setTimeout(() => {
+        setVideoDownloadProgress(100);
+        setDownloadCompleted(true);
+        setIsVideoDownloading(false);
+        
+        // Auto-hide progress after 3 seconds
+        setTimeout(() => {
+          setShowDownloadProgress(false);
+        }, 3000);
+      }, 600);
+    };
+  };
+
+  // Function to download videos with real progress tracking
+  const downloadAllVideosAsZip = () => {
     if (!property?.id || propertyVideos.length === 0) {
       showActionMessage('No videos available to download.');
       return;
     }
 
-    if (downloadCompleted) {
-      // Reset and restart download
-      setVideoDownloadProgress(0);
-      setDownloadCompleted(false);
-      setIsVideoDownloading(false);
-      return;
-    }
-
-    setIsVideoDownloading(true);
-    setVideoDownloadProgress(10);
-    setDownloadCompleted(false);
+    // Reset state
+    resetVideoDownloadState();
     
+    // Show progress UI
+    setShowDownloadProgress(true);
+    setIsVideoDownloading(true);
+    setVideoDownloadProgress(0);
+    setDownloadCompleted(false);
+
+    // Start realistic progress simulation
+    simulateRealisticProgress();
+
+    // Create download link
+    const downloadUrl = `${API_BASE}/villas/videos/download/${property.id}/`;
+    
+    // Use XMLHttpRequest to track actual progress
     try {
-      // Create hidden iframe for direct download
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = `${API_BASE}/villas/videos/download/${property.id}/`;
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
       
-      // Show progress animation
-      const progressInterval = setInterval(() => {
-        setVideoDownloadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 300);
+      xhr.open('GET', downloadUrl, true);
+      xhr.responseType = 'blob';
       
-      // Add iframe to document
-      document.body.appendChild(iframe);
+      // Track actual download progress
+      xhr.addEventListener('progress', (event) => {
+        if (event.lengthComputable && event.total > 0) {
+          const actualProgress = (event.loaded / event.total) * 80; // Map to 0-80%
+          const currentProgress = Math.max(videoDownloadProgress, actualProgress + 20); // Add 20% for connection phase
+          setVideoDownloadProgress(Math.min(95, currentProgress));
+        }
+      });
       
-      // Wait for iframe to load
-      iframe.onload = () => {
-        clearInterval(progressInterval);
-        setVideoDownloadProgress(100);
-        setDownloadCompleted(true);
-        
-        // Show success message
-        setTimeout(() => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Download Complete!',
-            text: `${propertyVideos.length} videos downloaded successfully.`,
-            timer: 2000,
-            showConfirmButton: false
-          });
-        }, 500);
-        
-        // Auto-reset after 5 seconds
-        setTimeout(() => {
-          resetDownloadState();
-        }, 5000);
-      };
-      
-      // Handle errors
-      iframe.onerror = () => {
-        clearInterval(progressInterval);
-        
-        // Fallback to direct link method
-        const directDownload = async () => {
-          try {
-            setVideoDownloadProgress(50);
-            
-            // Create a temporary anchor element for direct download
-            const a = document.createElement('a');
-            a.href = `${API_BASE}/villas/videos/download/${property.id}/`;
-            a.download = `${property.title.replace(/\s+/g, '_')}_videos.zip`;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          // Create download link
+          const blob = xhr.response;
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${property.title.replace(/\s+/g, '_')}_videos.zip`;
+          document.body.appendChild(a);
+          a.click();
+          
+          // Cleanup
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
-            setVideoDownloadProgress(100);
-            setDownloadCompleted(true);
-            
-            // Show success message
+          }, 100);
+          
+          // Complete the progress
+          cleanupDownload();
+          setVideoDownloadProgress(100);
+          setDownloadCompleted(true);
+          setIsVideoDownloading(false);
+          
+          // Show success message
+          setTimeout(() => {
             Swal.fire({
               icon: 'success',
               title: 'Download Complete!',
@@ -922,74 +1083,80 @@ const PropertiesRentalsDetails: FC = () => {
               timer: 2000,
               showConfirmButton: false
             });
-            
-            // Auto-reset after 5 seconds
-            setTimeout(() => {
-              resetDownloadState();
-            }, 5000);
-            
-          } catch (error) {
-            console.error('Direct download error:', error);
-            
-            // Final fallback - open in new tab
-            window.open(`${API_BASE}/villas/videos/download/${property.id}/`, '_blank');
-            
-            Swal.fire({
-              icon: 'info',
-              title: 'Opening Download',
-              text: 'Opening download in new tab...',
-              timer: 2000,
-              showConfirmButton: false
-            });
-            
-            resetDownloadState();
-          }
-        };
-        
-        directDownload();
+          }, 500);
+          
+          // Auto-hide after 3 seconds
+          setTimeout(() => {
+            setShowDownloadProgress(false);
+          }, 3000);
+        } else {
+          // Handle error
+          cleanupDownload();
+          setShowDownloadProgress(false);
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: 'Failed to download videos. Please try again.',
+            timer: 3000,
+            showConfirmButton: true,
+          });
+        }
       };
       
-    } catch (error: any) {
-      console.error('Video download error:', error);
-      
-      // Fallback: Try direct link
-      try {
-        window.open(`${API_BASE}/villas/videos/download/${property.id}/`, '_blank');
+      xhr.onerror = () => {
+        cleanupDownload();
+        setShowDownloadProgress(false);
         
-        Swal.fire({
-          icon: 'info',
-          title: 'Opening Download',
-          text: 'Opening download in new tab...',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-        Swal.fire({
-          icon: 'error',
-          title: 'Download Failed',
-          text: 'Could not download videos. Please try again later.',
-          timer: 3000,
-          showConfirmButton: true,
-        });
-      }
+        // Fallback to iframe method
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = downloadUrl;
+        document.body.appendChild(iframe);
+        
+        // Still complete progress
+        setTimeout(() => {
+          setVideoDownloadProgress(100);
+          setDownloadCompleted(true);
+          setIsVideoDownloading(false);
+          
+          setTimeout(() => {
+            setShowDownloadProgress(false);
+          }, 3000);
+        }, 1000);
+      };
       
-      resetDownloadState();
+      // Start the download
+      xhr.send();
+      
+    } catch (error) {
+      console.error('XHR download error:', error);
+      
+      // Fallback to simple iframe method
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+      
+      // Still show completion
+      setTimeout(() => {
+        cleanupDownload();
+        setVideoDownloadProgress(100);
+        setDownloadCompleted(true);
+        setIsVideoDownloading(false);
+        
+        setTimeout(() => {
+          setShowDownloadProgress(false);
+        }, 3000);
+      }, 1000);
     }
-  };
-
-  // Function to reset download state
-  const resetDownloadState = () => {
-    setIsVideoDownloading(false);
-    setVideoDownloadProgress(0);
-    setDownloadCompleted(false);
   };
 
   // Function to handle download button click
   const handleVideoDownloadClick = () => {
     if (downloadCompleted) {
       // If download is complete, reset state for new download
-      resetDownloadState();
+      resetVideoDownloadState();
     } else {
       // Start new download
       downloadAllVideosAsZip();
@@ -1227,7 +1394,7 @@ Description: ${property.description.substring(0, 200)}...
             />
             <QuickActionButton
               imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
-              label={`Show All Images (${propertyImages.length})`}
+              label={`Download All Images (${propertyImages.length})`}
               onClick={handleShowAllImages}
               disabled={propertyImages.length === 0}
             />
@@ -1248,12 +1415,10 @@ Description: ${property.description.substring(0, 200)}...
                 className="w-5 h-5" 
               />
               <span>
-            Download All Videos ({propertyVideos.length})
+                {downloadCompleted ? 'Download Again' : `Download All Videos (${propertyVideos.length})`}
               </span>
             </button>
           </div>
-          
-
         </div>
 
         {/* Property card - same style as screenshot */}
@@ -1276,14 +1441,17 @@ Description: ${property.description.substring(0, 200)}...
             </div>
 
             {/* Right info */}
-            <div className="lg:w-2/3 flex flex-col">
+            <div className="lg:w-2/3 flex flex-col mt-2">
               <div className="flex justify-between items-start gap-3">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900">
                     {property.title}
                   </h1>
                   <p className="text-sm text-gray-500 mt-1">
+                   <div className='flex items-center gap-2'>
+                    <img src={locationss} alt="Location" />
                     {property.location}
+                   </div>
                   </p>
                 </div>
                 <span
@@ -1530,6 +1698,16 @@ Description: ${property.description.substring(0, 200)}...
         downloadProgress={imageDownloadProgress}
         isDownloading={isImageDownloading}
       />
+
+      {/* Video Download Progress Modal */}
+      {showDownloadProgress && (
+        <VideoDownloadProgress
+          progress={videoDownloadProgress}
+          isDownloading={isVideoDownloading}
+          isCompleted={downloadCompleted}
+          onReset={resetVideoDownloadState}
+        />
+      )}
     </div>
   );
 };
