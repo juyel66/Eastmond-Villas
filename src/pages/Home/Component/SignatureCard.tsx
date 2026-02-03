@@ -748,7 +748,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           {/* Location */}
           <div className="flex items-center text-sm md:text-base text-gray-600 mb-3">
             <img
-              className="w-4 h-4 mr-1 md:w-5 md:h-5"
+              className="w-4 h-4 mr-1 opacity-84 md:w-5 md:h-5"
               src={mapImage}
               alt="location-icon"
             />
