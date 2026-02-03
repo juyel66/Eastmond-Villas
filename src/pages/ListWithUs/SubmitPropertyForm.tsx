@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 
-
 interface Inputs {
   name: string;
   email: string;
@@ -13,11 +12,9 @@ interface Inputs {
   confirm_accuracy: boolean;
 }
 
-
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://api.eastmondvillas.com';
 
 const SubmitPropertyForm: React.FC = () => {
-
   const {
     register,
     handleSubmit,
@@ -45,10 +42,9 @@ const SubmitPropertyForm: React.FC = () => {
   const [isDocumentDragActive, setIsDocumentDragActive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
   const onSubmit = async (data: Inputs) => {
     try {
-
+      // Validation: Check if photo is uploaded
       if (!files.property_photo) {
         Swal.fire({
           title: "Missing Photo",
@@ -60,22 +56,10 @@ const SubmitPropertyForm: React.FC = () => {
 
       setIsSubmitting(true);
 
-      const accessToken = localStorage.getItem('auth_access');
-      if (!accessToken) {
-        Swal.fire({
-          title: "Authentication Required",
-          text: "Please log in to submit a property",
-          icon: "warning",
-        });
-
-        window.location.assign('/login');
-        return;
-      }
-
-
+      // Create FormData for submission
       const formData = new FormData();
       
-
+      // Append form data
       formData.append('name', data.name);
       formData.append('email', data.email);
       formData.append('phone', data.phone);
@@ -83,7 +67,7 @@ const SubmitPropertyForm: React.FC = () => {
       formData.append('property_brief', data.property_brief);
       formData.append('confirm_accuracy', data.confirm_accuracy.toString());
 
-
+      // Append files
       if (files.property_photo) {
         formData.append('property_photo', files.property_photo);
       }
@@ -93,7 +77,7 @@ const SubmitPropertyForm: React.FC = () => {
       }
 
       // Log form data for debugging
-      console.log("--- Form Submission Data ---");
+      console.log("--- Property Submission Data (No Login Required) ---");
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           console.log(key, 'File:', value.name);
@@ -102,13 +86,10 @@ const SubmitPropertyForm: React.FC = () => {
         }
       }
 
-      // Make API call
+      // Make API call WITHOUT authorization header
       const response = await fetch(`${API_BASE}/list_vila/list/`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-      
-        },
+        // REMOVED: Authorization header since login is not required
         body: formData,
       });
 
@@ -133,6 +114,18 @@ const SubmitPropertyForm: React.FC = () => {
           if (errorData.property_document) {
             errors.push(`Document: ${errorData.property_document[0]}`);
           }
+          if (errorData.name) {
+            errors.push(`Name: ${errorData.name[0]}`);
+          }
+          if (errorData.email) {
+            errors.push(`Email: ${errorData.email[0]}`);
+          }
+          if (errorData.phone) {
+            errors.push(`Phone: ${errorData.phone[0]}`);
+          }
+          if (errorData.property_name) {
+            errors.push(`Property Name: ${errorData.property_name[0]}`);
+          }
           if (errors.length > 0) {
             errorMessage = errors.join(', ');
           } else {
@@ -154,9 +147,17 @@ const SubmitPropertyForm: React.FC = () => {
       // Show success message
       Swal.fire({
         title: "Success!",
-        text: "Your property has been submitted successfully. Our team will review it and contact you soon.",
+        html: `
+          <div class="text-center">
+          
+            <h3 class="text-xl font-semibold mb-2">Property Submitted Successfully!</h3>
+            
+         
+          </div>
+        `,
         icon: "success",
-        confirmButtonText: "OK",
+        confirmButtonText: "Done",
+        confirmButtonColor: "#0d9488",
       });
 
       // Reset form
@@ -166,19 +167,39 @@ const SubmitPropertyForm: React.FC = () => {
       setDocumentPreview(null);
       
       // Show toast notification
-      toast.success('Property submitted successfully!');
+      toast.success('Property submitted successfully!', {
+        duration: 5000,
+        position: 'top-right',
+      });
 
     } catch (error: any) {
       console.error('Submission error:', error);
       
       Swal.fire({
         title: "Submission Failed",
-        text: error.message || "An error occurred while submitting your property. Please try again.",
+        html: `
+          <div class="text-center">
+            <div class="mb-4 text-red-500">
+              <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Submission Error</h3>
+            <p class="text-gray-600">${error.message || "An error occurred while submitting your property. Please try again."}</p>
+            <div class="mt-3 p-2 bg-red-50 rounded">
+              <p class="text-xs text-red-700">If the issue persists, please contact support.</p>
+            </div>
+          </div>
+        `,
         icon: "error",
-        confirmButtonText: "OK",
+        confirmButtonText: "Try Again",
+        confirmButtonColor: "#dc2626",
       });
       
-      toast.error(error.message || 'Failed to submit property');
+      toast.error(error.message || 'Failed to submit property', {
+        duration: 5000,
+        position: 'top-right',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +226,7 @@ const SubmitPropertyForm: React.FC = () => {
       const file = selectedFiles[0];
       setFiles(prev => ({ ...prev, property_document: file })); 
       
-   
+      // Create preview for images
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -282,25 +303,32 @@ const SubmitPropertyForm: React.FC = () => {
     <div className="max-w-4xl mx-auto mt-14 p-8 bg-white shadow-2xl rounded-xl">
       <header className="mb-8">
         <h2 className="text-3xl font-semibold text-gray-800">Submit Your Property</h2>
-        <p className="text-gray-500 mt-2">Kindly fill out the below form and a member of our team will review and be in touch accordingly.</p>
+        <p className="text-gray-500 mt-2">
+          Kindly fill out the below form and a member of our team will review and be in touch accordingly.
+        
+        </p>
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <div className="flex flex-col">
-            <label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1">
+              Name <span className="text-red-500">*</span>
+            </label>
             <input
               {...register("name", { required: "Name is required" })}
               type="text"
               id="name"
-              placeholder="e.g. Juyel"
+              placeholder="e.g. John Doe"
               className="p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
             />
             {errors.name && <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>}
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               {...register("email", { 
                 required: "Email is required",
@@ -311,14 +339,16 @@ const SubmitPropertyForm: React.FC = () => {
               })}
               type="email"
               id="email"
-              placeholder="e.g. ashik@example.com"
+              placeholder="e.g. example@gmail.com"
               className="p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
             />
             {errors.email && <span className="text-red-500 text-xs mt-1">{errors.email.message}</span>}
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-1">
+              Phone <span className="text-red-500">*</span>
+            </label>
             <input
               {...register("phone", { 
                 required: "Phone number is required",
@@ -336,7 +366,9 @@ const SubmitPropertyForm: React.FC = () => {
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="property_name" className="text-sm font-medium text-gray-700 mb-1">Property Name</label>
+            <label htmlFor="property_name" className="text-sm font-medium text-gray-700 mb-1">
+              Property Name <span className="text-red-500">*</span>
+            </label>
             <input
               {...register("property_name", { required: "Property Name is required" })}
               type="text"
@@ -348,7 +380,7 @@ const SubmitPropertyForm: React.FC = () => {
           </div>
         </div>
 
-
+        {/* Property Photo Upload */}
         <div className="mb-6">
           <label className="text-sm font-medium text-gray-700 block mb-1">
             Property Photo <span className="text-red-500">*</span> (Required)
@@ -396,7 +428,7 @@ const SubmitPropertyForm: React.FC = () => {
             onDragLeave={(e) => handleDragLeave(e, setIsPhotoDragActive)}
             onDrop={(e) => handleDrop(e, 'uploadPhotos', setIsPhotoDragActive)}
           >
-            <img className='' src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760832355/Component_17_ejh4v8.png" alt="" />
+            <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760832355/Component_17_ejh4v8.png" alt="Upload icon" />
             <p className="text-sm text-gray-500 mt-2">
               {photoPreview ? 'Click to change photo' : 'Drop photo/video here or click to upload'}
             </p>
@@ -411,11 +443,11 @@ const SubmitPropertyForm: React.FC = () => {
             />
           </label>
           <p className="text-xs text-gray-500 mt-1">
-            <span className="text-red-500">*</span> This field is required by the API
+            <span className="text-red-500">*</span> This field is required
           </p>
         </div>
 
-      
+        {/* Property Document Upload (Optional) */}
         <div className="mb-6">
           <label className="text-sm font-medium text-gray-700 block mb-1">
             Upload Property Document (Optional)
@@ -465,7 +497,7 @@ const SubmitPropertyForm: React.FC = () => {
             onDragLeave={(e) => handleDragLeave(e, setIsDocumentDragActive)}
             onDrop={(e) => handleDrop(e, 'uploadDocument', setIsDocumentDragActive)}
           >
-            <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760832355/Component_17_ejh4v8.png" alt="" />
+            <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760832355/Component_17_ejh4v8.png" alt="Upload icon" />
             <p className="text-sm text-gray-500 mt-2">
               {documentPreview ? 'Click to change document' : 'Drop any file here or click to upload'}
             </p>
@@ -475,16 +507,15 @@ const SubmitPropertyForm: React.FC = () => {
               id="uploadDocument"
               name="uploadDocument"
               onChange={handleFileChange}
-            
               className="hidden"
             />
           </label>
           <p className="text-xs text-gray-500 mt-1">
-            Will be saved as <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">property_document</code> in API
+            Optional: Upload floor plans, property documents, or additional photos
           </p>
         </div>
 
-      
+        {/* Property Description */}
         <div className="mb-6">
           <label htmlFor="property_brief" className="text-sm font-medium text-gray-700 block mb-1">
             Property Brief Description <span className="text-red-500">*</span> (Required)
@@ -499,12 +530,12 @@ const SubmitPropertyForm: React.FC = () => {
             })}
             id="property_brief"
             rows={4}
-            placeholder="Describe your property (e.g., location, features, amenities, etc.)..."
+            placeholder="Describe your property (e.g., location, features, amenities, nearby attractions, etc.)..."
             className="p-3 border border-gray-300 rounded-lg w-full focus:ring-teal-500 focus:border-teal-500"
           ></textarea>
           {errors.property_brief && <span className="text-red-500 text-xs mt-1">{errors.property_brief.message}</span>}
           <p className="text-xs text-gray-500 mt-1">
-            <span className="text-red-500">*</span> This field is required by the API as "property_brief"
+            <span className="text-red-500">*</span> Provide details about your property to help us understand it better
           </p>
         </div>
 
@@ -518,14 +549,16 @@ const SubmitPropertyForm: React.FC = () => {
               type="checkbox"
               className="form-checkbox h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
             />
-            <span className="ml-2">I confirm the information is accurate.</span>
+            <span className="ml-2">
+              I confirm the information provided is accurate and I agree to the terms of service.
+            </span>
           </label>
           {errors.confirm_accuracy && <span className="text-red-500 text-xs mt-1">{errors.confirm_accuracy.message}</span>}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`flex items-center justify-center w-full md:w-auto px-6 py-3 font-semibold rounded-lg shadow-md transition duration-150 ease-in-out focus:outline-none focus:ring-4 focus:ring-teal-500 focus:ring-opacity-50 ${
+            className={`flex items-center justify-center w-full md:w-auto px-8 py-3 font-semibold rounded-lg shadow-md transition duration-150 ease-in-out focus:outline-none focus:ring-4 focus:ring-teal-500 focus:ring-opacity-50 ${
               isSubmitting 
                 ? 'bg-gray-400 cursor-not-allowed text-gray-700' 
                 : 'bg-teal-600 hover:bg-teal-700 text-white'
@@ -549,6 +582,8 @@ const SubmitPropertyForm: React.FC = () => {
               </>
             )}
           </button>
+
+       
         </div>
       </form>
     </div>
