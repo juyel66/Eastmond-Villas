@@ -555,7 +555,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 {property.title}
               </h3>
               <p className="text-sm sm:text-base mt-2 text-gray-500 flex items-center font-medium">
-                <img src={mapImg} alt="location" className="w-5 h-5 mr-1" />{" "}
+                <img src={mapImg} alt="location" className="w-5 h-5 opacity-84 mr-1" />{" "}
                 {property.location}
               </p>
 
