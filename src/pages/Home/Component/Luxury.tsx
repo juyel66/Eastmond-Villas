@@ -97,7 +97,7 @@ const LuxuryFeaturesGrid = () => {
                   
                   <FeatureItem
                     title="Seamless Booking"
-                    description="A secure, transparent, and hassle-free process from inquiry to check-in."
+                    description="A secure, transparent, and hassle-free process from Enquire to check-in."
                   />
 
                
