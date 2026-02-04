@@ -85,7 +85,7 @@ const handleLogout = useCallback(async () => {
         icon: 'success',
         title: 'Logged out successfully',
         timer: 1500,
-        showConfirmButton: false,
+        showConfirmButton: true,
       });
     } finally {
       navigate('/login');

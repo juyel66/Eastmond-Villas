@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, MapPin, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
 import Swal from 'sweetalert2';
 
@@ -22,7 +22,7 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   pool: number;
-  status: 'Published' | 'draft' | 'pending_review' | 'pending';
+  status: string; // Accept any status
   imageUrl: string;
   description?: string | null;
   calendar_link?: string | null;
@@ -94,7 +94,7 @@ const ImageGalleryModal: React.FC<ImageGalleryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center  bg-opacity-75 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-75 p-4">
       <div className="absolute inset-0 bg-black z-[-1] opacity-50" />
       
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
@@ -145,8 +145,6 @@ const ImageGalleryModal: React.FC<ImageGalleryModalProps> = ({
                 
                 {/* Image Info */}
                 <div className="p-3 bg-white">
-                  
-                  
                   <div className="mt-2">
                     <a
                       href={img.image}
@@ -189,7 +187,7 @@ const ImageGalleryModal: React.FC<ImageGalleryModalProps> = ({
               {isDownloading ? (
                 <button
                   onClick={handleCancel}
-                  className="px-6 py-2.5 border cursor-pointer  font-medium rounded-lg  transition"
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
                 >
                   Cancel
                 </button>
@@ -340,25 +338,97 @@ const PropertyCard: React.FC<{
 
   const [isLoadingImages, setIsLoadingImages] = useState(false);
 
-  const formatPrice = (price: number) => {
+  const formatPriceDisplay = (price: number) => {
     return price.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   };
 
-  const StatusBadge = ({ status }: { status: Property['status'] }) => {
+  const StatusBadge = ({ status }: { status: string }) => {
+    // Format status for display - handle any status value
+    const formatStatus = (status: string): string => {
+      if (!status || typeof status !== 'string') return 'Unknown';
+      
+      // Replace underscores with spaces
+      let formatted = status.replace(/_/g, ' ');
+      
+      // Capitalize first letter of each word
+      formatted = formatted
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      
+      return formatted;
+    };
+
+    const formattedStatus = formatStatus(status);
+    
+    // Determine color based on status - default to gray if unknown
     let bgColor = 'bg-gray-100 text-gray-700';
-    if (status.toLocaleLowerCase() === 'published')
+    
+    // Check for publish statuses
+    if (status.toLowerCase().includes('publish')) {
       bgColor = 'bg-green-100 text-green-700';
-    else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
-    else if (status === 'pending_review' || status === 'pending')
+    } 
+    // Check for draft statuses
+    else if (status.toLowerCase().includes('draft')) {
+      bgColor = 'bg-yellow-100 text-yellow-700';
+    }
+    // Check for pending statuses
+    else if (status.toLowerCase().includes('pending')) {
       bgColor = 'bg-blue-100 text-blue-700';
+    }
+    // Check for review statuses
+    else if (status.toLowerCase().includes('review')) {
+      bgColor = 'bg-purple-100 text-purple-700';
+    }
+    // Check for approved statuses
+    else if (status.toLowerCase().includes('approved')) {
+      bgColor = 'bg-teal-100 text-teal-700';
+    }
+    // Check for rejected/denied statuses
+    else if (status.toLowerCase().includes('rejected') || status.toLowerCase().includes('denied')) {
+      bgColor = 'bg-red-100 text-red-700';
+    }
+    // Check for sold/rented/leased statuses
+    else if (status.toLowerCase().includes('sold') || 
+             status.toLowerCase().includes('rented') || 
+             status.toLowerCase().includes('leased')) {
+      bgColor = 'bg-indigo-100 text-indigo-700';
+    }
+    // Check for active statuses
+    else if (status.toLowerCase().includes('active')) {
+      bgColor = 'bg-emerald-100 text-emerald-700';
+    }
+    // Check for inactive statuses
+    else if (status.toLowerCase().includes('inactive')) {
+      bgColor = 'bg-slate-100 text-slate-700';
+    }
+    // Check for available statuses
+    else if (status.toLowerCase().includes('available')) {
+      bgColor = 'bg-green-100 text-green-700';
+    }
+    // Check for unavailable statuses
+    else if (status.toLowerCase().includes('unavailable')) {
+      bgColor = 'bg-orange-100 text-orange-700';
+    }
+    // Check for closed statuses
+    else if (status.toLowerCase().includes('closed')) {
+      bgColor = 'bg-gray-100 text-gray-700';
+    }
+    // Default for any other status
+    else {
+      bgColor = 'bg-gray-100 text-gray-700';
+    }
+
     return (
       <span
         className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
+        title={`Status: ${formattedStatus}`}
       >
-        {status.replace('_', ' ')}
+        {formattedStatus}
       </span>
     );
   };
@@ -427,9 +497,7 @@ flex flex-col md:flex-row gap-5 mb-6 w-full"
             </h2>
 
             <div className="flex justify-center md:justify-end">
-              <StatusBadge
-                status={status.charAt(0).toUpperCase() + status.slice(1)}
-              />
+              <StatusBadge status={status} />
             </div>
           </div>
 
@@ -444,7 +512,7 @@ flex flex-col md:flex-row gap-5 mb-6 w-full"
             <div>
               <p className="text-gray-500 text-xs uppercase">Price</p>
               <p className="font-semibold text-gray-800">
-                ${formatPrice(price)}
+                ${formatPriceDisplay(price)}
               </p>
             </div>
 
@@ -459,7 +527,7 @@ flex flex-col md:flex-row gap-5 mb-6 w-full"
             </div>
 
             <div>
-              <p className="text-gray-500 text-xs uppercase">{pool ==1 ? "Pool" : "Pools"}</p>
+              <p className="text-gray-500 text-xs uppercase">{pool == 1 ? "Pool" : "Pools"}</p>
               <p className="font-semibold text-gray-800">{pool}</p>
             </div>
           </div>
@@ -655,6 +723,90 @@ const Pagination: React.FC<PaginationProps> = ({
   );
 };
 
+// --- AUTHENTICATION HELPER FUNCTIONS ---
+const getAuthToken = (): string | null => {
+  try {
+    // Try multiple possible token storage locations with priority order
+    const tokenSources = [
+      localStorage.getItem('auth_access'),
+      localStorage.getItem('access_token'),
+      localStorage.getItem('token'),
+      sessionStorage.getItem('auth_access'),
+      sessionStorage.getItem('access_token'),
+      sessionStorage.getItem('token'),
+    ];
+    
+    // Return the first valid token found
+    for (const token of tokenSources) {
+      if (token && token.trim() !== '' && token !== 'null' && token !== 'undefined') {
+        return token;
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    console.warn('Failed to access storage:', e);
+    return null;
+  }
+};
+
+// Simpler token validation - just check if token exists and is valid format
+const isValidTokenFormat = (token: string | null): boolean => {
+  if (!token) return false;
+  
+  // Check if token is a JWT format (has at least 2 dots)
+  const tokenParts = token.split('.');
+  if (tokenParts.length >= 2) {
+    return true;
+  }
+  
+  // Check if token is a simple string token
+  return token.length > 10; // Assume valid tokens are longer than 10 chars
+};
+
+// Handle authentication errors gracefully without immediate logout
+const handleAuthError = (error: any, showNotification: boolean = true) => {
+  console.warn('Authentication error:', error);
+  
+  if (showNotification) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Authentication Issue',
+      text: 'There was an issue with authentication. Please try again or contact support.',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  }
+  
+  // Don't logout immediately - let the user continue with limited functionality
+  return false;
+};
+
+// Get headers with token, but don't validate aggressively
+const getAuthHeaders = (): HeadersInit => {
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const token = getAuthToken();
+    
+    if (token && isValidTokenFormat(token)) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn('No valid token found, making unauthenticated request');
+      // Continue without token - backend will handle authentication
+    }
+    
+  } catch (error) {
+    console.warn('Error getting auth headers:', error);
+    // Continue without auth headers
+  }
+
+  return headers;
+};
+
 // --- MAIN COMPONENT (Sales) ---
 type Props = {
   agentId?: number | null;
@@ -663,11 +815,13 @@ type Props = {
 const PropertiesSales: React.FC<Props> = ({
   agentId: propAgentId = null,
 }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastFetchAt, setLastFetchAt] = useState<number | null>(null);
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
 
   // State for image gallery modal
   const [showImageGallery, setShowImageGallery] = useState(false);
@@ -682,28 +836,37 @@ const PropertiesSales: React.FC<Props> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
+  // Check initial authentication
+  useEffect(() => {
+    const checkInitialAuth = () => {
+      const token = getAuthToken();
+      const isValid = token && isValidTokenFormat(token);
+      
+      if (!isValid) {
+        console.log('No valid token found on initial load');
+        // Don't redirect immediately - let the page load and show appropriate message
+      }
+      
+      setAuthChecked(true);
+    };
+    
+    checkInitialAuth();
+  }, []);
+
   // Function to fetch images for a property
   const fetchPropertyImages = async (propertyId: number, title: string): Promise<PropertyImage[]> => {
     try {
       const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(propertyId)}/`;
       
-      const headers: HeadersInit = {
-        Accept: 'application/json',
-      };
-
-      try {
-        const token =
-          localStorage.getItem('auth_access') ||
-          localStorage.getItem('access_token') ||
-          localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      } catch (e) {
-        console.warn('Token error:', e);
-      }
+      const headers = getAuthHeaders();
 
       const res = await fetch(url, { headers });
+      
+      if (res.status === 401 || res.status === 403) {
+        handleAuthError(new Error('Unauthorized access to property images'));
+        throw new Error('Unauthorized access to property images');
+      }
+      
       if (!res.ok) throw new Error(`Failed to fetch property details (status ${res.status}).`);
       
       const propertyData = await res.json();
@@ -985,26 +1148,28 @@ const PropertiesSales: React.FC<Props> = ({
 
       console.log('[Sales] Fetching from URL:', url);
 
-      // Add authorization headers
-      const headers: HeadersInit = {
-        Accept: 'application/json',
-      };
-
-      try {
-        const token =
-          localStorage.getItem('auth_access') ||
-          localStorage.getItem('access_token') ||
-          localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      } catch (e) {
-        console.warn('Token error:', e);
-      }
+      // Get authentication headers (will include token if available)
+      const headers = getAuthHeaders();
 
       const res = await fetch(url, {
         headers,
       });
+
+      // Handle authentication errors gracefully
+      if (res.status === 401 || res.status === 403) {
+        handleAuthError(new Error(`Unauthorized: ${res.status}`), false);
+        
+        // If it's the first page load, set an appropriate error message
+        if (page === 1) {
+          setLoadError('Please login to access your sales properties.');
+          setProperties([]);
+          setPagination(null);
+          setLoading(false);
+          return;
+        }
+        
+        throw new Error('Authentication required');
+      }
 
       if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -1053,13 +1218,9 @@ const PropertiesSales: React.FC<Props> = ({
         // Address
         const address = p.address || p.city || 'No address provided';
 
-        // Status normalization
-        let statusVal: Property['status'] = 'draft';
-        const rawStatus = (p.status || '').toLowerCase();
-        if (rawStatus === 'published') statusVal = 'Published';
-        else if (rawStatus === 'pending_review') statusVal = 'pending_review';
-        else if (rawStatus === 'pending') statusVal = 'pending';
-        else statusVal = 'draft';
+        // Status - accept ANY status value as is
+        const statusVal = p.status || 'unknown';
+        // No normalization - keep original status
 
         // Listing type
         const listingTypeRaw = String(p.listing_type || '').toLowerCase();
@@ -1078,7 +1239,7 @@ const PropertiesSales: React.FC<Props> = ({
           bedrooms: bedroomsVal,
           bathrooms: bathroomsVal,
           pool: poolVal,
-          status: statusVal,
+          status: statusVal, // Keep original status
           imageUrl: img,
           description: p.description || null,
           calendar_link: p.calendar_link || null,
@@ -1095,12 +1256,21 @@ const PropertiesSales: React.FC<Props> = ({
       setPagination(paginationInfo);
       setCurrentPage(page);
       setLastFetchAt(Date.now());
+      setLoadError(null); // Clear any previous errors
     } catch (err: any) {
       console.error('Failed to load properties', err);
       if (opts?.ignoreResults?.current) return;
       setProperties([]);
       setPagination(null);
-      setLoadError(err?.message ?? 'Failed to load properties.');
+      
+      // Don't show aggressive logout for network errors
+      if (err.message.includes('Network') || err.message.includes('Failed to fetch')) {
+        setLoadError('Network error. Please check your connection and try again.');
+      } else if (err.message.includes('Authentication')) {
+        setLoadError('Authentication required. Please login to continue.');
+      } else {
+        setLoadError(err?.message ?? 'Failed to load properties.');
+      }
     } finally {
       if (!opts?.ignoreResults?.current) {
         setLoading(false);
