@@ -626,11 +626,12 @@ const AdminDashboard = () => {
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm"
+            className="bg-white cursor-pointer text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm"
           >
             <img
               src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760922664/Icon_36_ptz5ii.png"
               alt="Create Property"
+              className="cursor-pointer"
             />
             Create Property
           </button>
