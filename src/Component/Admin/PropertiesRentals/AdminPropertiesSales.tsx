@@ -42,7 +42,7 @@ const ToastNotification: React.FC<{
   );
 };
 
-/* ---------- normalize payload helper ---------- */
+
 function toArray(payload: any): any[] {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
@@ -61,7 +61,7 @@ const availableStatuses = [
 ];
 
 
-/* ---------- helper to decide if property is a "sale" listing ---------- */
+
 function isSaleProperty(p: any): boolean {
   if (!p) return false;
   const val =
