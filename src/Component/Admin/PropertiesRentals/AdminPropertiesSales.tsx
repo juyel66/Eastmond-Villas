@@ -57,6 +57,7 @@ const availableStatuses = [
   { label: "Pending Review", value: "pending_review" },
   { label: "Draft", value: "draft" },
   { label: "Archived", value: "archived" },
+  { label: "Sold", value: "sold" },
 ];
 
 
