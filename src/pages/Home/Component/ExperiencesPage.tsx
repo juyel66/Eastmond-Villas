@@ -40,7 +40,7 @@ const ExperiencesPage = () => {
           exploring hidden gems. */}
 
 
-           Our Concierge team crafts a lifestyle of ease, access, and distinction — tailored exclusively to you.
+           They crafts a lifestyle of ease, access, and distinction — tailored exclusively to you.
         </p>
 
         {/* Button */}
