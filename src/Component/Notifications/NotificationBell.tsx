@@ -167,7 +167,8 @@ const NotificationBell: React.FC = () => {
 
                   {/* Show message if present */}
                   <div className="text-xs text-gray-700 truncate">
-                    {n.data?.message }
+                    {n.data?.message}
+                    {/* {n.data?.message || n.body} */}
                   </div>
 
                   <div className="text-[11px] text-gray-400 mt-1">
