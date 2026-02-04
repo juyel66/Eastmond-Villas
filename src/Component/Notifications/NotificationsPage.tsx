@@ -76,27 +76,15 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  // Filter out summary notifications (type: 'unseen_notifications')
-  const realNotifications = useMemo(
-    () => notifications.filter(item => item.type !== 'unseen_notifications'),
-    [notifications]
-  );
-
-  // List sorted newest first (if not already) - only real notifications
+  // List sorted newest first (if not already)
   const sorted = useMemo(
     () =>
-      [...realNotifications].sort((a, b) => {
+      [...notifications].sort((a, b) => {
         const aa = a.created_at ?? "";
         const bb = b.created_at ?? "";
         return bb.localeCompare(aa);
       }),
-    [realNotifications]
-  );
-
-  // Calculate real unread count from real notifications
-  const realUnreadCount = useMemo(
-    () => sorted.filter(n => !n.read).length,
-    [sorted]
+    [notifications]
   );
 
   return (
@@ -105,16 +93,16 @@ const NotificationsPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold">Notifications</h1>
           <p className="text-sm text-gray-500">
-            {realUnreadCount} unread
+            {unreadCount} unread
           </p>
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={handleMarkAllRead}
-            disabled={realUnreadCount === 0 || markingAll}
+            disabled={unreadCount === 0 || markingAll}
             className={`px-4 py-2 border rounded-md text-sm font-medium ${
-              realUnreadCount === 0 || markingAll
+              unreadCount === 0 || markingAll
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
             }`}
@@ -181,6 +169,7 @@ const NotificationsPage: React.FC = () => {
 
                     {message && (
                       <div className="text-sm text-gray-700 mt-3 p-2 bg-gray-50 rounded">
+                        
                         {message}
                       </div>
                     )}
