@@ -10,6 +10,7 @@ import { LogOut } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/features/Auth/authSlice";
 import { useCallback } from "react";
+import Swal from "sweetalert2";
 
 
 
@@ -64,13 +65,34 @@ const AppSidebar = () => {
   const showAgent = role === "agent";
   const showCustomer = role === "customer";
 
-  const handleLogout = useCallback(async () => {
+const handleLogout = useCallback(async () => {
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you really want to log out?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, log out',
+    cancelButtonText: 'Cancel',
+  });
+
+  if (result.isConfirmed) {
     try {
       await dispatch(logout());
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Logged out successfully',
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } finally {
-      navigate("/login");
+      navigate('/login');
     }
-  }, [dispatch, navigate]);
+  }
+}, [dispatch, navigate]);
+
 
   const renderMenu = (items) =>
     items.map((item) => (
