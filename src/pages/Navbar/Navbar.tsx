@@ -13,6 +13,7 @@ import { IoMdArrowDropdown } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../features/Auth/authSlice"; 
 import type { AppDispatch } from "@/store";
+import Swal from "sweetalert2"; // Add this import
 
 
 const Navbar = () => {
@@ -40,13 +41,44 @@ const Navbar = () => {
   const handleLinkClick = () => setIsMobileMenuOpen(false);
 
   const handleLogout = async () => {
-    try {
-      await dispatch(logout());
-      navigate("/");
-    } catch (err) {
-      console.error("Logout error:", err);
-      navigate("/");
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: 'Confirm Logout',
+      text: 'Are you sure you want to logout from your account?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, Logout',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+    });
+
+    // Only logout if user confirms
+    if (result.isConfirmed) {
+      try {
+        await dispatch(logout());
+        // Show success message
+        Swal.fire({
+          title: 'Logged Out!',
+          text: 'You have been successfully logged out.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        navigate("/");
+      } catch (err) {
+        console.error("Logout error:", err);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Failed to logout. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#00A597',
+        });
+        navigate("/");
+      }
     }
+    // If user cancels, do nothing
   };
 
   const links = (
