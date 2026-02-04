@@ -395,12 +395,18 @@ const Login: React.FC = () => {
             </div>
 
             {/* Error */}
-            {errorMsg && (
-              <p className="text-sm text-red-600 font-medium">{errorMsg}</p>
-            )}
-            {auth.error && !errorMsg && typeof auth.error === "string" && (
-              <p className="text-sm text-red-600 font-medium">{auth.error}</p>
-            )}
+          {errorMsg && (
+  <p className="text-sm text-red-600 opacity-80 font-medium">
+    Login failed. Please check your email and password and try again.
+  </p>
+)}
+
+{auth.error && !errorMsg && typeof auth.error === "string" && (
+  <p className="text-sm text-red-600 font-medium">
+    {auth.error}
+  </p>
+)}
+
 
             {/* Submit */}
             <button
