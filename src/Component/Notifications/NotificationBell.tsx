@@ -19,12 +19,12 @@ const NotificationBell: React.FC = () => {
     (s: RootState) => s.notifications.items
   );
   const [open, setOpen] = useState(false);
-  const [showAll, setShowAll] = useState(false); // default: show only unseen
+  const [showAll, setShowAll] = useState(false); 
   const ref = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Get user role from Redux store
+
   const userRole = useSelector((s: RootState) => s.auth?.user?.role || '');
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const NotificationBell: React.FC = () => {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // when opening dropdown, default to unseen-only
+
   useEffect(() => {
     if (open) setShowAll(false);
   }, [open]);
@@ -50,7 +50,6 @@ const NotificationBell: React.FC = () => {
     }
   };
 
-  // preview: unseen by default, else all
   const previewItems = (
     showAll
       ? allItems
@@ -59,14 +58,13 @@ const NotificationBell: React.FC = () => {
 
   const onClickNotif = (notif: Notification) => {
     if (!notif.read) {
-      // global optimistic: update store immediately
+
       dispatch(markAsReadLocal(notif.id));
     }
 
-    // dispatch async thunk to mark read on server
+
     dispatch(markAsReadAsync({ id: notif.id }) as any);
 
-    // keep behavior: close dropdown and navigate if payload has url
     setOpen(false);
 
     const url =
@@ -74,7 +72,7 @@ const NotificationBell: React.FC = () => {
     if (url) navigate(url);
   };
 
-  // Determine notification page URL based on user role
+ 
   const getNotificationPageUrl = () => {
     const basePath = "/dashboard";
     
@@ -88,18 +86,18 @@ const NotificationBell: React.FC = () => {
       case 'user':
         return `${basePath}/user/notifications`;
       default:
-        // Default to admin if role is not recognized or empty
+
         return `${basePath}/notifications`;
     }
   };
 
-  // Get view all URL with filter parameter
+
   const getViewAllUrl = () => {
     const baseUrl = getNotificationPageUrl();
     return showAll ? baseUrl : `${baseUrl}?filter=unseen`;
   };
 
-  // Get open notifications page URL
+
   const getOpenNotificationsUrl = () => {
     return getNotificationPageUrl();
   };
@@ -169,7 +167,7 @@ const NotificationBell: React.FC = () => {
 
                   {/* Show message if present */}
                   <div className="text-xs text-gray-700 truncate">
-                    {n.data?.message || n.body}
+                    {n.data?.message }
                   </div>
 
                   <div className="text-[11px] text-gray-400 mt-1">
