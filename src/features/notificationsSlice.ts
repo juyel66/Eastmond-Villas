@@ -230,22 +230,52 @@ const slice = createSlice({
   initialState,
   reducers: {
     addNotification(state, action: PayloadAction<Notification>) {
+      // FIX: Prevent adding 'unseen_notifications' type notifications
+      // These are not real notifications, just count updates
+      if (action.payload.type === 'unseen_notifications') {
+        // We only update unreadCount from data if available
+        if (action.payload.data?.count !== undefined) {
+          state.unreadCount = action.payload.data.count;
+        }
+        // DO NOT add to items array - return early
+        return;
+      }
+      
       const exists = state.items.find((i) => i.id === action.payload.id);
       if (!exists) {
         state.items.unshift(action.payload);
+        // Update unreadCount if new notification is unread
+        if (!action.payload.read) {
+          state.unreadCount += 1;
+        }
       } else {
+        // Check if read status is changing
+        const wasUnread = !exists.read;
+        const isUnread = !action.payload.read;
+        
         Object.assign(exists, action.payload);
+        
+        // Update unreadCount if read status changed
+        if (wasUnread && !isUnread) {
+          // Became read - decrement count
+          state.unreadCount = Math.max(0, state.unreadCount - 1);
+        } else if (!wasUnread && isUnread) {
+          // Became unread - increment count
+          state.unreadCount += 1;
+        }
       }
-      state.unreadCount = state.items.filter((i) => !i.read).length;
     },
 
     setUnreadCount(state, action: PayloadAction<number>) {
-      state.unreadCount = action.payload;
+      state.unreadCount = Math.max(0, action.payload);
     },
 
     removeNotification(state, action: PayloadAction<string>) {
+      const item = state.items.find((i) => i.id === action.payload);
+      if (item && !item.read) {
+        state.unreadCount = Math.max(0, state.unreadCount - 1);
+      }
       state.items = state.items.filter((i) => i.id !== action.payload);
-      state.unreadCount = state.items.filter((i) => !i.read).length;
     },
 
     // local synchronous mark-as-read (useful for optimistic updates)
@@ -290,8 +320,8 @@ const slice = createSlice({
       const item = state.items.find((i) => i.id === id);
       if (item && !item.read) {
         item.read = true;
+        state.unreadCount = Math.max(0, state.unreadCount - 1);
       }
-      state.unreadCount = state.items.filter((i) => !i.read).length;
     });
 
     builder.addCase(markAllAsReadAsync.fulfilled, (state) => {
