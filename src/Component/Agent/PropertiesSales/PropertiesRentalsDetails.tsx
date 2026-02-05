@@ -68,15 +68,21 @@ interface Property {
   }>;
 
   _raw?: any;
+  
+  // Thumbnail field
+  thumbnail_url?: string;
 }
 
 // Image interface
 interface PropertyImage {
   id?: number;
-  image: string;
+  image: string; // Original image URL
+  thumbnail?: string; // Thumbnail image URL
   alt_text?: string;
   is_main?: boolean;
+  is_thumbnail?: boolean;
   source?: string;
+  thumbnail_url?: string;
 }
 
 // Video interface
@@ -112,7 +118,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center  bg-opacity-75 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-75 p-4">
       <div className="absolute inset-0 bg-black z-[-1] opacity-50" />
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
         {/* Header */}
@@ -121,9 +127,6 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
             <h2 className="text-2xl font-bold text-gray-900">
               {propertyTitle} - All Images ({images.length})
             </h2>
-            <p className="text-gray-600 mt-1">
-              Preview all images before downloading
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -151,13 +154,13 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((img, index) => (
                 <div 
-                  key={index} 
+                  key={img.id || index} 
                   className="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:shadow-md transition-shadow duration-200"
                 >
-                  {/* Image */}
+                  {/* Display thumbnail in modal */}
                   <div className="aspect-square relative">
                     <img
-                      src={img.image}
+                      src={img.thumbnail || img.image} // Show thumbnail if available, otherwise fallback to original
                       alt={img.alt_text || `Property image ${index + 1}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -174,18 +177,15 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                   
                   {/* Image Info */}
                   <div className="p-3 bg-white">
-                   
-                  
                     <div className="mt-2 flex justify-between items-center">
                       <a
-                        href={img.image}
+                        href={img.image} // Always link to original image
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-teal-600 hover:text-teal-800 font-medium"
                       >
                         View Full
                       </a>
-                    
                     </div>
                   </div>
                 </div>
@@ -221,9 +221,8 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-gray-700">
-                  <strong>Total images:</strong> {images.length}
+                  <strong>Total Images:</strong> {images.length}
                 </p>
-              
               </div>
               <div className="flex gap-3">
                 <button
@@ -247,7 +246,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                      Download All Images
+                      Download All Images ({images.length})
                     </>
                   )}
                 </button>
@@ -417,6 +416,224 @@ const VideoDownloadProgress: FC<VideoDownloadProgressProps> = ({
   );
 };
 
+// Status badge component that shows any status properly
+const StatusBadge: FC<{ status: string }> = ({ status }) => {
+  // Format status for display
+  const formatStatus = (status: string): string => {
+    if (!status || typeof status !== 'string') return 'Unknown';
+    
+    // Replace underscores with spaces and capitalize
+    return status
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const formattedStatus = formatStatus(status);
+  
+  // Determine color based on status - default to professional colors
+  let bgColor = 'bg-gray-100 text-gray-700';
+  
+  // Check for publish/published statuses
+  if (status.toLowerCase().includes('publish')) {
+    bgColor = 'bg-green-100 text-green-700';
+  } 
+  // Check for draft statuses
+  else if (status.toLowerCase().includes('draft')) {
+    bgColor = 'bg-yellow-100 text-yellow-700';
+  }
+  // Check for pending statuses
+  else if (status.toLowerCase().includes('pending')) {
+    bgColor = 'bg-blue-100 text-blue-700';
+  }
+  // Check for review statuses
+  else if (status.toLowerCase().includes('review')) {
+    bgColor = 'bg-purple-100 text-purple-700';
+  }
+  // Check for approved statuses
+  else if (status.toLowerCase().includes('approved')) {
+    bgColor = 'bg-teal-100 text-teal-700';
+  }
+  // Check for rejected/denied statuses
+  else if (status.toLowerCase().includes('rejected') || status.toLowerCase().includes('denied')) {
+    bgColor = 'bg-red-100 text-red-700';
+  }
+  // Check for sold/rented/leased statuses
+  else if (status.toLowerCase().includes('sold') || 
+           status.toLowerCase().includes('rented') || 
+           status.toLowerCase().includes('leased') ||
+           status.toLowerCase().includes('closed')) {
+    bgColor = 'bg-indigo-100 text-indigo-700';
+  }
+  // Check for active statuses
+  else if (status.toLowerCase().includes('active')) {
+    bgColor = 'bg-emerald-100 text-emerald-700';
+  }
+  // Check for inactive statuses
+  else if (status.toLowerCase().includes('inactive')) {
+    bgColor = 'bg-slate-100 text-slate-700';
+  }
+  // Check for available statuses
+  else if (status.toLowerCase().includes('available')) {
+    bgColor = 'bg-green-100 text-green-700';
+  }
+  // Check for unavailable statuses
+  else if (status.toLowerCase().includes('unavailable')) {
+    bgColor = 'bg-orange-100 text-orange-700';
+  }
+  // Default for any other status - use published-like styling
+  else {
+    bgColor = 'bg-green-100 text-green-700'; // Default to published style
+  }
+
+  return (
+    <span
+      className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
+      title={`Status: ${formattedStatus}`}
+    >
+      {formattedStatus}
+    </span>
+  );
+};
+
+// Function to download original image (not thumbnail)
+const downloadImageWithAuth = async (imageUrl: string, index: number): Promise<{ fileName: string; blob: Blob } | null> => {
+  try {
+    console.log(`Downloading original image ${index + 1}: ${imageUrl}`);
+    
+    // Check if image URL is from a different domain (CORS issue)
+    const urlObj = new URL(imageUrl, window.location.origin);
+    const isCrossOrigin = urlObj.origin !== window.location.origin;
+    
+    if (isCrossOrigin) {
+      // For cross-origin requests, use canvas method
+      return await downloadImageViaCanvas(imageUrl, index);
+    } else {
+      // Same origin - use normal fetch with authorization
+      const headers = new Headers();
+      headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4ODc0OTMwLCJpYXQiOjE3NzAyMzQ5MzAsImp0aSI6IjgwZjAxNDU0Y2UxYzQ2Nzg4NThkNThlMDM1ZTc0NjAwIiwidXNlcl9pZCI6IjM3In0.vSjY1T-c14iNsTMy3obEvSFKtcMjWS7PCjlEhEyYERs');
+      
+      const response = await fetch(imageUrl, {
+        headers: headers,
+        mode: 'cors',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        console.warn(`Failed to fetch original image ${index + 1}: ${imageUrl} - Status: ${response.status}`);
+        return null;
+      }
+
+      const blob = await response.blob();
+      const extension = getImageExtension(blob, imageUrl);
+      const fileName = `property_image_${index + 1}.${extension}`;
+      console.log(`Original image ${index + 1} downloaded successfully: ${fileName} (${blob.size} bytes)`);
+      
+      return { fileName, blob };
+    }
+  } catch (error) {
+    console.error(`Error downloading original image ${index + 1}:`, error);
+    
+    // Fallback to canvas method
+    try {
+      return await downloadImageViaCanvas(imageUrl, index);
+    } catch (canvasError) {
+      console.error(`Canvas fallback also failed for image ${index + 1}:`, canvasError);
+      return null;
+    }
+  }
+};
+
+// Function to download image via canvas (CORS workaround)
+const downloadImageViaCanvas = (imageUrl: string, index: number): Promise<{ fileName: string; blob: Blob } | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    
+    // Set crossOrigin attribute to anonymous to try to avoid CORS issues
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      try {
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          console.warn(`Could not get canvas context for image ${index + 1}`);
+          resolve(null);
+          return;
+        }
+        
+        // Draw the image to canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert canvas to blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const extension = getImageExtension(blob, imageUrl);
+            const fileName = `property_image_${index + 1}.${extension}`;
+            console.log(`Image ${index + 1} downloaded via canvas: ${fileName} (${blob.size} bytes)`);
+            resolve({ fileName, blob });
+          } else {
+            console.warn(`Canvas toBlob failed for image ${index + 1}`);
+            resolve(null);
+          }
+        }, 'image/jpeg', 0.95); // Use JPEG format with 95% quality
+        
+      } catch (error) {
+        console.error(`Canvas processing error for image ${index + 1}:`, error);
+        resolve(null);
+      }
+    };
+    
+    img.onerror = () => {
+      console.error(`Image failed to load for canvas method: ${imageUrl}`);
+      resolve(null);
+    };
+    
+    // Start loading the image
+    img.src = imageUrl;
+    
+    // Set timeout in case image takes too long to load
+    setTimeout(() => {
+      if (!img.complete) {
+        console.warn(`Image load timeout for image ${index + 1}`);
+        resolve(null);
+      }
+    }, 10000); // 10 second timeout
+  });
+};
+
+// Helper function to get image extension
+const getImageExtension = (blob: Blob, imageUrl: string): string => {
+  // Try to get extension from blob type first
+  if (blob.type && blob.type !== 'application/octet-stream') {
+    const typeParts = blob.type.split('/');
+    if (typeParts.length > 1) {
+      const ext = typeParts[1].toLowerCase();
+      if (ext === 'jpeg') return 'jpg';
+      if (['jpg', 'png', 'gif', 'webp', 'avif', 'bmp'].includes(ext)) {
+        return ext;
+      }
+    }
+  }
+  
+  // Fallback: try to get extension from URL
+  const urlParts = imageUrl.split('.');
+  if (urlParts.length > 1) {
+    const possibleExt = urlParts[urlParts.length - 1].toLowerCase().split('?')[0].split('#')[0];
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp'].includes(possibleExt)) {
+      return possibleExt === 'jpeg' ? 'jpg' : possibleExt;
+    }
+  }
+  
+  // Default to jpg
+  return 'jpg';
+};
+
 const PropertiesRentalsDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
@@ -472,88 +689,157 @@ const PropertiesRentalsDetails: FC = () => {
   const fetchAllImages = async (propertyId: number, propertyData: any): Promise<PropertyImage[]> => {
     const images: PropertyImage[] = [];
     
+    // Check for main thumbnail image first
+    if (propertyData.thumbnail_url) {
+      images.push({
+        id: -1, // Special ID for main thumbnail
+        image: propertyData.thumbnail_url,
+        alt_text: `${propertyData.title || 'Property'} - Main Thumbnail`,
+        is_main: false,
+        is_thumbnail: true,
+        source: 'thumbnail_url',
+        thumbnail_url: propertyData.thumbnail_url,
+      });
+    }
+
     // Main image
     if (propertyData.main_image_url) {
       images.push({
+        id: -2, // Special ID for main image
         image: propertyData.main_image_url,
         alt_text: `${propertyData.title || 'Property'} - Main Image`,
         is_main: true,
-        source: 'main_image_url'
+        is_thumbnail: false,
+        source: 'main_image_url',
       });
     }
     
+    // Check for image_url
     if (propertyData.image_url && !images.some(img => img.image === propertyData.image_url)) {
       images.push({
+        id: -3, // Special ID for image_url
         image: propertyData.image_url,
         alt_text: `${propertyData.title || 'Property'} - Image`,
         is_main: false,
-        source: 'image_url'
+        is_thumbnail: false,
+        source: 'image_url',
       });
     }
     
+    // Check for imageUrl
     if (propertyData.imageUrl && !images.some(img => img.image === propertyData.imageUrl)) {
       images.push({
+        id: -4, // Special ID for imageUrl
         image: propertyData.imageUrl,
         alt_text: `${propertyData.title || 'Property'} - Image`,
         is_main: false,
-        source: 'imageUrl'
+        is_thumbnail: false,
+        source: 'imageUrl',
       });
     }
     
-    // Media images
+    // Process media_images array - KEY PART: ONLY DOWNLOAD ORIGINAL IMAGES FROM media_images
     if (Array.isArray(propertyData.media_images)) {
       propertyData.media_images.forEach((img: any, index: number) => {
-        if (img.image && !images.some(existing => existing.image === img.image)) {
+        if (img.image) {
+          // ONLY ADD THE ORIGINAL IMAGE FROM media_images (not thumbnails)
           images.push({
             id: img.id || index,
-            image: img.image,
+            image: img.image, // Original image URL from media_images
+            thumbnail: img.thumbnail, // Thumbnail URL if available (for display only)
             alt_text: img.alt_text || `${propertyData.title || 'Property'} - Image ${index + 1}`,
             is_main: false,
-            source: 'media_images'
+            is_thumbnail: false, // Mark as not thumbnail for download filtering
+            source: 'media_images',
+            thumbnail_url: img.thumbnail,
           });
         }
       });
     }
 
-    // Other potential image fields
+    // Helper function to process image fields
     const processImageField = (fieldName: string, value: any) => {
       if (Array.isArray(value)) {
         value.forEach((item: any, index: number) => {
           if (typeof item === 'string' && !images.some(img => img.image === item)) {
             images.push({
+              id: images.length + index,
               image: item,
               alt_text: `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
               is_main: false,
-              source: fieldName
+              is_thumbnail: false,
+              source: fieldName,
             });
           } else if (item && item.url && !images.some(img => img.image === item.url)) {
             images.push({
+              id: images.length + index,
               image: item.url,
               alt_text: item.alt_text || `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
               is_main: false,
-              source: fieldName
+              is_thumbnail: false,
+              source: fieldName,
             });
           }
         });
       } else if (typeof value === 'string' && !images.some(img => img.image === value)) {
         images.push({
+          id: images.length,
           image: value,
           alt_text: `${propertyData.title || 'Property'} - ${fieldName}`,
           is_main: false,
-          source: fieldName
+          is_thumbnail: false,
+          source: fieldName,
         });
       }
     };
 
-    // Check other image fields
-    const imageFields = ['thumbnail_url', 'banner_image', 'cover_image', 'gallery_images', 'photos', 'images'];
+    // Check common image fields
+    const imageFields = [
+      'thumbnail_url',
+      'banner_image',
+      'cover_image',
+      'gallery_images',
+      'photos',
+      'images',
+    ];
     imageFields.forEach(field => {
       if (propertyData[field]) {
         processImageField(field, propertyData[field]);
       }
     });
 
-    return images;
+    // Remove duplicates by image URL
+    const uniqueImages = images.filter((image, index, self) =>
+      index === self.findIndex((t) => t.image === image.image)
+    );
+
+    console.log('=== All Images from API ===');
+    console.log('Total images found:', uniqueImages.length);
+    console.log('Images with thumbnails:', uniqueImages.filter(img => img.thumbnail).length);
+    console.log('Original images for download:', uniqueImages.filter(img => !img.is_thumbnail).map(img => ({
+      id: img.id,
+      original: img.image,
+      source: img.source,
+      is_thumbnail: img.is_thumbnail
+    })));
+
+    return uniqueImages;
+  };
+
+  // Function to filter images for download - ONLY download original images
+  const getDownloadableImages = (images: PropertyImage[]): PropertyImage[] => {
+    // Filter out thumbnail images and only include original images
+    // Specifically exclude images that are marked as thumbnails or from thumbnail_url source
+    return images.filter(img => {
+      // Skip images that are explicitly marked as thumbnails
+      if (img.is_thumbnail) return false;
+      
+      // Skip images from thumbnail_url source (these are usually thumbnails)
+      if (img.source === 'thumbnail_url') return false;
+      
+      // Include all other images (original images from media_images, main_image_url, etc.)
+      return true;
+    });
   };
 
   useEffect(() => {
@@ -572,7 +858,18 @@ const PropertiesRentalsDetails: FC = () => {
         const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(
           id
         )}/`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        
+        // Add authorization header to the fetch request
+        const headers = new Headers();
+        headers.append('Accept', 'application/json');
+        headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4ODc0OTMwLCJpYXQiOjE3NzAyMzQ5MzAsImp0aSI6IjgwZjAxNDU0Y2UxYzQ2Nzg4NThkNThlMDM1ZTc0NjAwIiwidXNlcl9pZCI6IjM3In0.vSjY1T-c14iNsTMy3obEvSFKtcMjWS7PCjlEhEyYERs');
+        
+        const res = await fetch(url, {
+          headers: headers,
+          mode: 'cors',
+          credentials: 'include'
+        });
+        
         if (!res.ok) {
           if (res.status === 404) throw new Error('Property not found (404).');
           throw new Error(`Failed to fetch property (status ${res.status}).`);
@@ -583,6 +880,8 @@ const PropertiesRentalsDetails: FC = () => {
         const images = await fetchAllImages(Number(p.id), p);
         console.log('=== All Images from API ===');
         console.log('Total images found:', images.length);
+        console.log('Original images for download:', getDownloadableImages(images).length);
+        console.log('Thumbnails excluded:', images.filter(img => img.is_thumbnail || img.source === 'thumbnail_url').length);
         
         // Set property images
         setPropertyImages(images);
@@ -678,10 +977,11 @@ const PropertiesRentalsDetails: FC = () => {
         // Extract calendar_accuracy from API response
         const calendarAccuracy = p.calendar_accuracy || p.calendar_accuracy_percentage || '';
 
-        // Determine main image for display
-        let mainImage = images.find(img => img.is_main)?.image || 
-                      images[0]?.image || 
-                      'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
+        // Find main image or first image for display
+        let mainImage = images.find(img => img.is_main)?.image ||
+                       images.find(img => !img.thumbnail)?.image ||
+                       images[0]?.image ||
+                       'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
 
         // Ensure proper URL for images starting with /
         if (mainImage.startsWith('/')) {
@@ -742,6 +1042,7 @@ const PropertiesRentalsDetails: FC = () => {
           
           // Add videos field
           videos: videos,
+          thumbnail_url: p.thumbnail_url,
           
           _raw: p,
         };
@@ -774,10 +1075,13 @@ const PropertiesRentalsDetails: FC = () => {
     setShowImageGallery(true);
   };
 
-  // Function to download all images as zip (from gallery modal)
+  // Function to download all ORIGINAL images as zip (from gallery modal)
   const downloadAllImagesAsZip = async () => {
-    if (propertyImages.length === 0 || !property) {
-      showActionMessage('No images available to download.');
+    // Get only downloadable images (exclude thumbnails)
+    const downloadableImages = getDownloadableImages(propertyImages);
+    
+    if (downloadableImages.length === 0 || !property) {
+      showActionMessage('No original images available to download.');
       return;
     }
 
@@ -786,104 +1090,142 @@ const PropertiesRentalsDetails: FC = () => {
     
     try {
       const zip = new JSZip();
-      const imageFolder = zip.folder(`${property.title.replace(/\s+/g, '_')}_images`);
+      const imageFolder = zip.folder(`${property.title.replace(/\s+/g, '_')}_original_images`);
       
       if (!imageFolder) {
         throw new Error('Failed to create zip folder');
       }
 
       let completed = 0;
-      const totalItems = propertyImages.length;
+      const totalItems = downloadableImages.length;
       
-      // Download each image and add to zip
-      const downloadPromises = propertyImages.map(async (img, index) => {
-        try {
-          // Ensure proper URL
-          let imageUrl = img.image;
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
-          }
-          
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
-            completed++;
-            const progress = Math.round((completed / totalItems) * 95) + 5;
-            setImageDownloadProgress(progress);
-            return null;
-          }
-          
-          const blob = await response.blob();
-          const extension = blob.type.split('/')[1] || 'jpg';
-          const fileName = `${property.title.replace(/\s+/g, '_')}_image_${index + 1}.${extension}`;
-          
-          // Update progress
-          completed++;
-          const progress = Math.round((completed / totalItems) * 95) + 5;
-          setImageDownloadProgress(progress);
-          
-          return { fileName, blob };
-        } catch (error) {
-          console.error(`Error downloading image ${index + 1}:`, error);
-          completed++;
-          const progress = Math.round((completed / totalItems) * 95) + 5;
-          setImageDownloadProgress(progress);
-          return null;
+      console.log(`Starting download of ${totalItems} original images (excluding ${propertyImages.length - totalItems} thumbnails)`);
+      
+      // Download all ORIGINAL images in batches
+      const batchSize = 3; // Download 3 images at a time
+      const downloadedImages: Array<{ fileName: string; blob: Blob } | null> = [];
+      
+      for (let i = 0; i < totalItems; i += batchSize) {
+        const batch = downloadableImages.slice(i, i + batchSize);
+        const batchPromises = batch.map((img, batchIndex) => 
+          // Download the ORIGINAL image
+          downloadImageWithAuth(img.image, i + batchIndex)
+        );
+        
+        const batchResults = await Promise.all(batchPromises);
+        downloadedImages.push(...batchResults);
+        
+        completed += batch.length;
+        const progress = Math.round((completed / totalItems) * 95) + 5;
+        setImageDownloadProgress(progress);
+        
+        // Small delay between batches to avoid rate limiting
+        if (i + batchSize < totalItems) {
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
-      });
+      }
 
-      const downloadedImages = await Promise.all(downloadPromises);
+      console.log(`Download completed. Successful: ${downloadedImages.filter(img => img !== null).length}, Failed: ${downloadedImages.filter(img => img === null).length}`);
       
       // Add downloaded images to zip
-      downloadedImages.forEach((item) => {
+      downloadedImages.forEach((item, index) => {
         if (item) {
           imageFolder.file(item.fileName, item.blob);
+          console.log(`Added ORIGINAL image to ZIP: ${item.fileName}`);
+        } else {
+          console.warn(`Skipping original image ${index + 1} - download failed`);
         }
       });
 
-      // Generate zip file and trigger browser download
-      const content = await zip.generateAsync({ type: 'blob' });
+      // Check if any images were successfully downloaded
+      const successfulDownloads = downloadedImages.filter(img => img !== null);
+      if (successfulDownloads.length === 0) {
+        throw new Error('No original images could be downloaded due to CORS restrictions or network issues.');
+      }
+
+      console.log('Generating ZIP file...');
+      setImageDownloadProgress(97);
       
-      // Complete progress
+      const content = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        const zipProgress = 97 + (metadata.percent / 100) * 3;
+        setImageDownloadProgress(Math.min(100, zipProgress));
+      });
+
       setImageDownloadProgress(100);
-      
-      // Create download link and trigger download
+      console.log('ZIP generation complete');
+
+      // Create download link
       const blobUrl = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `${property.title.replace(/\s+/g, '_')}_images.zip`;
+      a.download = `${property.title.replace(/\s+/g, '_')}_original_images_${Date.now()}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
       
-      // Show success message after a brief delay
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
+
+      // Show success message
       setTimeout(() => {
         Swal.fire({
           icon: 'success',
-          title: 'Success',
-          text: `Downloaded ${propertyImages.length} images`,
-          timer: 2000,
-          showConfirmButton: false
+          title: 'Download Complete!',
+          html: `
+            <div class="text-center">
+              <p class="mb-2">Successfully downloaded ${successfulDownloads.length} of ${totalItems} original images.</p>
+              <p class="text-sm text-gray-600">
+                <strong>Note:</strong> Downloaded original full-size images only (thumbnails excluded)
+              </p>
+              <p class="text-xs text-gray-500 mt-1">
+                Total images available: ${propertyImages.length}<br/>
+                Thumbnails excluded: ${propertyImages.length - totalItems}
+              </p>
+            </div>
+          `,
+          timer: 3000,
+          showConfirmButton: true,
         });
       }, 500);
-      
-      // Close modal and reset after completion
+
+      // Reset states after delay
       setTimeout(() => {
-        setShowImageGallery(false);
         setIsImageDownloading(false);
         setImageDownloadProgress(0);
       }, 2000);
-
     } catch (error) {
       console.error('Error creating zip file:', error);
+      
+      // Show error message with helpful information
+      let errorMessage = 'Failed to create zip file. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('CORS')) {
+          errorMessage = 'CORS restrictions prevent downloading images directly. Please contact the website administrator.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: 'Failed to create zip file. Please try again.',
-        timer: 3000,
+        title: 'Download Error',
+        html: `
+          <div class="text-left">
+            <p class="mb-2">${errorMessage}</p>
+            <p class="text-sm text-gray-600 mt-2">
+              <strong>Download Summary:</strong><br/>
+              • Total images available: ${propertyImages.length}<br/>
+              • Original images for download: ${downloadableImages.length}<br/>
+              • Thumbnails excluded: ${propertyImages.length - downloadableImages.length}
+            </p>
+          </div>
+        `,
+        timer: 5000,
         showConfirmButton: true,
       });
+      
       setIsImageDownloading(false);
       setImageDownloadProgress(0);
     }
@@ -1013,10 +1355,10 @@ const PropertiesRentalsDetails: FC = () => {
     // Start realistic progress simulation
     simulateRealisticProgress();
 
-    // Create download link
+    // Create download link with authorization
     const downloadUrl = `${API_BASE}/villas/videos/download/${property.id}/`;
     
-    // Use XMLHttpRequest to track actual progress
+    // Use XMLHttpRequest to track actual progress with authorization
     try {
       const xhr = new XMLHttpRequest();
       xhrRef.current = xhr;
@@ -1024,6 +1366,9 @@ const PropertiesRentalsDetails: FC = () => {
       xhr.open('GET', downloadUrl, true);
       xhr.responseType = 'blob';
       
+      // Add authorization header
+      xhr.setRequestHeader('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4ODc0OTMwLCJpYXQiOjE3NzAyMzQ5MzAsImp0aSI6IjgwZjAxNDU0Y2UxYzQ2Nzg4NThkNThlMDM1ZTc0NjAwIiwidXNlcl9pZCI6IjM3In0.vSjY1T-c14iNsTMy3obEvSFKtcMjWS7PCjlEhEyYERs');
+
       // Track actual download progress
       xhr.addEventListener('progress', (event) => {
         if (event.lengthComputable && event.total > 0) {
@@ -1079,7 +1424,7 @@ const PropertiesRentalsDetails: FC = () => {
           Swal.fire({
             icon: 'error',
             title: 'Download Failed',
-            text: 'Failed to download videos. Please try again.',
+            text: `Failed to download videos. Server returned status ${xhr.status}.`,
             timer: 3000,
             showConfirmButton: true,
           });
@@ -1090,7 +1435,7 @@ const PropertiesRentalsDetails: FC = () => {
         cleanupDownload();
         setShowDownloadProgress(false);
         
-        // Fallback to iframe method
+        // Try fallback method with iframe
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = downloadUrl;
@@ -1286,45 +1631,13 @@ Description: ${property.description.substring(0, 200)}...
     );
   }
 
-  // allow both rent & sale, block only "other"
+  // REMOVED the listing type check - allow ALL properties regardless of type
+  // This ensures users can view ANY property in the rentals details page
   const listingTypeSafe = String(property.listing_type || '').toLowerCase();
-  if (listingTypeSafe !== 'rent' && listingTypeSafe !== 'sale') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
-        <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 text-center">
-          <h2 className="text-xl font-semibold mb-2">Not a rental listing</h2>
-          <p className="text-gray-600 mb-4">
-            This page only shows properties listed for <strong>rent</strong>.
-          </p>
-          <Link
-            to="/dashboard/agent-properties-rentals"
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Rentals
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const getStatusStyle = (status: string) => {
-    switch (String(status).toLowerCase()) {
-      case 'published':
-        return 'bg-green-100 text-green-700';
-      case 'sold':
-        return 'bg-gray-200 text-gray-600';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
 
   // Prepare outdoor amenities data for display
   const allOutdoorAmenities = [
     ...property.outdoor_amenities,
-    
     ...property.signature_distinctions
   ].filter((item, index, self) => 
     item && item.trim() !== '' && self.indexOf(item) === index
@@ -1436,13 +1749,8 @@ Description: ${property.description.substring(0, 200)}...
                    </div>
                   </p>
                 </div>
-                <span
-                  className={`text-xs md:text-sm font-semibold px-3 py-1 mt-2 rounded-full ${getStatusStyle(
-                    localStatus
-                  )}`}
-                >
-                  {localStatus.toUpperCase().slice(0,1) + localStatus.slice(1)}
-                </span>
+                {/* Updated Status Badge */}
+                <StatusBadge status={localStatus} />
               </div>
 
               {/* Guests / beds / baths / pools with pluralization */}
@@ -1466,6 +1774,7 @@ Description: ${property.description.substring(0, 200)}...
                   <span>{getPluralText(property.pool ?? 0, 'Pool', 'Pools')}</span>
                 </div>
               </div>
+
 
               {/* Commission & Damage deposit */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">

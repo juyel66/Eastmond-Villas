@@ -21,7 +21,7 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   pool: number;
-  status: 'published' | 'draft' | 'pending_review' | 'pending';
+  status: 'published' | 'draft' | 'pending_review' | 'pending' | string;
   imageUrl: string;
   description?: string | null;
   calendar_link?: string | null;
@@ -348,17 +348,49 @@ const PropertyCard: React.FC<{
   };
 
   const StatusBadge = ({ status }: { status: Property['status'] }) => {
+    // Convert status to string and lowercase for comparison
+    const statusStr = String(status).toLowerCase();
+    
     let bgColor = 'bg-gray-100 text-gray-700';
-    if (status.toLocaleLowerCase() === 'published')
+    let displayText = statusStr.replace('_', ' ');
+    
+    if (statusStr === 'published') {
       bgColor = 'bg-green-100 text-green-700';
-    else if (status === 'draft') bgColor = 'bg-yellow-100 text-yellow-700';
-    else if (status === 'pending_review' || status === 'pending')
+    } else if (statusStr === 'draft') {
+      bgColor = 'bg-yellow-100 text-yellow-700';
+    } else if (statusStr === 'pending_review' || statusStr === 'pending') {
       bgColor = 'bg-blue-100 text-blue-700';
+    } else if (statusStr === 'sold') {
+      bgColor = 'bg-red-100 text-red-700';
+    } else if (statusStr === 'archived') {
+      bgColor = 'bg-gray-200 text-gray-600';
+    } else if (statusStr === 'inactive') {
+      bgColor = 'bg-gray-300 text-gray-700';
+    } else if (statusStr === 'active') {
+      bgColor = 'bg-green-200 text-green-800';
+    } else if (statusStr === 'available') {
+      bgColor = 'bg-teal-100 text-teal-700';
+    } else if (statusStr === 'unavailable') {
+      bgColor = 'bg-red-100 text-red-700';
+    } else if (statusStr === 'under_review') {
+      bgColor = 'bg-purple-100 text-purple-700';
+    } else if (statusStr === 'under_contract') {
+      bgColor = 'bg-indigo-100 text-indigo-700';
+    } else if (statusStr === 'closed') {
+      bgColor = 'bg-gray-400 text-white';
+    }
+    
+    // Capitalize first letter of each word
+    displayText = displayText
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
     return (
       <span
         className={`text-xs font-semibold py-1 px-3 rounded-full ${bgColor}`}
       >
-        {status.replace('_', ' ')}
+        {displayText}
       </span>
     );
   };
@@ -441,9 +473,7 @@ flex flex-col md:flex-row gap-5 mb-6 w-full"
             </h2>
 
             <div className="flex justify-center md:justify-end">
-              <StatusBadge
-                status={status.charAt(0).toUpperCase() + status.slice(1)}
-              />
+              <StatusBadge status={status} />
             </div>
           </div>
 
@@ -1015,6 +1045,7 @@ const PropertiesRentals: React.FC<Props> = ({
 
     try {
       // ✅ FETCHING RENT PROPERTIES FROM AGENT SPECIFIC API WITH PAGINATION
+      // REMOVED status filter to show all statuses
       const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=rent&page=${page}`;
 
       console.log('[Rentals] Fetching from URL:', url);
@@ -1087,13 +1118,14 @@ const PropertiesRentals: React.FC<Props> = ({
         // Address
         const address = p.address || p.city || 'No address provided';
 
-        // Status normalization
-        let statusVal: Property['status'] = 'draft';
+        // Status - preserve original status from API without filtering
         const rawStatus = (p.status || '').toLowerCase();
-        if (rawStatus === 'published') statusVal = 'published';
-        else if (rawStatus === 'pending_review') statusVal = 'pending_review';
-        else if (rawStatus === 'pending') statusVal = 'pending';
-        else statusVal = 'draft';
+        let statusVal: Property['status'] = rawStatus;
+        
+        // Keep the original status value
+        if (!rawStatus) {
+          statusVal = 'draft';
+        }
 
         // Listing type
         const listingTypeRaw = String(p.listing_type || '').toLowerCase();
@@ -1181,7 +1213,8 @@ const PropertiesRentals: React.FC<Props> = ({
 
       return (
         p.title.toLowerCase().includes(lower) ||
-        p.address.toLowerCase().includes(lower)
+        p.address.toLowerCase().includes(lower) ||
+        p.status.toLowerCase().includes(lower)
       );
     });
   }, [searchTerm, properties]);
@@ -1207,7 +1240,7 @@ const PropertiesRentals: React.FC<Props> = ({
           <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search rental properties..."
+            placeholder="Search rental properties by title, address, or status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-blue-500 focus:border-blue-500 transition"
@@ -1226,6 +1259,9 @@ const PropertiesRentals: React.FC<Props> = ({
 
         {!loading && filteredProperties.length > 0 && (
           <>
+            {/* Status Summary */}
+     
+
             {filteredProperties.map((property) => (
               <PropertyCard 
                 key={property.id} 

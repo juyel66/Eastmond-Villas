@@ -853,7 +853,7 @@ const PropertiesSales: React.FC<Props> = ({
     checkInitialAuth();
   }, []);
 
-  // Function to fetch images for a property
+ 
   const fetchPropertyImages = async (propertyId: number, title: string): Promise<PropertyImage[]> => {
     try {
       const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(propertyId)}/`;
@@ -1178,24 +1178,24 @@ const PropertiesSales: React.FC<Props> = ({
 
       const data = await res.json();
 
-      // Extract properties from results array
+   
       const list = Array.isArray(data?.results) ? data.results : [];
 
       console.log('[Sales] API Response count:', list.length, 'Page:', page);
 
-      // Set pagination info
+      
       const paginationInfo: PaginationInfo = {
         count: data.count || 0,
         next: data.next || null,
         previous: data.previous || null,
         current_page: page,
-        total_pages: Math.ceil((data.count || 0) / 20), // Assuming 20 items per page
+        total_pages: Math.ceil((data.count || 0) / 20), 
         page_size: 20,
       };
 
-      // Map API response to our Property interface
+      
       const mapped: Property[] = list.map((p: any) => {
-        // Get first media image
+        
         let img = PLACEHOLDER_IMAGE;
         if (
           p.media_images &&
@@ -1205,20 +1205,20 @@ const PropertiesSales: React.FC<Props> = ({
           img = p.media_images[0]?.image || PLACEHOLDER_IMAGE;
         }
 
-        // Parse price - handle string like "751.00"
+        
         const priceVal = parseFloat(p.price || p.price_display || '0') || 0;
 
-        // Parse bedrooms and bathrooms - handle string like "76.0"
+        
         const bedroomsVal = parseFloat(p.bedrooms || '0') || 0;
         const bathroomsVal = parseFloat(p.bathrooms || '0') || 0;
 
-        // Pool as number
+     
         const poolVal = parseInt(p.pool || '0', 10) || 0;
 
-        // Address
+      
         const address = p.address || p.city || 'No address provided';
 
-        // Status - accept ANY status value as is
+        
         const statusVal = p.status || 'unknown';
         // No normalization - keep original status
 

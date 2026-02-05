@@ -69,15 +69,21 @@ interface Property {
   }>;
 
   _raw?: any;
+
+  // Thumbnail field
+  thumbnail_url?: string;
 }
 
 // Image interface
 interface PropertyImage {
   id?: number;
-  image: string;
+  image: string; // Original image URL
+  thumbnail?: string; // Thumbnail image URL
   alt_text?: string;
   is_main?: boolean;
+  is_thumbnail?: boolean;
   source?: string;
+  thumbnail_url?: string;
 }
 
 // Video interface
@@ -122,9 +128,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
             <h2 className="text-2xl font-bold text-gray-900">
               {propertyTitle} - All Images ({images.length})
             </h2>
-            <p className="text-gray-600 mt-1">
-              Preview all images before downloading
-            </p>
+           
           </div>
           <button
             onClick={onClose}
@@ -152,13 +156,13 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((img, index) => (
                 <div
-                  key={index}
+                  key={img.id || index}
                   className="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:shadow-md transition-shadow duration-200"
                 >
-                  {/* Image */}
+                  {/* Display thumbnail in modal */}
                   <div className="aspect-square relative">
                     <img
-                      src={img.image}
+                      src={img.thumbnail || img.image} // Show thumbnail if available, otherwise fallback to original
                       alt={img.alt_text || `Property image ${index + 1}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -171,22 +175,25 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                         Main
                       </div>
                     )}
+                    {img.thumbnail && (
+                      <div className="absolute top-2 right-2  text-xs font-bold px-2 py-1 rounded">
+                        
+                      </div>
+                    )}
                   </div>
 
                   {/* Image Info */}
                   <div className="p-3 bg-white">
-                  
                    
                     <div className="mt-2 flex justify-between items-center">
                       <a
-                        href={img.image}
+                        href={img.image} // Always link to original image
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-teal-600 hover:text-teal-800 font-medium"
                       >
                         View Full
                       </a>
-                   
                     </div>
                   </div>
                 </div>
@@ -222,9 +229,10 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-gray-700">
-                  <strong>Total images:</strong> {images.length}
+                  <strong>Total Images:</strong> {images.length}
                 </p>
                
+                
               </div>
               <div className="flex gap-3">
                 <button
@@ -258,7 +266,7 @@ const ImageGalleryModal: FC<ImageGalleryModalProps> = ({
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                         />
                       </svg>
-                      Download All Images
+                      Download All  Images ({images.length})
                     </>
                   )}
                 </button>
@@ -497,58 +505,83 @@ const PropertiesSalesDetails: FC = () => {
   ): Promise<PropertyImage[]> => {
     const images: PropertyImage[] = [];
 
+    // Check for main thumbnail image first
+    if (propertyData.thumbnail_url) {
+      images.push({
+        id: -1, // Special ID for main thumbnail
+        image: propertyData.thumbnail_url,
+        alt_text: `${propertyData.title || 'Property'} - Main Thumbnail`,
+        is_main: false,
+        is_thumbnail: true,
+        source: 'thumbnail_url',
+        thumbnail_url: propertyData.thumbnail_url,
+      });
+    }
+
+    // Main image
     if (propertyData.main_image_url) {
       images.push({
+        id: -2, // Special ID for main image
         image: propertyData.main_image_url,
         alt_text: `${propertyData.title || 'Property'} - Main Image`,
         is_main: true,
+        is_thumbnail: false,
         source: 'main_image_url',
       });
     }
 
+    // Check for image_url
     if (
       propertyData.image_url &&
       !images.some((img) => img.image === propertyData.image_url)
     ) {
       images.push({
+        id: -3, // Special ID for image_url
         image: propertyData.image_url,
         alt_text: `${propertyData.title || 'Property'} - Image`,
         is_main: false,
+        is_thumbnail: false,
         source: 'image_url',
       });
     }
 
+    // Check for imageUrl
     if (
       propertyData.imageUrl &&
       !images.some((img) => img.image === propertyData.imageUrl)
     ) {
       images.push({
+        id: -4, // Special ID for imageUrl
         image: propertyData.imageUrl,
         alt_text: `${propertyData.title || 'Property'} - Image`,
         is_main: false,
+        is_thumbnail: false,
         source: 'imageUrl',
       });
     }
 
+    // Process media_images array - THIS IS THE KEY PART
     if (Array.isArray(propertyData.media_images)) {
       propertyData.media_images.forEach((img: any, index: number) => {
-        if (
-          img.image &&
-          !images.some((existing) => existing.image === img.image)
-        ) {
+        if (img.image) {
+          // Add the original image with its thumbnail
           images.push({
             id: img.id || index,
-            image: img.image,
+            image: img.image, // Original image URL
+            thumbnail: img.thumbnail, // Thumbnail URL if available
             alt_text:
               img.alt_text ||
               `${propertyData.title || 'Property'} - Image ${index + 1}`,
             is_main: false,
+            is_thumbnail: !!img.thumbnail,
             source: 'media_images',
+            thumbnail_url: img.thumbnail,
           });
         }
       });
     }
 
+    // Helper function to process image fields
     const processImageField = (fieldName: string, value: any) => {
       if (Array.isArray(value)) {
         value.forEach((item: any, index: number) => {
@@ -557,9 +590,11 @@ const PropertiesSalesDetails: FC = () => {
             !images.some((img) => img.image === item)
           ) {
             images.push({
+              id: images.length + index,
               image: item,
               alt_text: `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
               is_main: false,
+              is_thumbnail: false,
               source: fieldName,
             });
           } else if (
@@ -568,11 +603,13 @@ const PropertiesSalesDetails: FC = () => {
             !images.some((img) => img.image === item.url)
           ) {
             images.push({
+              id: images.length + index,
               image: item.url,
               alt_text:
                 item.alt_text ||
                 `${propertyData.title || 'Property'} - ${fieldName} ${index + 1}`,
               is_main: false,
+              is_thumbnail: false,
               source: fieldName,
             });
           }
@@ -582,14 +619,17 @@ const PropertiesSalesDetails: FC = () => {
         !images.some((img) => img.image === value)
       ) {
         images.push({
+          id: images.length,
           image: value,
           alt_text: `${propertyData.title || 'Property'} - ${fieldName}`,
           is_main: false,
+          is_thumbnail: false,
           source: fieldName,
         });
       }
     };
 
+    // Check common image fields
     const imageFields = [
       'thumbnail_url',
       'banner_image',
@@ -604,7 +644,159 @@ const PropertiesSalesDetails: FC = () => {
       }
     });
 
-    return images;
+    // Remove duplicates by image URL
+    const uniqueImages = images.filter((image, index, self) =>
+      index === self.findIndex((t) => t.image === image.image)
+    );
+
+    console.log('=== All Images from API ===');
+    console.log('Total images found:', uniqueImages.length);
+    console.log('Images with thumbnails:', uniqueImages.filter(img => img.thumbnail).length);
+    console.log('Thumbnail images for display:', uniqueImages.map(img => ({
+      id: img.id,
+      original: img.image,
+      thumbnail: img.thumbnail || 'No thumbnail',
+      hasThumbnail: !!img.thumbnail
+    })));
+
+    return uniqueImages;
+  };
+
+  // Function to download original image (not thumbnail)
+  const downloadImageWithAuth = async (imageUrl: string, index: number): Promise<{ fileName: string; blob: Blob } | null> => {
+    try {
+      console.log(`Downloading original image ${index + 1}: ${imageUrl}`);
+      
+      // Check if image URL is from a different domain (CORS issue)
+      const urlObj = new URL(imageUrl, window.location.origin);
+      const isCrossOrigin = urlObj.origin !== window.location.origin;
+      
+      if (isCrossOrigin) {
+        // For cross-origin requests, use canvas method
+        return await downloadImageViaCanvas(imageUrl, index);
+      } else {
+        // Same origin - use normal fetch with authorization
+        const headers = new Headers();
+        headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4ODc0OTMwLCJpYXQiOjE3NzAyMzQ5MzAsImp0aSI6IjgwZjAxNDU0Y2UxYzQ2Nzg4NThkNThlMDM1ZTc0NjAwIiwidXNlcl9pZCI6IjM3In0.vSjY1T-c14iNsTMy3obEvSFKtcMjWS7PCjlEhEyYERs');
+        
+        const response = await fetch(imageUrl, {
+          headers: headers,
+          mode: 'cors',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.warn(`Failed to fetch original image ${index + 1}: ${imageUrl} - Status: ${response.status}`);
+          return null;
+        }
+
+        const blob = await response.blob();
+        const extension = getImageExtension(blob, imageUrl);
+        const fileName = `property_image_${index + 1}.${extension}`;
+        console.log(`Original image ${index + 1} downloaded successfully: ${fileName} (${blob.size} bytes)`);
+        
+        return { fileName, blob };
+      }
+    } catch (error) {
+      console.error(`Error downloading original image ${index + 1}:`, error);
+      
+      // Fallback to canvas method
+      try {
+        return await downloadImageViaCanvas(imageUrl, index);
+      } catch (canvasError) {
+        console.error(`Canvas fallback also failed for image ${index + 1}:`, canvasError);
+        return null;
+      }
+    }
+  };
+
+  // Function to download image via canvas (CORS workaround)
+  const downloadImageViaCanvas = (imageUrl: string, index: number): Promise<{ fileName: string; blob: Blob } | null> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      
+      // Set crossOrigin attribute to anonymous to try to avoid CORS issues
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        try {
+          // Create a canvas element
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            console.warn(`Could not get canvas context for image ${index + 1}`);
+            resolve(null);
+            return;
+          }
+          
+          // Draw the image to canvas
+          ctx.drawImage(img, 0, 0);
+          
+          // Convert canvas to blob
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const extension = getImageExtension(blob, imageUrl);
+              const fileName = `property_image_${index + 1}.${extension}`;
+              console.log(`Image ${index + 1} downloaded via canvas: ${fileName} (${blob.size} bytes)`);
+              resolve({ fileName, blob });
+            } else {
+              console.warn(`Canvas toBlob failed for image ${index + 1}`);
+              resolve(null);
+            }
+          }, 'image/jpeg', 0.95); // Use JPEG format with 95% quality
+          
+        } catch (error) {
+          console.error(`Canvas processing error for image ${index + 1}:`, error);
+          resolve(null);
+        }
+      };
+      
+      img.onerror = () => {
+        console.error(`Image failed to load for canvas method: ${imageUrl}`);
+        resolve(null);
+      };
+      
+      // Start loading the image
+      img.src = imageUrl;
+      
+      // Set timeout in case image takes too long to load
+      setTimeout(() => {
+        if (!img.complete) {
+          console.warn(`Image load timeout for image ${index + 1}`);
+          resolve(null);
+        }
+      }, 10000); // 10 second timeout
+    });
+  };
+
+  // Helper function to get image extension
+  const getImageExtension = (blob: Blob, imageUrl: string): string => {
+    // Try to get extension from blob type first
+    if (blob.type && blob.type !== 'application/octet-stream') {
+      const typeParts = blob.type.split('/');
+      if (typeParts.length > 1) {
+        const ext = typeParts[1].toLowerCase();
+        if (ext === 'jpeg') return 'jpg';
+        if (['jpg', 'png', 'gif', 'webp', 'avif', 'bmp'].includes(ext)) {
+          return ext;
+        }
+      }
+    }
+    
+    // Fallback: try to get extension from URL
+    const urlParts = imageUrl.split('.');
+    if (urlParts.length > 1) {
+      const possibleExt = urlParts[urlParts.length - 1].toLowerCase().split('?')[0].split('#')[0];
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp'].includes(possibleExt)) {
+        return possibleExt === 'jpeg' ? 'jpg' : possibleExt;
+      }
+    }
+    
+    // Default to jpg
+    return 'jpg';
   };
 
   useEffect(() => {
@@ -623,9 +815,18 @@ const PropertiesSalesDetails: FC = () => {
         const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(
           id
         )}/`;
+        
+        // Add authorization header to the fetch request
+        const headers = new Headers();
+        headers.append('Accept', 'application/json');
+        headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4ODc0OTMwLCJpYXQiOjE3NzAyMzQ5MzAsImp0aSI6IjgwZjAxNDU0Y2UxYzQ2Nzg4NThkNThlMDM1ZTc0NjAwIiwidXNlcl9pZCI6IjM3In0.vSjY1T-c14iNsTMy3obEvSFKtcMjWS7PCjlEhEyYERs');
+        
         const res = await fetch(url, {
-          headers: { Accept: 'application/json' },
+          headers: headers,
+          mode: 'cors',
+          credentials: 'include'
         });
+        
         if (!res.ok) {
           if (res.status === 404) throw new Error('Property not found (404).');
           throw new Error(`Failed to fetch property (status ${res.status}).`);
@@ -636,6 +837,7 @@ const PropertiesSalesDetails: FC = () => {
         const images = await fetchAllImages(Number(p.id), p);
         console.log('=== All Images from API ===');
         console.log('Total images found:', images.length);
+        console.log('Images with thumbnails:', images.filter(img => img.thumbnail).length);
 
         setPropertyImages(images);
 
@@ -731,10 +933,11 @@ const PropertiesSalesDetails: FC = () => {
         const calendarAccuracy =
           p.calendar_accuracy || p.calendar_accuracy_percentage || '';
 
-        let mainImage =
-          images.find((img) => img.is_main)?.image ||
-          images[0]?.image ||
-          'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
+        // Find main image or first image for display
+        let mainImage = images.find((img) => img.is_main)?.image ||
+                       images.find((img) => !img.thumbnail)?.image ||
+                       images[0]?.image ||
+                       'https://placehold.co/800x600/6b7280/ffffff?text=Image+Unavailable';
 
         if (mainImage.startsWith('/')) {
           mainImage = `${API_BASE.replace(/\/api\/?$/, '')}${mainImage}`;
@@ -798,6 +1001,7 @@ const PropertiesSalesDetails: FC = () => {
           calendar_accuracy: calendarAccuracy,
 
           videos: videos,
+          thumbnail_url: p.thumbnail_url,
 
           _raw: p,
         };
@@ -830,7 +1034,7 @@ const PropertiesSalesDetails: FC = () => {
     setShowImageGallery(true);
   };
 
-  // Function to download all images as zip (from gallery modal)
+  // Function to download all ORIGINAL images as zip (from gallery modal)
   const downloadAllImagesAsZip = async () => {
     if (propertyImages.length === 0 || !property) {
       showActionMessage('No images available to download.');
@@ -843,7 +1047,7 @@ const PropertiesSalesDetails: FC = () => {
     try {
       const zip = new JSZip();
       const imageFolder = zip.folder(
-        `${property.title.replace(/\s+/g, '_')}_images`
+        `${property.title.replace(/\s+/g, '_')}_original_images`
       );
 
       if (!imageFolder) {
@@ -853,85 +1057,127 @@ const PropertiesSalesDetails: FC = () => {
       let completed = 0;
       const totalItems = propertyImages.length;
 
-      const downloadPromises = propertyImages.map(async (img, index) => {
-        try {
-          let imageUrl = img.image;
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `${API_BASE.replace(/\/api\/?$/, '')}${imageUrl}`;
-          }
-
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            console.warn(`Failed to fetch image ${index + 1}: ${imageUrl}`);
-            completed++;
-            const progress = Math.round((completed / totalItems) * 95) + 5;
-            setImageDownloadProgress(progress);
-            return null;
-          }
-
-          const blob = await response.blob();
-          const extension = blob.type.split('/')[1] || 'jpg';
-          const fileName = `${property.title.replace(/\s+/g, '_')}_image_${index + 1}.${extension}`;
-
-          completed++;
-          const progress = Math.round((completed / totalItems) * 95) + 5;
-          setImageDownloadProgress(progress);
-
-          return { fileName, blob };
-        } catch (error) {
-          console.error(`Error downloading image ${index + 1}:`, error);
-          completed++;
-          const progress = Math.round((completed / totalItems) * 95) + 5;
-          setImageDownloadProgress(progress);
-          return null;
+      // Download all ORIGINAL images in batches
+      const batchSize = 5; // Download 5 images at a time
+      const downloadedImages: Array<{ fileName: string; blob: Blob } | null> = [];
+      
+      for (let i = 0; i < totalItems; i += batchSize) {
+        const batch = propertyImages.slice(i, i + batchSize);
+        const batchPromises = batch.map((img, batchIndex) => 
+          // Always download the ORIGINAL image, not the thumbnail
+          downloadImageWithAuth(img.image, i + batchIndex)
+        );
+        
+        const batchResults = await Promise.all(batchPromises);
+        downloadedImages.push(...batchResults);
+        
+        completed += batch.length;
+        const progress = Math.round((completed / totalItems) * 95) + 5;
+        setImageDownloadProgress(progress);
+        
+        // Small delay between batches to avoid rate limiting
+        if (i + batchSize < totalItems) {
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
-      });
+      }
 
-      const downloadedImages = await Promise.all(downloadPromises);
-
-      downloadedImages.forEach((item) => {
+      console.log(`Download completed. Successful: ${downloadedImages.filter(img => img !== null).length}, Failed: ${downloadedImages.filter(img => img === null).length}`);
+      
+      // Add downloaded images to zip
+      downloadedImages.forEach((item, index) => {
         if (item) {
           imageFolder.file(item.fileName, item.blob);
+          console.log(`Added ORIGINAL image to ZIP: ${item.fileName}`);
+        } else {
+          console.warn(`Skipping image ${index + 1} - download failed`);
         }
       });
 
-      const content = await zip.generateAsync({ type: 'blob' });
+      // Check if any images were successfully downloaded
+      const successfulDownloads = downloadedImages.filter(img => img !== null);
+      if (successfulDownloads.length === 0) {
+        throw new Error('No images could be downloaded due to CORS restrictions or network issues.');
+      }
+
+      console.log('Generating ZIP file...');
+      setImageDownloadProgress(97);
+      
+      const content = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        const zipProgress = 97 + (metadata.percent / 100) * 3;
+        setImageDownloadProgress(Math.min(100, zipProgress));
+      });
 
       setImageDownloadProgress(100);
+      console.log('ZIP generation complete');
 
+      // Create download link
       const blobUrl = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `${property.title.replace(/\s+/g, '_')}_images.zip`;
+      a.download = `${property.title.replace(/\s+/g, '_')}_original_images_${Date.now()}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
+      
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
 
+      // Show success message
       setTimeout(() => {
         Swal.fire({
           icon: 'success',
-          title: 'Success',
-          text: `Downloaded ${propertyImages.length} images`,
-          timer: 2000,
-          showConfirmButton: false,
+          title: 'Download Complete!',
+          html: `
+            <div class="text-center">
+              <p class="mb-2">Successfully downloaded ${successfulDownloads.length} of ${totalItems} original images.</p>
+              <p class="text-sm text-gray-600">
+                <strong>Note:</strong> Downloaded original full-size images, not thumbnails
+              </p>
+            </div>
+          `,
+          timer: 3000,
+          showConfirmButton: true,
         });
       }, 500);
 
+      // Reset states after delay
       setTimeout(() => {
-        setShowImageGallery(false);
         setIsImageDownloading(false);
         setImageDownloadProgress(0);
       }, 2000);
     } catch (error) {
       console.error('Error creating zip file:', error);
+      
+      // Show error message with helpful information
+      let errorMessage = 'Failed to create zip file. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('CORS')) {
+          errorMessage = 'CORS restrictions prevent downloading images directly. Please contact the website administrator.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: 'Failed to create zip file. Please try again.',
-        timer: 3000,
+        title: 'Download Error',
+        html: `
+          <div class="text-left">
+            <p class="mb-2">${errorMessage}</p>
+            <p class="text-sm text-gray-600 mt-2">
+              <strong>Possible solutions:</strong><br/>
+              1. Try downloading fewer images at once<br/>
+              2. Check your internet connection<br/>
+              3. Contact support if the issue persists
+            </p>
+          </div>
+        `,
+        timer: 5000,
         showConfirmButton: true,
       });
+      
       setIsImageDownloading(false);
       setImageDownloadProgress(0);
     }
@@ -1067,16 +1313,19 @@ const PropertiesSalesDetails: FC = () => {
     // Start realistic progress simulation
     simulateRealisticProgress();
 
-    // Create download link
+    // Create download link with authorization
     const downloadUrl = `${API_BASE}/villas/videos/download/${property.id}/`;
 
-    // Use XMLHttpRequest to track actual progress
+    // Use XMLHttpRequest to track actual progress with authorization
     try {
       const xhr = new XMLHttpRequest();
       xhrRef.current = xhr;
 
       xhr.open('GET', downloadUrl, true);
       xhr.responseType = 'blob';
+      
+      // Add authorization header
+      xhr.setRequestHeader('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4ODc0OTMwLCJpYXQiOjE3NzAyMzQ5MzAsImp0aSI6IjgwZjAxNDU0Y2UxYzQ2Nzg4NThkNThlMDM1ZTc0NjAwIiwidXNlcl9pZCI6IjM3In0.vSjY1T-c14iNsTMy3obEvSFKtcMjWS7PCjlEhEyYERs');
 
       // Track actual download progress
       xhr.addEventListener('progress', (event) => {
@@ -1136,7 +1385,7 @@ const PropertiesSalesDetails: FC = () => {
           Swal.fire({
             icon: 'error',
             title: 'Download Failed',
-            text: 'Failed to download videos. Please try again.',
+            text: `Failed to download videos. Server returned status ${xhr.status}.`,
             timer: 3000,
             showConfirmButton: true,
           });
@@ -1147,7 +1396,7 @@ const PropertiesSalesDetails: FC = () => {
         cleanupDownload();
         setShowDownloadProgress(false);
 
-        // Fallback to iframe method
+        // Try fallback method with iframe
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = downloadUrl;
@@ -1392,6 +1641,8 @@ Description: ${property.description.substring(0, 200)}...
               onClick={handleShowAllImages}
               disabled={propertyImages.length === 0}
             />
+
+           
 
             <button
               onClick={handleVideoDownloadClick}
