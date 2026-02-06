@@ -534,7 +534,7 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
   if (Array.isArray(v.media_images) && v.media_images.length > 0) {
     const first = v.media_images[0];
     imageUrl =
-      first.file_url || first.image || first.file || LOCAL_FALLBACK_IMAGE;
+      first.file_url || first.thumbnail || first.file || LOCAL_FALLBACK_IMAGE;
   } else if (v.main_image_url) {
     imageUrl = v.main_image_url;
   } else if (v.media && Array.isArray(v.media) && v.media.length > 0) {

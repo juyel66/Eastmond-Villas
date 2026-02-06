@@ -19,14 +19,14 @@ const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, 
 
   const handleToggle = () => {
     if (allVisible) {
-      // Collapse back to default
+     
       setVisibleCount(INITIAL_SHOW);
 
-      // Optional: smooth scroll back to section top
+     
       const el = document.getElementById("signatureVilla");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Load 3 more items
+    
       setVisibleCount((prev) => Math.min(prev + INCREMENT, total));
     }
   };
@@ -68,7 +68,7 @@ const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, 
           !loading && (
      <div className="col-span-full flex justify-center py-10">
   <div className="max-w-md w-full bg-white rounded-2xl shadow-lg border border-teal-100 px-6 py-8 flex flex-col items-center animate-[fadeIn_0.5s_ease-out]">
-    {/* Animated icon */}
+ 
     <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-4 animate-bounce">
       <svg
         className="w-7 h-7 text-teal-600"
@@ -101,7 +101,7 @@ const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, 
         )}
       </div>
 
-      {/* Only show button if total > 6 */}
+    
       {total > INITIAL_SHOW && (
         <div className="mt-8 flex justify-center">
           <button
