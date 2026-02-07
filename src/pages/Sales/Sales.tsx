@@ -61,7 +61,7 @@ const Pagination: React.FC<PaginationProps> = ({
         </button>
 
         {pagesToShow.map((page) => (
-          <button
+          <a href='#'
             key={page}
             className={`w-10 h-10 mx-1 flex items-center justify-center rounded-lg text-sm font-semibold ${
               page === currentPage
@@ -71,7 +71,7 @@ const Pagination: React.FC<PaginationProps> = ({
             onClick={() => onPageChange(page)}
           >
             {String(page).padStart(2, '0')}
-          </button>
+          </a>
         ))}
 
         <button
@@ -124,10 +124,10 @@ const Sales: React.FC = () => {
           const firstImage =
             (it.media_images &&
               Array.isArray(it.media_images) &&
-              it.media_images[0]?.image) ||
+              it.media_images[0]?.thumbnail) ||
             (it.bedrooms_images &&
               Array.isArray(it.bedrooms_images) &&
-              it.bedrooms_images[0]?.image) ||
+              it.bedrooms_images[0]?.thumbnail) ||
             PLACEHOLDER_IMG;
 
           const amenities: string[] = [];

@@ -44,10 +44,11 @@ const VideoExperience: React.FC<VideoExperienceProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const rawVideo =
-    videos?.[0]?.url ||
-    villa?.youtube_link ||
-    'https://www.youtube.com/watch?v=1dxrO79dbCg';
+  // only use provided video/link — do NOT fall back to a default video
+  const rawVideo = videos?.[0]?.url || villa?.youtube_link || '';
+
+  // if there's no video or link, render nothing
+  if (!rawVideo || !rawVideo.trim()) return null;
 
   const video = useMemo(() => {
     if (isYoutube(rawVideo)) {

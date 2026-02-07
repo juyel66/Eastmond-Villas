@@ -24,13 +24,13 @@ const Navbar = () => {
 
   const dispatch = useDispatch<AppDispatch | any>();
 
-  // ---------- SAFE INLINE SELECTORS (no external selector dependency) ----------
+
   const isAuthenticated = useSelector((state: any) =>
     Boolean(state?.auth?.access && state?.auth?.user)
   );
   const currentUser = useSelector((state: any) => state?.auth?.user);
 
-  console.log('current user is:' , currentUser);
+
 
   useEffect(() => {
     localStorage.setItem("theme", theme);

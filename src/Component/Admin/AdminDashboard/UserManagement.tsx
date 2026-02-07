@@ -1126,7 +1126,7 @@ export default function UserManagement() {
         </div>
 
         {/* Mobile cards */}
-        <div className="lg:hidden mt-6 space-y-4">
+        {/* <div className="lg:hidden mt-6 space-y-4">
           {filtered.map((user) => {
             const isEditing = Boolean(editing[user.id]);
             const editVals = editing[user.id] || {};
@@ -1279,7 +1279,7 @@ export default function UserManagement() {
               {loading ? 'Loading...' : 'No users found.'}
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

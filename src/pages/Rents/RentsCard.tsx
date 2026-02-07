@@ -476,8 +476,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           >
             {/* Rating */}
             <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl font-semibold text-sm flex items-center space-x-1">
-              <span className="text-yellow-500">⭐</span>
-              <span className="text-gray-800">{property.rating}</span>
+             
+              <span className="text-yellow-400 mr-1">★</span>
+              <span className="text-gray-800">{property.rating}</span>    
               <span className="text-gray-700 font-normal">
                 ({property.reviewCount})
               </span>

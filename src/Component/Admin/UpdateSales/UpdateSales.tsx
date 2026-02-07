@@ -1496,55 +1496,65 @@ const UpdateSales = ({ editData = null, onClose = null }) => {
             </p>
           </div>
         </div>
+        
 
         {/* Spotlight Details Section */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Spotlight Details (add rows: title + description)
-          </label>
-          <div className="space-y-2">
-            {spotlightRows.map((r, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  ref={(el) => (spotlightTitleRefs.current[idx] = el)}
-                  value={r.title}
-                  onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
-                  placeholder="Spotlight Title"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <input
-                  value={r.description}
-                  onChange={(e) =>
-                    updateSpotlightRow(idx, 'description', e.target.value)
-                  }
-                  placeholder="Spotlight Description"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={addSpotlightRow}
-                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
-                  >
-                    Add
-                  </button>
-                  {spotlightRows.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeSpotlightRow(idx)}
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Add spotlight details. At least one row will always be available.
-          </p>
+      <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Spotlight Details (add rows: title + description)
+  </label>
+
+  <div className="space-y-2">
+    {spotlightRows.map((r, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start"
+      >
+        <input
+          ref={(el) => (spotlightTitleRefs.current[idx] = el)}
+          value={r.title}
+          onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
+          placeholder="Spotlight Title"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <input
+          value={r.description}
+          onChange={(e) =>
+            updateSpotlightRow(idx, 'description', e.target.value)
+          }
+          placeholder="Spotlight Description"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <div className="flex flex-row sm:flex-col gap-2">
+          <button
+            type="button"
+            onClick={addSpotlightRow}
+            className="w-full sm:w-auto px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+          >
+            Add
+          </button>
+
+          {spotlightRows.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeSpotlightRow(idx)}
+              className="w-full sm:w-auto px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+            >
+              Remove
+            </button>
+          )}
         </div>
+      </div>
+    ))}
+  </div>
+
+  <p className="text-sm text-gray-500 mt-2">
+    Add spotlight details. At least one row will always be available.
+  </p>
+</div>
+
 
         {/* SEO */}
         <div className="grid grid-cols-12 gap-6">

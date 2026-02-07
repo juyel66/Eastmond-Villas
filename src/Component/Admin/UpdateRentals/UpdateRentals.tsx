@@ -1128,6 +1128,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         <option value="pending_review">Pending Review</option>
         <option value="published">Published</option>
         <option value="archived">Archived</option>
+        <option value="sold">Sold</option>
       </select>
       <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
         ▼
@@ -1865,162 +1866,185 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         </div>
 
         {/* Staff rows */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Staff (add rows: name + details)
-          </label>
-          <div className="space-y-2">
-            {staffRows.map((r, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  ref={(el) => (staffNameRefs.current[idx] = el)}
-                  value={r.name}
-                  onChange={(e) => updateStaffRow(idx, 'name', e.target.value)}
-                  placeholder="Staff Name"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <input
-                  value={r.details}
-                  onChange={(e) =>
-                    updateStaffRow(idx, 'details', e.target.value)
-                  }
-                  placeholder="Details (role, phone, email)"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={addStaffRow}
-                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
-                  >
-                    Add
-                  </button>
-                  {staffRows.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeStaffRow(idx)}
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Add staff information. At least one row will always be available.
-          </p>
+       <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Staff (add rows: name + details)
+  </label>
+
+  <div className="space-y-2">
+    {staffRows.map((r, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start"
+      >
+        <input
+          ref={(el) => (staffNameRefs.current[idx] = el)}
+          value={r.name}
+          onChange={(e) => updateStaffRow(idx, 'name', e.target.value)}
+          placeholder="Staff Name"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <input
+          value={r.details}
+          onChange={(e) =>
+            updateStaffRow(idx, 'details', e.target.value)
+          }
+          placeholder="Details (role, phone, email)"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <div className="flex flex-row sm:flex-col gap-2">
+          <button
+            type="button"
+            onClick={addStaffRow}
+            className="w-full sm:w-auto px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+          >
+            Add
+          </button>
+
+          {staffRows.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeStaffRow(idx)}
+              className="w-full sm:w-auto px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+            >
+              Remove
+            </button>
+          )}
         </div>
+      </div>
+    ))}
+  </div>
+
+  <p className="text-sm text-gray-500 mt-2">
+    Add staff information. At least one row will always be available.
+  </p>
+</div>
+
 
         {/* Spotlight Details Section */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Spotlight Details (add rows: title + description)
-          </label>
-          <div className="space-y-2">
-            {spotlightRows.map((r, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  ref={(el) => (spotlightTitleRefs.current[idx] = el)}
-                  value={r.title}
-                  onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
-                  placeholder="Spotlight Title"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <input
-                  value={r.description}
-                  onChange={(e) =>
-                    updateSpotlightRow(idx, 'description', e.target.value)
-                  }
-                  placeholder="Spotlight Description"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={addSpotlightRow}
-                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
-                  >
-                    Add
-                  </button>
-                  {spotlightRows.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeSpotlightRow(idx)}
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Add spotlight details. At least one row will always be available.
-          </p>
+       <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Spotlight Details (add rows: title + description)
+  </label>
+
+  <div className="space-y-2">
+    {spotlightRows.map((r, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start"
+      >
+        <input
+          ref={(el) => (spotlightTitleRefs.current[idx] = el)}
+          value={r.title}
+          onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
+          placeholder="Spotlight Title"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <input
+          value={r.description}
+          onChange={(e) =>
+            updateSpotlightRow(idx, 'description', e.target.value)
+          }
+          placeholder="Spotlight Description"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <div className="flex flex-row sm:flex-col gap-2">
+          <button
+            type="button"
+            onClick={addSpotlightRow}
+            className="w-full sm:w-auto px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+          >
+            Add
+          </button>
+
+          {spotlightRows.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeSpotlightRow(idx)}
+              className="w-full sm:w-auto px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+            >
+              Remove
+            </button>
+          )}
         </div>
+      </div>
+    ))}
+  </div>
+
+  <p className="text-sm text-gray-500 mt-2">
+    Add spotlight details. At least one row will always be available.
+  </p>
+</div>
+
 
         {/* Booking Rate Section */}
         <div className="border rounded-lg p-4 bg-white shadow mt-4">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
-            Booking Rate
-          </h3>
+  <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
+    Booking Rate
+  </h3>
 
-          {bookingRateRows.map((row, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-12 gap-3 mb-3 items-center"
-            >
-              <input
-                value={row.rentalPeriod}
-                onChange={(e) =>
-                  handleBookingRateChange(idx, 'rentalPeriod', e.target.value)
-                }
-                className="col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
-                placeholder="Rental Period (e.g. Jan 20 - Jan 30)"
-              />
-              <input
-                value={row.minimumStay}
-                onChange={(e) =>
-                  handleBookingRateChange(idx, 'minimumStay', e.target.value)
-                }
-                className="col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
-                placeholder="Minimum Stay (e.g. 10 Nights)"
-              />
-              <input
-                value={row.ratePerNight}
-                onChange={(e) =>
-                  handleBookingRateChange(idx, 'ratePerNight', e.target.value)
-                }
-                className="col-span-3 border rounded-lg p-2 text-sm bg-gray-50"
-                placeholder="Rate Per Night (e.g. 5600)"
-                type="number"
-              />
-              {bookingRateRows.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeBookingRateRow(idx)}
-                  className="col-span-1 bg-red-100 text-red-600 rounded-lg px-3 py-2 text-sm hover:bg-red-200"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
+  {bookingRateRows.map((row, idx) => (
+    <div
+      key={idx}
+      className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3 items-stretch sm:items-center"
+    >
+      <input
+        value={row.rentalPeriod}
+        onChange={(e) =>
+          handleBookingRateChange(idx, 'rentalPeriod', e.target.value)
+        }
+        className="sm:col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
+        placeholder="Rental Period (e.g. Jan 20 - Jan 30)"
+      />
 
-          <button
-            type="button"
-            onClick={addBookingRateRow}
-            className="mt-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm"
-          >
-            Add Booking Rate
-          </button>
-          <p className="text-sm text-gray-500 mt-2">
-            Add booking rate information. At least one row will always be available.
-          </p>
-        </div>
+      <input
+        value={row.minimumStay}
+        onChange={(e) =>
+          handleBookingRateChange(idx, 'minimumStay', e.target.value)
+        }
+        className="sm:col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
+        placeholder="Minimum Stay (e.g. 10 Nights)"
+      />
+
+      <input
+        value={row.ratePerNight}
+        onChange={(e) =>
+          handleBookingRateChange(idx, 'ratePerNight', e.target.value)
+        }
+        className="sm:col-span-3 border rounded-lg p-2 text-sm bg-gray-50"
+        placeholder="Rate Per Night (e.g. 5600)"
+        type="number"
+      />
+
+      {bookingRateRows.length > 1 && (
+        <button
+          type="button"
+          onClick={() => removeBookingRateRow(idx)}
+          className="sm:col-span-1 bg-red-100 text-red-600 rounded-lg px-3 py-2 text-sm hover:bg-red-200"
+        >
+          Remove
+        </button>
+      )}
+    </div>
+  ))}
+
+  <button
+    type="button"
+    onClick={addBookingRateRow}
+    className="mt-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm w-full sm:w-auto"
+  >
+    Add Booking Rate
+  </button>
+
+  <p className="text-sm text-gray-500 mt-2">
+    Add booking rate information. At least one row will always be available.
+  </p>
+</div>
+
 
         {/* SEO */}
         <div className="grid grid-cols-12 gap-6">

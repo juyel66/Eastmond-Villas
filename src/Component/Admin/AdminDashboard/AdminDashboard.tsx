@@ -656,59 +656,94 @@ const AdminDashboard = () => {
             </div>
           )}
         </div>
-        <Link to="/dashboard/admin-agent" className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm">
+        <Link to="/dashboard/admin-agent" className="bg-white text-gray-700 border w-36 border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm">
           <img src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760922664/Icon_38_h9ps9e.png" alt="Add Agent" /> Add Agent
         </Link>
       </div>
 
       {/* Dashboard cards */}
-      <div className="mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-2">
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-start shadow-sm" style={{ minHeight: "120px" }}>
-            <div className="mb-3">
-              <img className="bg-[#00968915] p-3 rounded-lg" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760834371/Icon_4_vocxhj.png" alt="Total Properties" />
-            </div>
-            <div className="text-3xl font-semibold text-gray-800 mb-1">{totals.totalProperties}</div>
-            <div className="text-gray-500 text-sm">Total Properties</div>
-          </div>
+     <div className="mb-8">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-2">
+    <div
+      className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-center sm:items-start shadow-sm"
+      style={{ minHeight: "120px" }}
+    >
+      <div className="mb-3">
+        <img
+          className="bg-[#00968915] p-3 rounded-lg"
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760834371/Icon_4_vocxhj.png"
+          alt="Total Properties"
+        />
+      </div>
+      <div className="text-3xl font-semibold text-gray-800 mb-1">
+        {totals.totalProperties}
+      </div>
+      <div className="text-gray-500 text-sm">Total Properties</div>
+    </div>
 
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-start shadow-sm" style={{ minHeight: "120px" }}>
-            <div className="mb-3">
-              <img className="bg-[#00968915] rounded-lg" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997613/DashboardView_1_hspyww.png" alt="Active Listings" />
-            </div>
-            <div className="text-3xl font-semibold text-gray-800 mb-1">{totals.activeListings}</div>
-            <div className="text-gray-500 text-sm">Active Listings</div>
-          </div>
+    <div
+      className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-center sm:items-start shadow-sm"
+      style={{ minHeight: "120px" }}
+    >
+      <div className="mb-3">
+        <img
+          className="bg-[#00968915] rounded-lg"
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997613/DashboardView_1_hspyww.png"
+          alt="Active Listings"
+        />
+      </div>
+      <div className="text-3xl font-semibold text-gray-800 mb-1">
+        {totals.activeListings}
+      </div>
+      <div className="text-gray-500 text-sm">Active Listings</div>
+    </div>
 
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-start shadow-sm" style={{ minHeight: "120px" }}>
-            <div className="mb-3">
-              <img className="bg-[#00968915] rounded-lg" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997613/DashboardView_2_j5n7q7.png" alt="Pending Reviews" />
-            </div>
-            <div className="text-3xl font-semibold text-gray-800 mb-1">{totals.pendingReviews}</div>
-            <div className="text-gray-500 text-sm">Pending Reviews</div>
-          </div>
+    <div
+      className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-center sm:items-start shadow-sm"
+      style={{ minHeight: "120px" }}
+    >
+      <div className="mb-3">
+        <img
+          className="bg-[#00968915] rounded-lg"
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997613/DashboardView_2_j5n7q7.png"
+          alt="Pending Reviews"
+        />
+      </div>
+      <div className="text-3xl font-semibold text-gray-800 mb-1">
+        {totals.pendingReviews}
+      </div>
+      <div className="text-gray-500 text-sm">Pending Reviews</div>
+    </div>
 
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-start shadow-sm" style={{ minHeight: "120px" }}>
-            <div className="mb-3">
-              <img className="bg-[#00968915] rounded-lg" src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997599/DashboardView_3_pfflqc.png" alt="Active Agents" />
-            </div>
+    <div
+      className="bg-white rounded-lg border-2 border-gray-200 p-5 flex flex-col items-center sm:items-start shadow-sm"
+      style={{ minHeight: "120px" }}
+    >
+      <div className="mb-3">
+        <img
+          className="bg-[#00968915] rounded-lg"
+          src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1760997599/DashboardView_3_pfflqc.png"
+          alt="Active Agents"
+        />
+      </div>
 
-            <div className="text-3xl font-semibold text-gray-800 mb-1">
-              {agentsLoading ? "…" : totals.activeAgents}
-            </div>
+      <div className="text-3xl font-semibold text-gray-800 mb-1">
+        {agentsLoading ? "…" : totals.activeAgents}
+      </div>
 
-            <div className="text-gray-500 text-sm">Active Agents</div>
+      <div className="text-gray-500 text-sm">Active Agents</div>
 
-            {agentsLoading && (
-              <div className="mt-2">
-                <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 animate-pulse"></div>
-                </div>
-              </div>
-            )}
+      {agentsLoading && (
+        <div className="mt-2 w-full">
+          <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 animate-pulse"></div>
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  </div>
+</div>
+
 
       {/* Recent Properties & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">

@@ -1828,220 +1828,262 @@ const CreatePropertyRentals = ({
         
 
         {/* Concierge services */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Concierge Services
-          </label>
-          <div className="space-y-3">
-            {conciergeRows.map((v, i) => (
-              <div key={i} className="flex gap-2 items-center">
-                <input
-                  ref={(el) => (conciergeRefs.current[i] = el)}
-                  value={v}
-                  onChange={(e) =>
-                    updateArray(
-                      setConciergeRows,
-                      conciergeRows,
-                      i,
-                      e.target.value
-                    )
-                  }
-                  placeholder='e.g. "24/7 Concierge", "Airport Pickup", "Restaurant Reservations"'
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addArrayItem(
-                        setConciergeRows,
-                        conciergeRows,
-                        conciergeRefs,
-                        ''
-                      )
-                    }
-                    className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
-                  >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      removeArrayItem(setConciergeRows, conciergeRows, i)
-                    }
-                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            {conciergeRows.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
-                No concierge services added yet. Click "Add" to add one.
-              </p>
-            )}
-          </div>
-        </div>
+     <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Concierge Services
+  </label>
 
-        {/* Staff rows */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Staff (add rows: name + details)
-          </label>
-          <div className="space-y-2">
-            {staffRows.map((r, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  ref={(el) => (staffNameRefs.current[idx] = el)}
-                  value={r.name}
-                  onChange={(e) => updateStaffRow(idx, 'name', e.target.value)}
-                  placeholder="Staff Name"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <input
-                  value={r.details}
-                  onChange={(e) =>
-                    updateStaffRow(idx, 'details', e.target.value)
-                  }
-                  placeholder="Details (role, phone, email)"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={addStaffRow}
-                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
-                  >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeStaffRow(idx)}
-                    className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            {staffRows.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
-                No staff members added yet. Click "Add" to add one.
-              </p>
-            )}
-          </div>
-        </div>
+  <div className="space-y-3">
+    {conciergeRows.map((v, i) => (
+      <div
+        key={i}
+        className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center"
+      >
+        <input
+          ref={(el) => (conciergeRefs.current[i] = el)}
+          value={v}
+          onChange={(e) =>
+            updateArray(
+              setConciergeRows,
+              conciergeRows,
+              i,
+              e.target.value
+            )
+          }
+          placeholder='e.g. "24/7 Concierge", "Airport Pickup", "Restaurant Reservations"'
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
 
-        {/* Spotlight Details Section */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Spotlight Details (add rows: title + description)
-          </label>
-          <div className="space-y-2">
-            {spotlightRows.map((r, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  ref={(el) => (spotlightTitleRefs.current[idx] = el)}
-                  value={r.title}
-                  onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
-                  placeholder="Spotlight Title"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <input
-                  value={r.description}
-                  onChange={(e) =>
-                    updateSpotlightRow(idx, 'description', e.target.value)
-                  }
-                  placeholder="Spotlight Description"
-                  className="flex-1 border rounded-lg p-2 bg-gray-50"
-                />
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={addSpotlightRow}
-                    className="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
-                  >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeSpotlightRow(idx)}
-                    className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            {spotlightRows.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
-                No spotlight details added yet. Click "Add" to add one.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Booking Rate Section */}
-        <div className="border rounded-lg p-4 bg-white shadow mt-4">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
-            Booking Rate
-          </h3>
-
-          {bookingRateRows.map((row, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-12 gap-3 mb-3 items-center"
-            >
-              <input
-                value={row.rentalPeriod}
-                onChange={(e) =>
-                  handleBookingRateChange(idx, 'rentalPeriod', e.target.value)
-                }
-                className="col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
-                placeholder="Rental Period (e.g. Jan 20 - Jan 30)"
-              />
-              <input
-                value={row.minimumStay}
-                onChange={(e) =>
-                  handleBookingRateChange(idx, 'minimumStay', e.target.value)
-                }
-                className="col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
-                placeholder="Minimum Stay (e.g. 10 Nights)"
-              />
-              <input
-                value={row.ratePerNight}
-                onChange={(e) =>
-                  handleBookingRateChange(idx, 'ratePerNight', e.target.value)
-                }
-                className="col-span-3 border rounded-lg p-2 text-sm bg-gray-50"
-                placeholder="Rate Per Night (e.g. 5600)"
-                type="number"
-              />
-              <button
-                type="button"
-                onClick={() => removeBookingRateRow(idx)}
-                className="col-span-1 bg-red-100 text-red-600 rounded-lg px-3 py-2 text-sm hover:bg-red-200"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
+        <div className="flex flex-row gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              addArrayItem(
+                setConciergeRows,
+                conciergeRows,
+                conciergeRefs,
+                ''
+              )
+            }
+            className="w-full sm:w-auto px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+          >
+            Add
+          </button>
 
           <button
             type="button"
-            onClick={addBookingRateRow}
-            className="mt-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm"
+            onClick={() =>
+              removeArrayItem(setConciergeRows, conciergeRows, i)
+            }
+            className="w-full sm:w-auto px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
           >
-            Add Booking Rate
+            Remove
+          </button>
+        </div>
+      </div>
+    ))}
+
+    {conciergeRows.length === 0 && (
+      <p className="text-sm text-gray-500 italic">
+        No concierge services added yet. Click "Add" to add one.
+      </p>
+    )}
+  </div>
+</div>
+
+
+
+        
+
+        {/* Staff rows */}
+
+
+
+
+
+
+      <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Staff (add rows: name + details)
+  </label>
+
+  <div className="space-y-2">
+    {staffRows.map((r, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start"
+      >
+        <input
+          ref={(el) => (staffNameRefs.current[idx] = el)}
+          value={r.name}
+          onChange={(e) => updateStaffRow(idx, 'name', e.target.value)}
+          placeholder="Staff Name"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <input
+          value={r.details}
+          onChange={(e) =>
+            updateStaffRow(idx, 'details', e.target.value)
+          }
+          placeholder="Details (role, phone, email)"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <div className="flex flex-row sm:flex-col gap-2">
+          <button
+            type="button"
+            onClick={addStaffRow}
+            className="w-full sm:w-auto px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+          >
+            Add
           </button>
 
-          {bookingRateRows.length === 0 && (
-            <p className="text-sm text-gray-500 italic mt-2">
-              No booking rates added yet. Click "Add Booking Rate" to add one.
-            </p>
-          )}
+          <button
+            type="button"
+            onClick={() => removeStaffRow(idx)}
+            className="w-full sm:w-auto px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+          >
+            Remove
+          </button>
         </div>
+      </div>
+    ))}
+
+    {staffRows.length === 0 && (
+      <p className="text-sm text-gray-500 italic">
+        No staff members added yet. Click "Add" to add one.
+      </p>
+    )}
+  </div>
+</div>
+
+
+
+
+
+        {/* Spotlight Details Section */}
+       <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Spotlight Details (add rows: title + description)
+  </label>
+
+  <div className="space-y-2">
+    {spotlightRows.map((r, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start"
+      >
+        <input
+          ref={(el) => (spotlightTitleRefs.current[idx] = el)}
+          value={r.title}
+          onChange={(e) => updateSpotlightRow(idx, 'title', e.target.value)}
+          placeholder="Spotlight Title"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <input
+          value={r.description}
+          onChange={(e) =>
+            updateSpotlightRow(idx, 'description', e.target.value)
+          }
+          placeholder="Spotlight Description"
+          className="w-full sm:flex-1 border rounded-lg p-2 bg-gray-50"
+        />
+
+        <div className="flex flex-row sm:flex-col  gap-2">
+          <button
+            type="button"
+            onClick={addSpotlightRow}
+            className="w-full sm:w-auto px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+          >
+            Add
+          </button>
+
+          <button
+            type="button"
+            onClick={() => removeSpotlightRow(idx)}
+            className="w-full sm:w-auto px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    ))}
+
+    {spotlightRows.length === 0 && (
+      <p className="text-sm text-gray-500 italic">
+        No spotlight details added yet. Click "Add" to add one.
+      </p>
+    )}
+  </div>
+</div>
+
+
+        {/* Booking Rate Section */}
+    <div className="border rounded-lg p-4 bg-white shadow mt-4">
+  <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
+    Booking Rate
+  </h3>
+
+  {bookingRateRows.map((row, idx) => (
+    <div
+      key={idx}
+      className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3 items-stretch sm:items-center"
+    >
+      <input
+        value={row.rentalPeriod}
+        onChange={(e) =>
+          handleBookingRateChange(idx, 'rentalPeriod', e.target.value)
+        }
+        className="sm:col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
+        placeholder="Rental Period (e.g. Jan 20 - Jan 30)"
+      />
+
+      <input
+        value={row.minimumStay}
+        onChange={(e) =>
+          handleBookingRateChange(idx, 'minimumStay', e.target.value)
+        }
+        className="sm:col-span-4 border rounded-lg p-2 text-sm bg-gray-50"
+        placeholder="Minimum Stay (e.g. 10 Nights)"
+      />
+
+      <input
+        value={row.ratePerNight}
+        onChange={(e) =>
+          handleBookingRateChange(idx, 'ratePerNight', e.target.value)
+        }
+        className="sm:col-span-3 border rounded-lg p-2 text-sm bg-gray-50"
+        placeholder="Rate Per Night (e.g. 5600)"
+        type="number"
+      />
+
+      <button
+        type="button"
+        onClick={() => removeBookingRateRow(idx)}
+        className="sm:col-span-1 bg-red-100 text-red-600 rounded-lg px-3 py-2 text-sm hover:bg-red-200"
+      >
+        Remove
+      </button>
+    </div>
+  ))}
+
+  <button
+    type="button"
+    onClick={addBookingRateRow}
+    className="mt-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm w-full sm:w-auto"
+  >
+    Add Booking Rate
+  </button>
+
+  {bookingRateRows.length === 0 && (
+    <p className="text-sm text-gray-500 italic mt-2">
+      No booking rates added yet. Click "Add Booking Rate" to add one.
+    </p>
+  )}
+</div>
+
 
         {/* SEO */}
         <div className="grid grid-cols-12 gap-6">
