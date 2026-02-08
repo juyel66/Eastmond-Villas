@@ -421,7 +421,7 @@ const SelectUserModal: React.FC<Props> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-gray-50">
+        <div className="p-3 border-t bg-gray-50">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-600">
               <span className="font-medium">{selected.length} users</span> selected for newsletter

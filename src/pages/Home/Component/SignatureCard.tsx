@@ -98,7 +98,7 @@ const PoolIcon = () => (
   />
 );
 
-// Heart icon supports "filled" (favorite) state
+
 const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
   <svg
     className={`w-5 h-5 transition-colors duration-200 ${
@@ -712,10 +712,10 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ villa }) => {
           />
 
           {/* Rating */}
-          <div className="absolute top-3 left-3 flex items-center bg-white text-black text-sm font-semibold px-3 py-1 rounded-full backdrop-blur-sm">
+          {/* <div className="absolute top-3 left-3 flex items-center bg-white text-black text-sm font-semibold px-3 py-1 rounded-full backdrop-blur-sm">
             <span className="text-yellow-400 mr-1">★</span>
             {rating} ({reviewCount})
-          </div>
+          </div> */}
 
           {/* Heart & Share */}
           <div className="absolute top-3 right-3 flex space-x-2">

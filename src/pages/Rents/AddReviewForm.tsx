@@ -345,7 +345,7 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({ propertyId }) => {
           {/* Rating */}
           <div className="mb-6">
             <p className="text-base font-semibold text-gray-800 mb-2">
-              Your Rating: <span className="text-red-500">*</span>
+              Your Rating:  <span className="text-red-500">*</span>
             </p>
             <div
               className="flex cursor-pointer"

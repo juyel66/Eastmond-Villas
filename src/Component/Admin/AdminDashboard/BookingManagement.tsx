@@ -1,6 +1,6 @@
 // File: BookingManagement.tsx
 import React, { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 type Booking = {
@@ -15,6 +15,13 @@ type Booking = {
   user_details?: { id?: number; name?: string; email?: string };
   status?: string;
   [k: string]: any;
+};
+
+type PaginatedResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Booking[];
 };
 
 const ACCESS_KEY = 'auth_access';
@@ -74,6 +81,13 @@ export default function BookingManagement(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [prevUrl, setPrevUrl] = useState<string | null>(null);
 
   // track which booking(s) are being updated for status (id -> boolean)
   const [statusUpdating, setStatusUpdating] = useState<Record<number, boolean>>(
@@ -85,7 +99,7 @@ export default function BookingManagement(): JSX.Element {
     window.location.href = `/login?next=${encodeURIComponent(next)}`;
   };
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (url?: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -93,7 +107,10 @@ export default function BookingManagement(): JSX.Element {
       const token = getAccessToken();
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const res = await fetch(BOOKINGS_ENDPOINT, { headers });
+      // Use provided URL or default endpoint
+      const fetchUrl = url || BOOKINGS_ENDPOINT;
+      
+      const res = await fetch(fetchUrl, { headers });
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         // If unauthorized, redirect to login
@@ -105,12 +122,32 @@ export default function BookingManagement(): JSX.Element {
         throw new Error(`Fetch error ${res.status} ${text}`);
       }
 
-      const data = await res.json();
-      // Accept paginated response with results or plain array
-      const list: Booking[] = Array.isArray(data)
-        ? data
-        : (data?.results ?? data?.bookings ?? []);
+      const data: PaginatedResponse = await res.json();
+      
+      // Set bookings from results array
+      const list: Booking[] = data.results || [];
       setBookings(list);
+      
+      // Set pagination data
+      setTotalCount(data.count || 0);
+      setNextUrl(data.next);
+      setPrevUrl(data.previous);
+      
+      // Calculate total pages (assuming 50 items per page as mentioned)
+      const itemsPerPage = 50;
+      const totalPages = Math.ceil((data.count || 0) / itemsPerPage);
+      setTotalPages(totalPages || 1);
+      
+      // Update current page based on URL if available
+      if (url) {
+        const pageMatch = url.match(/page=(\d+)/);
+        if (pageMatch) {
+          setCurrentPage(parseInt(pageMatch[1], 10));
+        }
+      } else {
+        setCurrentPage(1);
+      }
+      
     } catch (err: any) {
       console.error('Failed to fetch bookings:', err);
       setError(err?.message ?? 'Failed to load bookings');
@@ -124,6 +161,24 @@ export default function BookingManagement(): JSX.Element {
     fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle page navigation
+  const handleNextPage = () => {
+    if (nextUrl) {
+      fetchBookings(nextUrl);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (prevUrl) {
+      fetchBookings(prevUrl);
+    }
+  };
+
+  const handlePageClick = (page: number) => {
+    const url = `${BOOKINGS_ENDPOINT}?page=${page}`;
+    fetchBookings(url);
+  };
 
   // Search/filter (uses full_name, email, phone, check_in, check_out, property title)
   const filtered = bookings.filter((b) => {
@@ -192,6 +247,8 @@ export default function BookingManagement(): JSX.Element {
           timer: 1400,
           showConfirmButton: false,
         });
+        // Refresh the current page after deletion
+        fetchBookings();
       } else {
         const txt = await res.text().catch(() => '');
         throw new Error(`Delete failed ${res.status} ${txt}`);
@@ -322,6 +379,26 @@ export default function BookingManagement(): JSX.Element {
     }
   };
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    
+    // Adjust if we're near the beginning
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <div>
@@ -330,7 +407,7 @@ export default function BookingManagement(): JSX.Element {
             Booking Management
           </h1>
           <p className="text-sm text-gray-600 mb-4 mt-4">
-            Total Booking: {bookings.length}
+            Showing {bookings.length} of {totalCount} bookings (Page {currentPage} of {totalPages})
           </p>
 
           <input
@@ -360,8 +437,7 @@ export default function BookingManagement(): JSX.Element {
                 <th className="px-6 py-3">Name</th>
                 <th className="px-6 py-3">Email</th>
                 <th className="px-6 py-3">Phone</th>
-                <th className="px-6 py-3">Property</th>{' '}
-                {/* NEW: Property column */}
+                <th className="px-6 py-3">Property</th>
                 <th className="px-6 py-3">Check In</th>
                 <th className="px-6 py-3">Check Out</th>
                 <th className="px-6 py-3">Status</th>
@@ -371,21 +447,25 @@ export default function BookingManagement(): JSX.Element {
 
             <tbody>
               {loading && (
-                  <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-            <div className="bg-white/95 p-6 rounded-lg shadow-lg flex flex-col items-center pointer-events-auto">
-              <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-              <div className="text-sm text-gray-700">Loading Booking...</div>
-            </div>
-          </div>
+                <tr>
+                  <td colSpan={9} className="px-6 py-10">
+                    <div className="flex items-center justify-center">
+                      <div className="bg-white shadow-lg rounded-xl p-8 text-center border border-gray-100 w-full max-w-md">
+                        <svg className="animate-spin h-10 w-10 text-teal-600 mb-3 mx-auto" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        <div className="text-sm text-gray-700">Loading Bookings...</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
               )}
 
               {!loading &&
                 filtered.map((b, idx) => (
                   <tr key={b.id ?? idx} className="border-t hover:bg-gray-50">
-                    <td className="px-6 py-4">{idx + 1}</td>
+                    <td className="px-6 py-4">{((currentPage - 1) * 50) + idx + 1}</td>
                     <td className="px-6 py-4">
                       {b.full_name ?? b.user_details?.name}
                     </td>
@@ -394,7 +474,7 @@ export default function BookingManagement(): JSX.Element {
                     </td>
                     <td className="px-6 py-4">{b.phone}</td>
 
-                    {/* NEW: display property title or fallback to id or em-dash */}
+                    {/* Property column */}
                     <td className="px-6 py-4">
                       {b.property_details?.title ??
                         (b.property_details?.id
@@ -432,7 +512,7 @@ export default function BookingManagement(): JSX.Element {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleDelete(b.id)}
-                        className="flex items-center  justify-center gap-2 px-3 py-2 rounded-md text-white text-sm"
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-white text-sm"
                         style={{
                           backgroundColor:
                             deletingId === b.id ? '#9B1C1C' : '#DC2626',
@@ -448,38 +528,72 @@ export default function BookingManagement(): JSX.Element {
 
               {!loading && filtered.length === 0 && (
                 <tr>
-                 <td colSpan={9} className="px-6 py-10">
-  <div className="flex items-center justify-center">
-    <div className="bg-white shadow-lg rounded-xl p-8 text-center border border-gray-100 w-full max-w-md">
-   
-      <h3 className="text-lg font-semibold text-gray-800 mb-1">
-        No Booking Found
-      </h3>
-      <p className="text-sm text-gray-500">
-        There are currently no booking records available.
-      </p>
-    </div>
-  </div>
-</td>
-
+                  <td colSpan={9} className="px-6 py-10">
+                    <div className="flex items-center justify-center">
+                      <div className="bg-white shadow-lg rounded-xl p-8 text-center border border-gray-100 w-full max-w-md">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                          No Bookings Found
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          There are currently no booking records available.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
+          
+          {/* Pagination for desktop */}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between border-t px-6 py-4">
+              <div className="text-sm text-gray-700">
+                Showing page {currentPage} of {totalPages} ({totalCount} total bookings)
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={!prevUrl}
+                  className={`px-3 py-1 rounded border ${!prevUrl ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                {getPageNumbers().map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageClick(page)}
+                    className={`px-3 py-1 rounded border ${currentPage === page ? 'bg-teal-600 text-white border-teal-600' : 'hover:bg-gray-50'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={handleNextPage}
+                  disabled={!nextUrl}
+                  className={`px-3 py-1 rounded border ${!nextUrl ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mobile View */}
         <div className="lg:hidden mt-6 space-y-4">
           {loading && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-            <div className="bg-white/95 p-6 rounded-lg shadow-lg flex flex-col items-center pointer-events-auto">
-              <svg className="animate-spin h-10 w-10 text-teal-600 mb-3" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-              <div className="text-sm text-gray-700">Loading Booking..</div>
+            <div className="flex items-center justify-center">
+              <div className="bg-white shadow-lg rounded-xl p-8 text-center border border-gray-100 w-full">
+                <svg className="animate-spin h-10 w-10 text-teal-600 mb-3 mx-auto" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <div className="text-sm text-gray-700">Loading Bookings...</div>
+              </div>
             </div>
-          </div>
           )}
 
           {!loading &&
@@ -491,7 +605,7 @@ export default function BookingManagement(): JSX.Element {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-sm font-semibold">
-                      {idx + 1}. {b.full_name ?? b.user_details?.name}
+                      {((currentPage - 1) * 50) + idx + 1}. {b.full_name ?? b.user_details?.name}
                     </div>
                     <div className="text-xs text-gray-600">
                       {b.email ?? b.user_details?.email}
@@ -568,6 +682,38 @@ export default function BookingManagement(): JSX.Element {
           {!loading && filtered.length === 0 && (
             <div className="text-center text-sm text-gray-500">
               No bookings found.
+            </div>
+          )}
+          
+          {/* Pagination for mobile */}
+          {!loading && totalPages > 1 && (
+            <div className="bg-white border rounded-lg p-4">
+              <div className="text-center text-sm text-gray-700 mb-3">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={!prevUrl}
+                  className={`flex items-center px-3 py-2 rounded border ${!prevUrl ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+                >
+                  <ChevronLeft size={16} />
+                  <span className="ml-1">Previous</span>
+                </button>
+                
+                <div className="text-sm">
+                  {currentPage} / {totalPages}
+                </div>
+                
+                <button
+                  onClick={handleNextPage}
+                  disabled={!nextUrl}
+                  className={`flex items-center px-3 py-2 rounded border ${!nextUrl ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+                >
+                  <span className="mr-1">Next</span>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           )}
         </div>

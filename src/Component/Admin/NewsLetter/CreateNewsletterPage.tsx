@@ -22,7 +22,7 @@ interface Property {
   pool: number;
   images: Array<{
     id: number;
-    image: string;
+    thumbnail: string;
   }>;
 }
 
@@ -574,7 +574,7 @@ const CreateNewsletterPage: React.FC = () => {
 
   const renderPropertyRow = (property: Property) => {
     const isSelected = selectedProperties.includes(property.id);
-    const imageUrl = property.images?.[0]?.image || "https://via.placeholder.com/56";
+    const imageUrl = property.images?.[0]?.thumbnail || "https://via.placeholder.com/56";
     const price = parseFloat(property.price).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,

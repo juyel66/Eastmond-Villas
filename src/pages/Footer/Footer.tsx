@@ -30,7 +30,7 @@ const Footer = () => {
         Swal.fire({
           icon: "warning",
           title: "Dashboard Access Restricted",
-          text: "You are not logged in. Please sign in to access the Dashboard (Admin & Agent only).",
+          text: "You are not logged in. Please sign in to access the Dashboard (Admins & Agents only).",
           showCancelButton: true,
           confirmButtonText: "Login",
           cancelButtonText: "Cancel",
@@ -92,7 +92,7 @@ const Footer = () => {
       Swal.fire({
         icon: "error",
         title: "Access Denied",
-        text: "Only Admin and Agent are allowed to access the Dashboard. If you believe this is a mistake, please contact support.",
+        text: "Only Admins and Agents are allowed to access the Dashboard. If you believe this is a mistake, please contact support.",
         confirmButtonText: "OK",
       });
     } catch (err) {

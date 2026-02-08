@@ -217,7 +217,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-4 mb-3 ">
           <img
             src={previewImageUrl}
             alt="preview"
@@ -421,7 +421,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         return;
       }
 
-      // API থেকে expected response: { "is_favorited": true/false }
+      
       const nextState = json?.is_favorited ?? !isFavorite;
 
       console.log('Favorite state updated:', {
@@ -475,14 +475,16 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             style={{ backgroundImage: `url(${property.imageUrl})` }}
           >
             {/* Rating */}
-            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl font-semibold text-sm flex items-center space-x-1">
+
+            
+            {/* <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl font-semibold text-sm flex items-center space-x-1">
              
               <span className="text-yellow-400 mr-1">★</span>
               <span className="text-gray-800">{property.rating}</span>    
               <span className="text-gray-700 font-normal">
                 ({property.reviewCount})
               </span>
-            </div>
+            </div> */}
 
             {/* Favorite & Share Buttons */}
             <div className="absolute top-3 right-3 flex space-x-2">

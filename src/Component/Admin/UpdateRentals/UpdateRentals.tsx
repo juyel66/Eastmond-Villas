@@ -1128,7 +1128,7 @@ const UpdateRentals = ({ editData = null, onClose = null }) => {
         <option value="pending_review">Pending Review</option>
         <option value="published">Published</option>
         <option value="archived">Archived</option>
-        <option value="sold">Sold</option>
+        
       </select>
       <span className="pointer-events-none absolute right-[20px] top-1/2 -translate-y-1/2 text-gray-500">
         ▼

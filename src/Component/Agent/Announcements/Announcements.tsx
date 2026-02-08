@@ -1,4 +1,4 @@
-// File: AdminAnnouncements.tsx
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Clock,
@@ -19,10 +19,10 @@ import {
   createAnnouncement,
 } from "../../../features/Properties/PropertiesSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
-// Import API_BASE only for file URL transformation
+
 import { API_BASE } from "../../../features/Auth/authSlice";
 
-// SweetAlert2 add করেছি
+
 import Swal from "sweetalert2";
 
 
@@ -172,7 +172,7 @@ const UpdateCard = ({ update, onDelete }: { update: any; onDelete: (id: number) 
      
           <button
             onClick={handleDeleteClick}
-            className="p-1.5 md:p-2 text-red-500 hover:bg-red-50 rounded-lg transition border"
+            className="p-1.5 md:p-2 hidden text-red-500 hover:bg-red-50 rounded-lg transition border"
             aria-label={`Delete announcement: ${update.title}`}
             type="button"
           >

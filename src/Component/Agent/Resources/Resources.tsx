@@ -80,20 +80,22 @@ const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource
           <FileText className="w-6 h-6 text-blue-600" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ">
           <span className="text-xs font-medium py-1 px-3 rounded-full bg-gray-100 text-gray-700">
             {resource.fileType ?? 'file'}
           </span>
 
           {/* Gray delete button (replaces 3-dot menu) */}
-          <button
+         <div className='hidden'>
+           <button
             onClick={() => onDelete(resource)}
             title="Delete resource"
-            className="flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none"
+            className="flex  items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none"
           >
             <Trash2 className="w-4 h-4" />
-            <span className="text-sm">Delete</span>
+            <span className="text-sm hid">Delete</span>
           </button>
+         </div>
         </div>
       </div>
 

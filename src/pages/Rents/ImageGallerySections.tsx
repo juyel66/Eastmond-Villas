@@ -114,14 +114,14 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-9999"
+      className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center"
+        className="absolute cursor-pointer top-2 pb-1 right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center"
       >
         ×
       </button>
@@ -129,12 +129,12 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
       <button
         onClick={onPrev}
         disabled={currentImgIndex === 0}
-        className="absolute left-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
+        className="absolute pb-2 cursor-pointer left-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
       >
         ‹
       </button>
 
-      <div className="relative max-w-4xl max-h-[80vh]">
+      <div className="relative max-w-full max-h-full">
         {/* Main Image - Use FULL image URL */}
         <img
           src={images[currentImgIndex]?.image || images[currentImgIndex]?.url || LOCAL_FALLBACK}
@@ -169,7 +169,7 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
       <button
         onClick={onNext}
         disabled={currentImgIndex === images.length - 1}
-        className="absolute right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
+        className="absolute pb-2 cursor-pointer right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
       >
         ›
       </button>
@@ -181,7 +181,7 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
   );
 };
 
-// --------- MAIN COMPONENT ----------
+
 const ImageGallerySection = ({ villa }) => {
   if (!villa)
     return (
@@ -296,7 +296,6 @@ const ImageGallerySection = ({ villa }) => {
     villaName,
   });
 
-  const [showAll, setShowAll] = useState(false);
   const [showAllStaff, setShowAllStaff] = useState(false);
   const [showAllInterior, setShowAllInterior] = useState(false);
   const [showAllOutdoor, setShowAllOutdoor] = useState(false);
@@ -326,7 +325,7 @@ const ImageGallerySection = ({ villa }) => {
     }
   };
 
-  // Function to transform API booking_rate data to table format
+
   const transformBookingRateData = () => {
     if (!booking_rate || booking_rate.length === 0) {
       return [];
@@ -964,7 +963,7 @@ const ImageGallerySection = ({ villa }) => {
 
           {/* GALLERY - Shows THUMBNAILS */}
           <div className="grid grid-cols-3 gap-4">
-            {(showAll ? media_images : media_images.slice(0, 6)).map(
+            {media_images.slice(0, 6).map(
               (img, index) => (
                 <div
                   key={img.id}
@@ -983,21 +982,12 @@ const ImageGallerySection = ({ villa }) => {
           </div>
 
           <div className="mt-8 text-center">
-            {!showAll ? (
-              <button
-                onClick={() => setShowAll(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-lg transition shadow-lg"
-              >
-                View All Photos
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowAll(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition shadow-lg"
-              >
-                Show Less
-              </button>
-            )}
+            <button
+              onClick={() => openImageModal(0)}
+              className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-lg transition shadow-lg"
+            >
+              View All Photos
+            </button>
 
             <BedRoomsSliders bedrooms_images={bedrooms_images} />
 
@@ -1187,7 +1177,7 @@ const ImageGallerySection = ({ villa }) => {
               )}
 
               {/* Security Deposit - only show if data exists */}
-              {security_deposit && (
+              {/* {security_deposit && (
                 <>
                   <h3 className="text-3xl font-bold mt-10 mb-4">
                     Security Deposit
@@ -1196,7 +1186,7 @@ const ImageGallerySection = ({ villa }) => {
                     USD$ {formattedSecurityDeposit || "10,000.00"}
                   </p>
                 </>
-              )}
+              )} */}
             </>
           )}
 

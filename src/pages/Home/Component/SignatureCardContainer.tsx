@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import SignatureCard from "./SignatureCard";
+import { Link } from "react-router";
 
 interface Props {
   items?: any[];
@@ -11,10 +12,16 @@ const INITIAL_SHOW = 6;
 const INCREMENT = 3;
 
 const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, error = null }) => {
-  const total = items.length;
+  // Filter to show only sales items
+  const salesItems = items.filter((item) => {
+    const type = String(item.listing_type || item.property_type || item.type || "").toLowerCase();
+    return type === "rent" || type === "rental";
+  });
+
+  const total = salesItems.length;
   const [visibleCount, setVisibleCount] = useState<number>(INITIAL_SHOW);
 
-  const visibleItems = items.slice(0, Math.min(visibleCount, total));
+  const visibleItems = salesItems.slice(0, Math.min(visibleCount, total));
   const allVisible = visibleCount >= total;
 
   const handleToggle = () => {
@@ -101,7 +108,7 @@ const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, 
         )}
       </div>
 
-    
+{/*     
       {total > INITIAL_SHOW && (
         <div className="mt-8 flex justify-center">
           <button
@@ -110,6 +117,18 @@ const SignatureCardContainer: React.FC<Props> = ({ items = [], loading = false, 
           >
             {allVisible ? "View less" : "View more"}
           </button>
+        </div>
+      )} */}
+      {total > INITIAL_SHOW && (
+        <div className="mt-8 flex justify-center">
+          <a href="/properties"
+            // onClick={handleToggle}
+            className="px-6 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-sm"
+          >
+            {/* {allVisible ? "View less" : "View more"} */}
+
+            View More
+          </a>
         </div>
       )}
     </div>

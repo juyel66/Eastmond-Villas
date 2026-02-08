@@ -160,6 +160,11 @@ export default function Agent() {
       }
       await res.json();
       toast.success('Agent added');
+      Swal.fire({
+        icon: 'success',
+        title: 'Agent Create Successful',
+
+      });
       setIsAddOpen(false);
       setAddForm(emptyForm);
       await fetchAgents();

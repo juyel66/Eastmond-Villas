@@ -136,8 +136,8 @@ interface CallToActionButtonsProps {
 const CallToActionButtons: React.FC<CallToActionButtonsProps> = ({ onExploreClick }) => (
   <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0 mt-6 transition-all duration-500 ease-in-out">
 
-    <button
-      onClick={onExploreClick}
+    <a href="/properties"
+       onClick={onExploreClick}
       className="flex items-center justify-center space-x-2 px-8 py-3 bg-teal-500 text-white font-semibold rounded-lg shadow-xl hover:bg-teal-600 transition duration-300 text-sm"
     >
       <img
@@ -146,7 +146,7 @@ const CallToActionButtons: React.FC<CallToActionButtonsProps> = ({ onExploreClic
         alt=""
       />
       <span>Explore Listings</span>
-    </button>
+    </a>
 
     <a
       href="/contact"

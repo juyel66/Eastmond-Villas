@@ -466,9 +466,7 @@ export default function Calendars() {
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 mt-3">
-        Booked days are red; available days are green. Calendar is read-only for agents.
-      </p>
+     
       <p className="text-xs text-gray-500 mt-1">
         Note: You can only view current and future dates. Past dates are not accessible.
       </p>

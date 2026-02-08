@@ -494,14 +494,14 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             style={{ backgroundImage: `url(${property.imageUrl})` }}
           >
             {/* Rating */}
-            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl font-semibold text-sm flex items-center space-x-1">
+            {/* <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl font-semibold text-sm flex items-center space-x-1">
              <span className="text-yellow-400 mr-1">★</span>
              
               <span className="text-gray-800">{property.rating}</span>
               <span className="text-gray-700 font-normal">
                 ({property.reviewCount})
               </span>
-            </div>
+            </div> */}
 
             {/* Favorite & Share Buttons */}
             <div className="absolute top-3 right-3 flex space-x-2">
@@ -516,6 +516,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                   className={`w-5 h-5 transition-colors duration-200 ${
                     isFavorite ? "text-red-500" : "text-gray-700"
                   }`}
+
+                
                   fill={isFavorite ? "currentColor" : "none"}
                   stroke="currentColor"
                   viewBox="0 0 24 24"
