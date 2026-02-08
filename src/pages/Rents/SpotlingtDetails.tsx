@@ -20,7 +20,7 @@ interface SpotlightDetailsProps {
 // Reusable component for a single spotlight card
 const SpotlightCard: React.FC<SpotlightItemProps> = ({ icon, title, description }) => {
   return (
-    <div className="bg-white p-6 border rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 text-left">
+    <div className="bg-white p-6 border rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 text-center md:text-left">
       {/* Icon on top */}
       <div className="rounded-xl p-3 inline-flex items-center justify-center mb-4">
         {icon || (

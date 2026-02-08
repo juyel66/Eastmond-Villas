@@ -148,26 +148,30 @@ const RatesBookingInformation: React.FC<RatesBookingInformationProps> = ({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           <div className="lg:col-span-7 bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
-            <div className="grid grid-cols-3 bg-teal-600 text-white font-semibold text-lg p-4">
-              <div className="p-2">Rental Period</div>
-              <div className="p-2 text-center">Minimum Stay</div>
-              <div className="p-2 text-right">Rate Per Night</div>
-            </div>
+            <div className="overflow-x-auto">
+              <div className="min-w-[600px] md:min-w-0">
+                <div className="grid grid-cols-3 bg-teal-600 text-white font-semibold text-lg p-4">
+                  <div className="p-2">Rental Period</div>
+                  <div className="p-2 text-center">Minimum Stay</div>
+                  <div className="p-2 text-right">Rate Per Night</div>
+                </div>
 
-            {rows.map((r) => (
-              <div
-                key={r.id}
-                className="grid grid-cols-3 p-4 border-t border-gray-200 hover:bg-teal-50"
-              >
-                <div className="p-2 font-medium">{r.period}</div>
-                <div className="p-2 text-center text-gray-600">
-                  {r.min_stay}
-                </div>
-                <div className="p-2 text-right font-bold">
-                  {formatCurrency(r.rate)}
-                </div>
+                {rows.map((r) => (
+                  <div
+                    key={r.id}
+                    className="grid grid-cols-3 p-4 border-t border-gray-200 hover:bg-teal-50"
+                  >
+                    <div className="p-2 font-medium">{r.period}</div>
+                    <div className="p-2 text-center text-gray-600">
+                      {r.min_stay}
+                    </div>
+                    <div className="p-2 text-right font-bold">
+                      {formatCurrency(r.rate)}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
           <div className="lg:col-span-5 bg-white shadow-xl rounded-xl overflow-hidden">
