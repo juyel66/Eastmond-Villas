@@ -8,11 +8,11 @@ const FAQ_ENDPOINT = `${API_BASE}/api/faqs/`;
 
 // Category options exactly like backend expects (value = API string, label = nice text)
 const CATEGORY_OPTIONS = [
-  { value: 'marketing_materials', label: 'Marketing Materials' },
-  { value: 'property_viewings', label: 'Property Viewings' },
-  { value: 'property_management', label: 'Property Management' },
-  { value: 'commissions', label: 'Commissions' },
-  { value: 'technical_support', label: 'Technical Support' },
+  { value: 'marketing_materials', label: 'Villas & Portfolio' },
+  { value: 'property_viewings', label: 'Concierge & Lifestyle' },
+  { value: 'property_management', label: 'Policies & Logistics' },
+  { value: 'commissions', label: 'Finance' },
+  { value: 'technical_support', label: 'General' },
 ];
 
 // Small helper: read auth token if needed
