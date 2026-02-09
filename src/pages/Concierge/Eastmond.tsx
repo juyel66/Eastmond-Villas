@@ -53,7 +53,7 @@ const Eastmond: React.FC = () => {
     imageUrl: 'https://res.cloudinary.com/dqkczdjjs/image/upload/v1760215120/bannnnner_jrc9uz.png', 
     brandName: 'Eastmond as a Standard',
     tagline: 'The Curatorium of Distinction',
-    description: 'True luxury anticipates your needs before they arise'
+    description: 'True luxury anticipates every need before it becomes a request.'
   };
 
   return (
