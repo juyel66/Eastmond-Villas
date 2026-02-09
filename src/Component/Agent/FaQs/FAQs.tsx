@@ -3,20 +3,19 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ChevronRight, ChevronDown, Delete } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-// ---- CONFIG ----
+
 const API_BASE = 'https://api.eastmondvillas.com';
 const FAQ_ENDPOINT = `${API_BASE}/api/faqs/`;
 
-// Category options exactly like backend expects (value = API string, label = nice text)
+
 const CATEGORY_OPTIONS = [
-  { value: 'marketing_materials', label: 'Marketing Materials' },
-  { value: 'property_viewings', label: 'Property Viewings' },
-  { value: 'property_management', label: 'Property Management' },
-  { value: 'commissions', label: 'Commissions' },
-  { value: 'technical_support', label: 'Technical Support' },
+  { value: 'marketing_materials', label: 'Villas & Portfolio' },
+  { value: 'property_viewings', label: 'Concierge & Lifestyle' },
+  { value: 'property_management', label: 'Policies & Logistics' },
+  { value: 'commissions', label: 'Finance' },
+  { value: 'technical_support', label: 'General' },
 ];
 
-// Small helper: read auth token if needed
 function authHeaders(): Record<string, string> {
   try {
     const token =
@@ -33,20 +32,20 @@ function authHeaders(): Record<string, string> {
   return {};
 }
 
-// Resolve category label from value
+
 function getCategoryLabel(value: string | null | undefined): string {
   if (!value) return '';
   const opt = CATEGORY_OPTIONS.find((o) => o.value === value);
   if (opt) return opt.label;
 
-  // fallback – just format string
+ 
   return value
     .toString()
     .replace(/_/g, ' ')
     .replace(/\w\S*/g, (txt) => txt[0].toUpperCase() + txt.slice(1).toLowerCase());
 }
 
-// ---- FAQ ITEM COMPONENT ----
+
 type FAQItemProps = {
   faq: any;
   onDelete: (id: number) => void;
@@ -57,7 +56,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ faq, onDelete }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-md mb-4 border border-gray-100 transition-all duration-300">
-      {/* Question Header */}
+
       <div
         className="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition"
         onClick={() => setIsOpen(!isOpen)}
@@ -67,7 +66,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ faq, onDelete }) => {
         </span>
 
         <div className="flex items-center gap-3">
-          {/* Small delete button */}
+    
 
 
          <div >
@@ -90,7 +89,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ faq, onDelete }) => {
 
          
 
-          {/* Toggle Icon with border and rounded full */}
+      
           <div className="border border-gray-300 rounded-full p-1 flex items-center justify-center">
             {isOpen ? (
               <ChevronDown className="w-5 h-5 text-gray-600" />
@@ -101,7 +100,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ faq, onDelete }) => {
         </div>
       </div>
 
-      {/* Answer Body (Collapsible) */}
+      
       <div
         className={`transition-max-height duration-500 ease-in-out overflow-hidden ${
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
@@ -121,7 +120,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ faq, onDelete }) => {
   );
 };
 
-// ---- MAIN COMPONENT ----
+
 const FAQs: React.FC = () => {
   const [faqs, setFaqs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -139,7 +138,7 @@ const FAQs: React.FC = () => {
   );
   const [submitting, setSubmitting] = useState(false);
 
-  // ----- FETCH FAQ LIST (GET /api/faqs/) -----
+ 
   const fetchFaqs = async () => {
     setLoading(true);
     setError(null);
@@ -156,7 +155,7 @@ const FAQs: React.FC = () => {
 
 
       const json = await res.json();
-      // support both list + paginated
+      
       const list = Array.isArray(json.results) ? json.results : json;
       setFaqs(Array.isArray(list) ? list : []);
     } catch (err: any) {
@@ -171,7 +170,7 @@ const FAQs: React.FC = () => {
     fetchFaqs();
   }, []);
 
-  // ----- CREATE FAQ (POST /api/faqs/ with form-data) -----
+
   const handleCreateFaq = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formQuestion.trim() || !formAnswer.trim() || !formCategory.trim()) {
@@ -189,13 +188,13 @@ const FAQs: React.FC = () => {
       const fd = new FormData();
       fd.append('question', formQuestion.trim());
       fd.append('answer', formAnswer.trim());
-      fd.append('category', formCategory.trim()); // backend expects like "marketing_materials"
+      fd.append('category', formCategory.trim()); 
 
       const res = await fetch(FAQ_ENDPOINT, {
         method: 'POST',
         headers: {
           ...authHeaders(),
-          // no Content-Type, browser sets boundary
+         
         },
         body: fd,
       });
@@ -212,7 +211,7 @@ const FAQs: React.FC = () => {
         throw new Error(msg);
       }
 
-      // success alert
+     
       Swal.fire({
         icon: 'success',
         title: 'FAQ added successfully',
@@ -220,13 +219,13 @@ const FAQs: React.FC = () => {
         timer: 1500,
       });
 
-      // Clear & close modal
+  
       setFormQuestion('');
       setFormAnswer('');
       setFormCategory(CATEGORY_OPTIONS[0]?.value || '');
       setIsModalOpen(false);
 
-      // Refresh list
+     
       await fetchFaqs();
     } catch (err: any) {
       Swal.fire({
@@ -240,7 +239,7 @@ const FAQs: React.FC = () => {
     }
   };
 
-  // ----- DELETE FAQ (DELETE /api/faqs/:id/) -----
+  
   const handleDeleteFaq = async (id: number) => {
     const result = await Swal.fire({
       icon: 'warning',
@@ -284,12 +283,12 @@ const FAQs: React.FC = () => {
     }
   };
 
-  // ----- CATEGORY LIST (TABS) -----
+
   const categories = useMemo(() => {
     return [ALL, ...CATEGORY_OPTIONS.map((c) => c.value)];
   }, []);
 
-  // ----- FILTERED LIST -----
+
   const filteredFAQs = faqs.filter((faq) => {
     const categoryMatch =
       activeCategory === ALL || faq.category === activeCategory;
@@ -305,7 +304,7 @@ const FAQs: React.FC = () => {
   return (
     <div className="font-sans p-4 md:p-8">
       <div className=" mx-auto">
-        {/* Header Section */}
+
         <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
@@ -324,7 +323,7 @@ const FAQs: React.FC = () => {
           </button>
         </header>
 
-        {/* Search and Category Filter Bar */}
+ 
         <div className="flex flex-col mb-8 space-y-4">
           <div className="flex items-center border-2 p-2 rounded-xl gap-2">
             <div className="relative flex-grow">
@@ -338,7 +337,7 @@ const FAQs: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
 
-            {/* Category Tabs */}
+
             <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
               <div className="inline-flex space-x-2 p-1 rounded-xl shadow-sm">
                 {categories.map((category) => {
@@ -369,7 +368,7 @@ const FAQs: React.FC = () => {
           </div>
         </div>
 
-        {/* FAQ List */}
+
         <main>
           {loading && (
             <div className="min-h-[40vh] flex items-center justify-center">
@@ -414,7 +413,7 @@ const FAQs: React.FC = () => {
         </main>
       </div>
 
-      {/* ADD FAQ MODAL */}
+  
       {isModalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
