@@ -1,4 +1,4 @@
-// File: Analytics.tsx
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { Eye, Download, FileDown } from 'lucide-react';
 import {
@@ -20,7 +20,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
 
-// Extend jsPDF with autoTable plugin
+
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -41,7 +41,7 @@ const Analytics = () => {
   const [apiError, setApiError] = useState(null);
   const [apiData, setApiData] = useState(null);
 
-  // NEW: store full properties list fetched separately when analytics doesn't include it
+
   const [allProperties, setAllProperties] = useState(null);
   const [propsLoading, setPropsLoading] = useState(false);
   const [propsError, setPropsError] = useState(null);
@@ -87,17 +87,16 @@ const Analytics = () => {
     return () => controller.abort();
   }, [selectedRange]);
 
-  // If analytics doesn't include a properties array, fetch the properties endpoint
   useEffect(() => {
     if (apiData && Array.isArray(apiData.properties) && apiData.properties.length) {
-      // analytics includes properties — we don't need a separate fetch
+
       setAllProperties(null);
       setPropsError(null);
       setPropsLoading(false);
       return;
     }
 
-    // otherwise fetch properties list once
+
     let mounted = true;
     const controller = new AbortController();
     async function fetchPropertiesList() {
@@ -110,7 +109,7 @@ const Analytics = () => {
           throw new Error(txt || `HTTP ${res.status}`);
         }
         const json = await res.json();
-        // many APIs return {results: [...]}; normalize
+      
         const list = Array.isArray(json) ? json : (Array.isArray(json.results) ? json.results : []);
         if (mounted) setAllProperties(list);
       } catch (err) {
@@ -127,7 +126,7 @@ const Analytics = () => {
     };
   }, [apiData]);
 
-  // ---------- Helpers: determine sale / rent ----------
+
   const isSaleProperty = (p) => {
     if (!p) return false;
     const val = (p?.listing_type ?? p?.listingType ?? p?.property_type ?? p?.type ?? p?.rateType) ?? '';
@@ -142,23 +141,23 @@ const Analytics = () => {
     return ['rent', 'rental', 'rentals'].includes(normalized);
   };
 
-  // Format date for display
+
   const formatDateForDisplay = (date, range) => {
     if (range === 'Last 7 Days') {
-      // Show day names for 7 days
+  
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       return days[date.getDay()];
     } else if (range === 'Last 30 Days') {
-      // Show date and month for 30 days
+  
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } else if (range === 'Last 90 Days') {
-      // Show month name for 90 days (monthly view)
+     
       return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
     return date.toLocaleDateString();
   };
 
-  // Format date for PDF (full format)
+
   const formatDateForPDF = (date) => {
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -167,7 +166,7 @@ const Analytics = () => {
     });
   };
 
-  // Helper to get month name from YYYY-MM format
+
   const getMonthNameFromYYYYMM = (monthStr) => {
     if (!monthStr) return '';
     const [year, month] = monthStr.split('-');
@@ -175,12 +174,12 @@ const Analytics = () => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  // Defensive mapping helpers with proper capitalization and date formatting
+
   const performanceChartData = useMemo(() => {
     if (!apiData || !Array.isArray(apiData.performance) || apiData.performance.length === 0) {
       console.log('No performance data found for', selectedRange, 'creating sample data');
       
-      // Generate sample dates based on selected range
+
       const today = new Date();
       const dates = [];
       
@@ -197,7 +196,7 @@ const Analytics = () => {
           dates.push(date);
         }
       } else if (selectedRange === 'Last 90 Days') {
-        // For 90 days, show monthly data
+  
         const currentMonth = today.getMonth();
         const currentYear = today.getFullYear();
         
@@ -218,7 +217,7 @@ const Analytics = () => {
           baseValue = 50;
           variationFactor = 0.3;
         } else if (selectedRange === 'Last 90 Days') {
-          // For 90 days (monthly), use increasing values for each month
+
           const monthlyValues = [40, 60, 80];
           baseValue = monthlyValues[index] || 60;
           variationFactor = 0.2;
@@ -227,9 +226,9 @@ const Analytics = () => {
           variationFactor = 0.3;
         }
         
-        // Add some variation to make it look realistic
+     
         const variation = Math.sin(index * 0.5) * 20 + Math.random() * 30;
-        const dayFactor = date.getDay(); // 0=Sunday, 6=Saturday
+        const dayFactor = date.getDay();
         
         return {
           date: date,
@@ -247,18 +246,17 @@ const Analytics = () => {
     }
     
     console.log('Processing performance data for', selectedRange, ':', apiData.performance);
-    
-    // For 90 days (monthly data)
+ 
     if (selectedRange === 'Last 90 Days') {
       console.log('Processing 90 days performance data from API:', apiData.performance);
       
-      // Create a map of month data from API
+ 
       const monthDataMap = {};
       apiData.performance.forEach(item => {
         if (item.month && item.label) {
           const monthKey = getMonthNameFromYYYYMM(item.month);
           monthDataMap[monthKey] = {
-            date: new Date(item.month + '-15'), // Middle of the month
+            date: new Date(item.month + '-15'), 
             displayDate: item.label,
             pdfDate: monthKey,
             Views: Number(item.views || 0),
@@ -269,7 +267,7 @@ const Analytics = () => {
         }
       });
       
-      // Generate last 3 months
+  
       const today = new Date();
       const last3Months = [];
       for (let i = 2; i >= 0; i--) {
@@ -316,14 +314,14 @@ const Analytics = () => {
     return mappedData;
   }, [apiData, selectedRange]);
 
-  // ---------- compute properties by type using analytics.properties OR allProperties fetched from /properties/ ----------
+  
   const propertiesByTypeData = useMemo(() => {
     const source =
       (apiData && Array.isArray(apiData.properties) && apiData.properties.length ? apiData.properties : null) ||
       (Array.isArray(allProperties) ? allProperties : null) ||
       (apiData && Array.isArray(apiData.properties_by_type) ? apiData.properties_by_type : null);
 
-    // If we have a normalized array of property objects, count directly using helpers
+   
     if (Array.isArray(source) && source.length && typeof source[0] === 'object' && ('listing_type' in source[0] || 'type' in source[0] || 'rateType' in source[0] || 'property_type' in source[0])) {
       let sales = 0;
       let rents = 0;
@@ -337,7 +335,7 @@ const Analytics = () => {
       ];
     }
 
-    // If api returned properties_by_type style entries like [{name, value}], try to infer counts by matching names
+   
     if (Array.isArray(source) && source.length && typeof source[0] === 'object' && ('name' in source[0] && ('value' in source[0] || 'count' in source[0]))) {
       let sales = 0;
       let rents = 0;
@@ -353,7 +351,7 @@ const Analytics = () => {
       ];
     }
 
-    // If we reach here we don't have data yet — show zeros rather than sample numbers
+   
     return [
       { name: 'Sales', value: 0, color: '#3B82F6' },
       { name: 'Rentals', value: 0, color: '#10B981' },
@@ -377,7 +375,7 @@ const Analytics = () => {
   const totals = useMemo(() => {
     const t = apiData && apiData.totals ? apiData.totals : null;
     
-    // Use API totals if available
+   
     if (t) {
       return {
         Views: t.views !== undefined ? t.views : '—',
@@ -387,7 +385,7 @@ const Analytics = () => {
       };
     }
     
-    // Calculate from performance data if no totals
+
     let calculatedViews = 0;
     let calculatedBookings = 0;
     let calculatedDownloads = 0;
@@ -457,7 +455,7 @@ const Analytics = () => {
               </div>
             </>
           ) : (
-            // Fallback if dataPoint is not available
+          
             payload.map((entry, index) => (
               <div key={`tooltip-${index}`} className="flex items-center justify-between mb-1">
                 <div className="flex items-center">
@@ -491,30 +489,29 @@ const Analytics = () => {
     setExporting(true);
 
     try {
-      // Create PDF document
+     
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 15;
       let yPos = margin;
 
-      // ===== HEADER =====
-      // Company Logo/Title
+
       doc.setFontSize(26);
-      doc.setTextColor(13, 148, 136); // teal color
+      doc.setTextColor(13, 148, 136);
       doc.setFont('helvetica', 'bold');
       doc.text('Eastmond Villas', margin, yPos);
       
       doc.setFontSize(14);
-      doc.setTextColor(100, 116, 139); // slate color
+      doc.setTextColor(100, 116, 139); 
       doc.setFont('helvetica', 'normal');
       doc.text('Analytics Report', margin, yPos + 8);
       
-      // Date range
+     
       const dateRangeText = `Date Range: ${selectedRange}`;
       const dateRangeWidth = doc.getStringUnitWidth(dateRangeText) * doc.getFontSize() / doc.internal.scaleFactor;
       doc.text(dateRangeText, pageWidth - margin - dateRangeWidth, yPos);
       
-      // Generated date with full format
+
       const generatedDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -529,15 +526,15 @@ const Analytics = () => {
       
       yPos += 22;
       
-      // Divider line
+   
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.5);
       doc.line(margin, yPos, pageWidth - margin, yPos);
       yPos += 12;
 
-      // ===== SUMMARY STATISTICS =====
+    
       doc.setFontSize(18);
-      doc.setTextColor(30, 41, 59); // slate-800
+      doc.setTextColor(30, 41, 59); 
       doc.setFont('helvetica', 'bold');
       doc.text('Summary Statistics', margin, yPos);
       yPos += 10;
@@ -557,7 +554,7 @@ const Analytics = () => {
         body: summaryData.slice(1),
         theme: 'striped',
         headStyles: {
-          fillColor: [16, 185, 129], // teal
+          fillColor: [16, 185, 129], 
           textColor: [255, 255, 255],
           fontSize: 12,
           fontStyle: 'bold',
@@ -568,7 +565,7 @@ const Analytics = () => {
           cellPadding: 4,
         },
         alternateRowStyles: {
-          fillColor: [248, 250, 252], // slate-50
+          fillColor: [248, 250, 252], 
         },
         margin: { left: margin, right: margin },
         tableWidth: 'auto',
@@ -576,7 +573,7 @@ const Analytics = () => {
 
       yPos = (doc as any).lastAutoTable?.finalY + 18 || yPos + 70;
 
-      // ===== PROPERTIES BY TYPE =====
+ 
       doc.setFontSize(18);
       doc.setTextColor(30, 41, 59);
       doc.setFont('helvetica', 'bold');
@@ -607,7 +604,7 @@ const Analytics = () => {
         body: propertiesTypeData.slice(1),
         theme: 'striped',
         headStyles: {
-          fillColor: [59, 130, 246], // blue-500
+          fillColor: [59, 130, 246], 
           textColor: [255, 255, 255],
           fontSize: 12,
           fontStyle: 'bold',
@@ -626,7 +623,7 @@ const Analytics = () => {
 
       yPos = (doc as any).lastAutoTable?.finalY + 18 || yPos + 50;
 
-      // ===== PERFORMANCE OVERVIEW DATA =====
+
       if (performanceChartData.length > 0) {
         doc.setFontSize(18);
         doc.setTextColor(30, 41, 59);
@@ -634,7 +631,7 @@ const Analytics = () => {
         doc.text('Performance Overview', margin, yPos);
         yPos += 10;
 
-        // Prepare performance data for table
+ 
         const performanceHeaders = ['Date', 'Views', 'Downloads', 'Inquiries', 'Bookings'];
         const performanceBody = performanceChartData.map(item => [
           item.displayDate,
@@ -650,7 +647,7 @@ const Analytics = () => {
           body: performanceBody,
           theme: 'striped',
           headStyles: {
-            fillColor: [147, 51, 234], // purple-600
+            fillColor: [147, 51, 234],
             textColor: [255, 255, 255],
             fontSize: selectedRange === 'Last 30 Days' ? 8 : 10,
             fontStyle: 'bold',
@@ -670,7 +667,7 @@ const Analytics = () => {
         yPos = (doc as any).lastAutoTable?.finalY + 15 || yPos + 100;
       }
 
-      // ===== AGENT PERFORMANCE =====
+  
       if (agentsChartData.length > 0) {
         doc.setFontSize(18);
         doc.setTextColor(30, 41, 59);
@@ -678,7 +675,7 @@ const Analytics = () => {
         doc.text('Agent Performance', margin, yPos);
         yPos += 10;
 
-        // Prepare agent data for table
+
         const agentHeaders = ['Agent Name', 'Total Views', 'Properties Assigned', 'Downloads', 'Bookings'];
         const agentBody = agentsChartData.map(agent => [
           agent.name,
@@ -694,7 +691,7 @@ const Analytics = () => {
           body: agentBody,
           theme: 'striped',
           headStyles: {
-            fillColor: [245, 158, 11], // amber-500
+            fillColor: [245, 158, 11],
             textColor: [255, 255, 255],
             fontSize: 10,
             fontStyle: 'bold',
@@ -714,10 +711,10 @@ const Analytics = () => {
         yPos = (doc as any).lastAutoTable?.finalY + 15 || yPos + 80;
       }
 
-      // ===== PROPERTIES LIST (if available) =====
+      
       const propertiesSource = apiData?.properties || allProperties;
       if (Array.isArray(propertiesSource) && propertiesSource.length > 0) {
-        // Check if we need a new page
+
         if (yPos > 240) {
           doc.addPage();
           yPos = margin;
@@ -729,10 +726,10 @@ const Analytics = () => {
         doc.text('Properties List', margin, yPos);
         yPos += 10;
 
-        // Take first 20 properties to avoid overwhelming the PDF
+       
         const limitedProperties = propertiesSource.slice(0, 20);
         
-        // Determine available property fields
+       
         const sampleProp = limitedProperties[0] || {};
         const propertyFields = Object.keys(sampleProp).filter(key => 
           !key.includes('_id') && 
@@ -740,7 +737,7 @@ const Analytics = () => {
           !key.includes('url') &&
           !key.includes('description') &&
           typeof sampleProp[key] !== 'object'
-        ).slice(0, 5); // Limit to 5 columns
+        ).slice(0, 5);
 
         if (propertyFields.length > 0) {
           const propHeaders = propertyFields.map(field => 
@@ -753,7 +750,7 @@ const Analytics = () => {
               if (value === null || value === undefined) return '-';
               if (typeof value === 'boolean') return value ? 'Yes' : 'No';
               if (typeof value === 'object') return '-';
-              return String(value).substring(0, 50); // Limit text length
+              return String(value).substring(0, 50);
             })
           );
 
@@ -763,7 +760,7 @@ const Analytics = () => {
             body: propBody,
             theme: 'striped',
             headStyles: {
-              fillColor: [59, 130, 246], // blue-500
+              fillColor: [59, 130, 246], 
               textColor: [255, 255, 255],
               fontSize: 9,
               fontStyle: 'bold',
@@ -790,12 +787,11 @@ const Analytics = () => {
         }
       }
 
-      // ===== FOOTER =====
       const totalPages = doc.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         
-        // Page number
+      
         doc.setFontSize(11);
         doc.setTextColor(100, 116, 139);
         doc.text(
@@ -823,11 +819,11 @@ const Analytics = () => {
         );
       }
 
-      // ===== SAVE PDF =====
+      
       const fileName = `analytics_report_${selectedRange.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
-      // Success notification
+   
       Swal.fire({
         icon: 'success',
         title: 'PDF Exported!',
@@ -848,17 +844,17 @@ const Analytics = () => {
     }
   };
 
-  // Chart components with proper date display and larger text
+
   const PerformanceOverviewChart = () => {
-    // Calculate custom interval based on selected range
+   
     const getXAxisInterval = () => {
       if (selectedRange === 'Last 7 Days') {
-        return 0; // Show all 7 days
+        return 0;
       } else if (selectedRange === 'Last 30 Days') {
-        // For 30 days, use 'preserveStart' to handle density better
+   
         return 'preserveStart';
       } else if (selectedRange === 'Last 90 Days') {
-        return 0; // Show all 3 months
+        return 0; 
       }
       return 0;
     };
@@ -965,7 +961,7 @@ const Analytics = () => {
       <h2 className="text-xl font-semibold text-gray-800">Properties by Type</h2>
       <p className="text-gray-500 text-sm mb-4">Distribution across Sales vs Rentals.</p>
 
-      {/* show small loader or error for properties fetch if needed */}
+     
       {(!apiData || (Array.isArray(apiData.properties) && apiData.properties.length === 0)) && propsLoading ? (
         <div className="flex items-center justify-center p-6">
           <div className="animate-spin h-5 w-5 border-2 border-teal-600 border-t-transparent rounded-full mr-2"></div>
@@ -1056,9 +1052,9 @@ const Analytics = () => {
     </p>
   </div>
 
-  {/* Actions */}
+
   <div className="flex flex-col sm:flex-row items-center gap-3 relative w-full lg:w-auto">
-    {/* Date Range */}
+  
     <div className="w-full sm:w-auto bg-gray-100 border-2 border-gray-300 text-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-colors duration-150 cursor-pointer relative">
       <select
         value={selectedRange}
@@ -1071,7 +1067,7 @@ const Analytics = () => {
       </select>
     </div>
 
-    {/* Export button */}
+
     <button
       onClick={exportToPDF}
       disabled={exporting || !apiData}
@@ -1095,7 +1091,7 @@ const Analytics = () => {
 </div>
 
 
-        {/* --- Stats Cards (use API totals) --- */}
+     
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex justify-between items-center hover:shadow-md transition-shadow duration-300">
             <div>
@@ -1145,7 +1141,7 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* --- Charts --- */}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
         <div className="lg:col-span-2">
           <PerformanceOverviewChart />
