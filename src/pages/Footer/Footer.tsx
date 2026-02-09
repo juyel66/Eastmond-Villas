@@ -213,7 +213,7 @@ const Footer = () => {
                 <div className="flex-shrink-0">
                   <img src={callImg} alt="Phone icon" className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
                 </div>
-                <p className="text-xs md:text-sm lg:text-base md:mt-1">+1 (246) 233-EAST</p>
+                <p className="text-xs md:text-sm lg:text-base md:mt-1">+1 (246) 233-3278</p>
               </div>
 
               <div className="flex flex-col md:flex-row items-center md:items-start justify-center md:justify-start space-y-1 md:space-y-0 md:space-x-3">
