@@ -15,29 +15,98 @@ const Description: React.FC<DescriptionProps> = ({
   const toggleShow = () => setShowFull((prev) => !prev);
 
   const text = descriptionData || "";
-  const words = text.split(" ");
   const characterLimit = 690;
 
-
+  // Split text into paragraphs
+  const paragraphs = text.split('\n').filter(p => p.trim().length > 0);
+  
   let shortText = "";
   let remainingText = "";
+  let shortParagraphs: string[] = [];
+  let remainingParagraphs: string[] = [];
   
   if (text.length > characterLimit) {
+    // For paragraph-based truncation
+    let accumulatedLength = 0;
+    shortParagraphs = [];
+    remainingParagraphs = [...paragraphs];
     
-    let cutoff = characterLimit;
-    // Don't cut in the middle of a word
-    while (cutoff > 0 && text.charAt(cutoff) !== ' ' && text.charAt(cutoff) !== '.' && text.charAt(cutoff) !== ',') {
-      cutoff--;
+    for (let i = 0; i < paragraphs.length; i++) {
+      const paragraph = paragraphs[i];
+      if (accumulatedLength + paragraph.length <= characterLimit) {
+        shortParagraphs.push(paragraph);
+        accumulatedLength += paragraph.length;
+        remainingParagraphs.shift();
+      } else {
+        // Need to truncate within this paragraph
+        const remainingChars = characterLimit - accumulatedLength;
+        let cutoff = remainingChars;
+        
+        // Don't cut in the middle of a word
+        while (cutoff > 0 && paragraph.charAt(cutoff) !== ' ' && 
+               paragraph.charAt(cutoff) !== '.' && paragraph.charAt(cutoff) !== ',') {
+          cutoff--;
+        }
+        
+        if (cutoff === 0) {
+          // If we can't find a good break point in the remaining characters,
+          // just take the full remaining chars
+          cutoff = Math.max(1, remainingChars);
+        }
+        
+        const truncatedParagraph = paragraph.substring(0, cutoff).trim() + "...";
+        shortParagraphs.push(truncatedParagraph);
+        remainingParagraphs[0] = paragraph.substring(cutoff).trim();
+        break;
+      }
     }
-    if (cutoff === 0) cutoff = characterLimit; // Fallback
     
-    shortText = text.substring(0, cutoff).trim() + "...";
-    remainingText = text.substring(cutoff).trim();
+    shortText = shortParagraphs.join('\n\n');
+    remainingText = remainingParagraphs.join('\n\n');
   } else {
     shortText = text;
+    shortParagraphs = paragraphs;
   }
 
   const title = "Description";
+
+  // Helper function to render text with paragraphs
+  const renderText = (content: string, isShort: boolean = false) => {
+    const paragraphsToRender = isShort ? shortParagraphs : content.split('\n').filter(p => p.trim().length > 0);
+    
+    return (
+      <div className="pr-2">
+        {paragraphsToRender.map((paragraph, index) => {
+          // Check if paragraph looks like a bullet point (starts with dash, asterisk, etc.)
+          const isBulletPoint = /^[\-\*\•\‣\⁃]\s/.test(paragraph.trim());
+          const isNumberedList = /^\d+\.\s/.test(paragraph.trim());
+          
+          if (isBulletPoint) {
+            return (
+              <div key={index} className="flex items-start mb-3">
+                <span className="mr-2 text-teal-600">•</span>
+                <span className="flex-1">{paragraph.trim().substring(1).trim()}</span>
+              </div>
+            );
+          } else if (isNumberedList) {
+            const match = paragraph.match(/^(\d+)\.\s(.*)/);
+            return (
+              <div key={index} className="flex items-start mb-3">
+                <span className="mr-2 font-medium text-teal-600">{match?.[1]}.</span>
+                <span className="flex-1">{match?.[2]}</span>
+              </div>
+            );
+          } else {
+            return (
+              <p key={index} className="mb-4 last:mb-0">
+                {paragraph}
+              </p>
+            );
+          }
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="mt-20">
@@ -80,13 +149,9 @@ const Description: React.FC<DescriptionProps> = ({
               </style>
               
               {showFull ? (
-                <div className="pr-2">
-                  {text}
-                </div>
+                renderText(text)
               ) : (
-                <div className="pr-2">
-                  {shortText}
-                </div>
+                renderText(shortText, true)
               )}
             </div>
 
@@ -180,16 +245,11 @@ const Description: React.FC<DescriptionProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Character count info */}
-     
     </div>
   );
 };
 
 export default Description;
-
-
 
 
 
