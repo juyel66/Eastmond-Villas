@@ -380,7 +380,7 @@ const VideoDownloadProgress: FC<VideoDownloadProgressProps> = ({
           <div className="flex justify-between text-sm text-gray-600 mb-1">
             <span>
               {isCompleted ? 'Download Complete!' : 
-               isDownloading ? 'Downloading...' : 'Preparing...'}
+               isDownloading ? 'Ready to download...' : 'Preparing...'}
             </span>
             <span>{Math.round(progress)}%</span>
           </div>
@@ -407,8 +407,8 @@ const VideoDownloadProgress: FC<VideoDownloadProgressProps> = ({
         {/* Download Stats */}
         {isDownloading && progress > 0 && progress < 100 && (
           <div className="text-xs text-gray-600 flex justify-between">
-            <span>Estimated time remaining: {Math.max(0, Math.round((100 - progress) * 0.3))}s</span>
-            <span>{Math.round(progress * 2.5)} KB / 250 KB</span>
+            {/* <span>Estimated time remaining: {Math.max(0, Math.round((100 - progress) * 0.3))}s</span>
+            <span>{Math.round(progress * 2.5)} KB / 250 KB</span> */}
           </div>
         )}
       </div>
