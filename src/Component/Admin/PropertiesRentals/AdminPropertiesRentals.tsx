@@ -401,7 +401,7 @@ const AdminPropertiesRentals: React.FC = () => {
                             src={
                               item?.main_image_url ||
                               item?.imageUrl ||
-                              item?.media_images?.[0]?.image ||
+                              item?.media_images?.[0]?.thumbnail ||
                               'https://placehold.co/64x64'
                             }
                             alt={item.title || item.name || `Property ${item.id}`}
