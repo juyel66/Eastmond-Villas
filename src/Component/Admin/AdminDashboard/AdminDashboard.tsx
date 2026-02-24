@@ -413,7 +413,7 @@ const AdminDashboard = () => {
     const extractUrl = (m) => {
       if (!m) return null;
       if (typeof m === "string") return m;
-      if (m.image) return m.image;
+      if (m.thumbnail) return m.thumbnail;
       if (m.url) return m.url;
       if (m.file) return m.file;
       return null;
