@@ -166,7 +166,7 @@ const AgentFaqs = () => {
             </div>
 
             <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
-              <div className="inline-flex space-x-2 p-1 rounded-xl shadow-sm">
+              <div className="inline-flex space-x-2 p-1 rounded-xl ">
                 {categories.map((category) => (
                   <button
                     key={category}
