@@ -642,15 +642,15 @@ export default function AdminResources() {
         </div>
 
         {/* Search + Filters */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+        <div className="flex border-2 p-2 rounded-xl flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
           <div className="relative mr-5 flex-grow lg:w-1/3">
             <input type="text" placeholder="Search Resources..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg text-sm focus:ring-teal-500 focus:border-teal-500 transition shadow-sm" />
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-base focus:ring-gray-900 focus:border-gray-900 transition shadow-sm" />
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           </div>
 
           <div className="overflow-x-auto whitespace-nowrap">
-            <div className="inline-flex space-x-2 p-1 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="inline-flex space-x-2 p-1   ">
               {categories.map((category) => (
                 <button key={category}
                   onClick={() => { setActiveCategory(category); setSearchTerm(''); }}
@@ -750,7 +750,7 @@ export default function AdminResources() {
               </button>
             </div>
 
-            <form onSubmit={handleAddResource} className="p-6 space-y-4">
+            <form onSubmit={handleAddResource} className="p-4 space-y-4 ">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full px-4 py-3 border rounded-md text-sm bg-gray-50" placeholder="Title" />
@@ -780,7 +780,7 @@ export default function AdminResources() {
                 </label>
 
                 {selectedFiles.length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-40 overflow-y-auto pr-2">
                     {selectedFiles.map((s, i) => (
                       <div key={`${s.name}-${i}`} className="relative rounded-md overflow-hidden border">
                         {s.kind === 'image' && s.preview ? (
