@@ -641,15 +641,15 @@ export default function AdminResources() {
         </div>
 
         {/* Search + Filters */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+        <div className="flex border-2 p-2 rounded-xl flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
           <div className="relative mr-5 flex-grow lg:w-1/3">
             <input type="text" placeholder="Search Resources..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg text-sm focus:ring-teal-500 focus:border-teal-500 transition shadow-sm" />
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-base focus:ring-gray-900 focus:border-gray-900 transition shadow-sm" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           </div>
 
           <div className="overflow-x-auto whitespace-nowrap">
-            <div className="inline-flex space-x-2 p-1 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="inline-flex space-x-2 p-1 ">
               {categories.map((category) => (
                 <button key={category}
                   onClick={() => { setActiveCategory(category); setSearchTerm(''); }}
