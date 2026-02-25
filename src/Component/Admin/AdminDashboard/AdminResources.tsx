@@ -19,15 +19,14 @@ type UIResource = {
   raw?: any;
 };
 
-const CATEGORIES_DISPLAY = ['All', 'Branding', 'Templates', 'Legal Forms', 'Training', 'Market Research', 'External Tools'] as const;
+const CATEGORIES_DISPLAY = ['All Categories', 'Villas & Portfolio', 'Concierge & Lifestyle', 'Policies & Logistics', 'Finance', 'General'] as const;
 const CATEGORY_TO_API: Record<string, string> = {
-  Branding: 'branding',
-  Templates: 'templates',
-  'Legal Forms': 'legal_forms',
-  Training: 'training',
-  'Market Research': 'market_research',
-  'External Tools': 'external_tools',
-  All: '',
+  'Villas & Portfolio': 'branding',
+  'Concierge & Lifestyle': 'templates',
+  'Policies & Logistics': 'legal_forms',
+  'Finance': 'training',
+  'General': 'market_research',
+  'All Categories': '',
 };
 const categories = CATEGORIES_DISPLAY as string[];
 
@@ -54,10 +53,15 @@ function normalizeCategoryForCompare(cat?: string | null) {
   return String(cat).trim().toLowerCase().replace(/\s+/g, '_');
 }
 
-// NEW helper: format backend category -> Title Case display (e.g. "external_tools" -> "External Tools")
+
 function formatCategoryForDisplay(cat?: string | null) {
   if (!cat) return '—';
-  const s = String(cat).trim().replace(/_/g, ' ');
+  // Find display name from API key
+  const apiKey = String(cat).trim();
+  const display = Object.entries(CATEGORY_TO_API).find(([displayName, apiVal]) => apiVal === apiKey);
+  if (display) return display[0];
+  // Fallback: Title Case
+  const s = apiKey.replace(/_/g, ' ');
   return s
     .split(/\s+/)
     .filter(Boolean)
@@ -65,9 +69,7 @@ function formatCategoryForDisplay(cat?: string | null) {
     .join(' ');
 }
 
-/* -----------------------
-   Resource card
-------------------------*/
+
 const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource; onDownload: (r: UIResource) => void; onDelete: (r: UIResource) => void }) => {
   const fileCount = resource.files?.length ?? (resource.downloadUrl ? 1 : 0);
   const description = resource.description || '';
@@ -152,7 +154,7 @@ export default function AdminResources() {
   const apiError = apiState.error ?? null;
 
   const [resources, setResources] = useState<UIResource[]>([]);
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('All Categories');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -237,7 +239,8 @@ export default function AdminResources() {
       (resource.title ?? '').toLowerCase().includes(search) ||
       (resource.description ?? '').toLowerCase().includes(search);
 
-    if (activeCategory === 'All') {
+    // Fix: use exact match for 'All Categories'
+    if (activeCategory === 'All Categories') {
       return searchMatch;
     }
 

@@ -19,7 +19,7 @@ type UIResource = {
   raw?: any;
 };
 
-const CATEGORIES_DISPLAY = ['All', 'Branding', 'Templates', 'Legal Forms', 'Training', 'Market Research', 'External Tools'] as const;
+const CATEGORIES_DISPLAY = ['All Categories ', 'Branding', 'Templates', 'Legal Forms', 'Training', 'Market Research', 'External Tools'] as const;
 const CATEGORY_TO_API: Record<string, string> = {
   Branding: 'branding',
   Templates: 'templates',
