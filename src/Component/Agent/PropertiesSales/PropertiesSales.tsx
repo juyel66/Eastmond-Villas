@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
  * PropertiesSales.tsx
  * - Fetches sale properties from: ${API_BASE}/api/villas/agent/properties/?listing_type=sale
  * - Shows ONLY properties assigned to the current agent
+ * - Supports global search via API search parameter
  * - View Details links to: /dashboard/agent-property-sales-details/:id
  * - Pagination support with page numbers
  * - Image gallery modal with bulk download functionality
@@ -254,12 +255,14 @@ interface EmptyStateCardProps {
   loadError: string | null;
   searchTerm: string;
   onRetry: () => void;
+  onClearSearch: () => void;
 }
 
 const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
   loadError,
   searchTerm,
   onRetry,
+  onClearSearch,
 }) => {
   const hasSearch = searchTerm.trim().length > 0;
   const isError = Boolean(loadError);
@@ -273,7 +276,7 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
   const description = isError
     ? 'Something went wrong while contacting the server. Please try again in a moment.'
     : hasSearch
-      ? 'Try adjusting your search term or clearing the search box to see all available sales properties.'
+      ? `No results found for "${searchTerm}". Try adjusting your search term or clearing it to see all available sales properties.`
       : 'Once sales properties are assigned to your account, they will appear here.';
 
   return (
@@ -298,7 +301,7 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
 
         {hasSearch && (
           <button
-            onClick={() => (window.location.href = window.location.pathname)}
+            onClick={onClearSearch}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
           >
             Clear search
@@ -633,8 +636,8 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
       <div className="text-sm text-gray-600">
-        Showing {pagination.count > 0 ? (currentPage - 1) * 20 + 1 : 0} -{' '}
-        {Math.min(currentPage * 20, pagination.count)} of {pagination.count}{' '}
+        Showing {pagination.count > 0 ? (currentPage - 1) * pagination.page_size + 1 : 0} -{' '}
+        {Math.min(currentPage * pagination.page_size, pagination.count)} of {pagination.count}{' '}
         properties
       </div>
 
@@ -722,6 +725,23 @@ const Pagination: React.FC<PaginationProps> = ({
     </div>
   );
 };
+
+// --- SEARCH DEBOUNCE HOOK ---
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 // --- AUTHENTICATION HELPER FUNCTIONS ---
 const getAuthToken = (): string | null => {
@@ -823,6 +843,9 @@ const PropertiesSales: React.FC<Props> = ({
   const [lastFetchAt, setLastFetchAt] = useState<number | null>(null);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
 
+  // Debounce search term to avoid too many API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // State for image gallery modal
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [currentPropertyImages, setCurrentPropertyImages] = useState<PropertyImage[]>([]);
@@ -853,7 +876,6 @@ const PropertiesSales: React.FC<Props> = ({
     checkInitialAuth();
   }, []);
 
- 
   const fetchPropertyImages = async (propertyId: number, title: string): Promise<PropertyImage[]> => {
     try {
       const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(propertyId)}/`;
@@ -1135,6 +1157,7 @@ const PropertiesSales: React.FC<Props> = ({
 
   const loadProperties = async (
     page: number = 1,
+    search: string = '',
     opts?: {
       ignoreResults?: { current: boolean };
     }
@@ -1143,8 +1166,14 @@ const PropertiesSales: React.FC<Props> = ({
     setLoadError(null);
 
     try {
-      // ✅ FETCHING SALE PROPERTIES FROM AGENT SPECIFIC API WITH PAGINATION
-      const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=sale&page=${page}`;
+      // ✅ FETCHING SALE PROPERTIES FROM AGENT SPECIFIC API WITH PAGINATION AND SEARCH
+      // Build URL with search parameter if provided
+      let url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/?listing_type=sale&page=${page}`;
+      
+      // Add search parameter if search term exists
+      if (search && search.trim() !== '') {
+        url += `&search=${encodeURIComponent(search.trim())}`;
+      }
 
       console.log('[Sales] Fetching from URL:', url);
 
@@ -1178,12 +1207,10 @@ const PropertiesSales: React.FC<Props> = ({
 
       const data = await res.json();
 
-   
       const list = Array.isArray(data?.results) ? data.results : [];
 
-      console.log('[Sales] API Response count:', list.length, 'Page:', page);
+      console.log('[Sales] API Response count:', list.length, 'Page:', page, 'Search:', search);
 
-      
       const paginationInfo: PaginationInfo = {
         count: data.count || 0,
         next: data.next || null,
@@ -1193,9 +1220,7 @@ const PropertiesSales: React.FC<Props> = ({
         page_size: 20,
       };
 
-      
       const mapped: Property[] = list.map((p: any) => {
-        
         let img = PLACEHOLDER_IMAGE;
         if (
           p.media_images &&
@@ -1205,20 +1230,15 @@ const PropertiesSales: React.FC<Props> = ({
           img = p.media_images[0]?.image || PLACEHOLDER_IMAGE;
         }
 
-        
         const priceVal = parseFloat(p.price || p.price_display || '0') || 0;
 
-        
         const bedroomsVal = parseFloat(p.bedrooms || '0') || 0;
         const bathroomsVal = parseFloat(p.bathrooms || '0') || 0;
 
-     
         const poolVal = parseInt(p.pool || '0', 10) || 0;
 
-      
         const address = p.address || p.city || 'No address provided';
 
-        
         const statusVal = p.status || 'unknown';
         // No normalization - keep original status
 
@@ -1284,48 +1304,58 @@ const PropertiesSales: React.FC<Props> = ({
     }
   };
 
+  // Initial load
   useEffect(() => {
     const ignore = { current: false };
-    loadProperties(1, { ignoreResults: ignore });
+    loadProperties(1, '', { ignoreResults: ignore });
 
     return () => {
       ignore.current = true;
     };
   }, []);
 
+  // Handle search when debounced search term changes
+  useEffect(() => {
+    const ignore = { current: false };
+    
+    // Reset to page 1 when searching
+    setCurrentPage(1);
+    
+    // Load properties with search term
+    loadProperties(1, debouncedSearchTerm, { ignoreResults: ignore });
+
+    return () => {
+      ignore.current = true;
+    };
+  }, [debouncedSearchTerm]);
+
   const handlePageChange = (page: number) => {
     if (page < 1 || (pagination && page > pagination.total_pages)) return;
-    loadProperties(page);
+    setCurrentPage(page);
+    loadProperties(page, searchTerm);
     // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleRetry = () => {
     const ignore = { current: false };
-    loadProperties(1, { ignoreResults: ignore });
+    loadProperties(1, searchTerm, { ignoreResults: ignore });
   };
 
-  // IMPORTANT: This API already returns ONLY properties assigned to the current agent
-  // So no need to filter by agent ID in frontend
-  const filteredProperties = useMemo(() => {
-    const lower = searchTerm.toLowerCase();
+  const handleClearSearch = () => {
+    setSearchTerm('');
+  };
 
-    return properties.filter((p) => {
-      // ✅ Already filtered by backend to show only agent's properties
-
-      if (!lower) return true;
-
-      return (
-        p.title.toLowerCase().includes(lower) ||
-        p.address.toLowerCase().includes(lower)
-      );
-    });
-  }, [searchTerm, properties]);
+  // Remove frontend filtering since we're using API search
+  const filteredProperties = properties;
 
   const shouldShowNoData =
     !loading &&
     ((Array.isArray(properties) && properties.length === 0) ||
       filteredProperties.length === 0);
+
+  // Show search result info
+  const showSearchInfo = searchTerm && properties.length > 0 && !loading;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -1339,16 +1369,31 @@ const PropertiesSales: React.FC<Props> = ({
           </p>
         </header>
 
-        <div className="relative mb-8">
+        <div className="relative mb-4">
           <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search sales properties..."
+            placeholder="Search sales properties by title, address, or status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-blue-500 focus:border-blue-500 transition"
+            className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl text-base focus:ring-teal-500 focus:border-teal-500 transition"
           />
+          {searchTerm && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
+
+        {/* Search result info */}
+        {showSearchInfo && (
+          <div className="mb-4 text-sm text-gray-600">
+            Found {properties.length} {properties.length === 1 ? 'property' : 'properties'} matching "{searchTerm}"
+          </div>
+        )}
 
         {loading && <LoadingState />}
 
@@ -1357,6 +1402,7 @@ const PropertiesSales: React.FC<Props> = ({
             loadError={loadError}
             searchTerm={searchTerm}
             onRetry={handleRetry}
+            onClearSearch={handleClearSearch}
           />
         )}
 
