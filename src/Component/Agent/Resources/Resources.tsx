@@ -19,15 +19,14 @@ type UIResource = {
   raw?: any;
 };
 
-const CATEGORIES_DISPLAY = ['All Categories ', 'Branding', 'Templates', 'Legal Forms', 'Training', 'Market Research', 'External Tools'] as const;
+const CATEGORIES_DISPLAY = ['All Categories', 'Villas & Portfolio', 'Concierge & Lifestyle', 'Policies & Logistics', 'Finance', 'General'] as const;
 const CATEGORY_TO_API: Record<string, string> = {
-  Branding: 'branding',
-  Templates: 'templates',
-  'Legal Forms': 'legal_forms',
-  Training: 'training',
-  'Market Research': 'market_research',
-  'External Tools': 'external_tools',
-  All: '',
+  'Villas & Portfolio': 'branding',
+  'Concierge & Lifestyle': 'templates',
+  'Policies & Logistics': 'legal_forms',
+  'Finance': 'training',
+  'General': 'market_research',
+  'All Categories': '',
 };
 const categories = CATEGORIES_DISPLAY as string[];
 
@@ -54,10 +53,15 @@ function normalizeCategoryForCompare(cat?: string | null) {
   return String(cat).trim().toLowerCase().replace(/\s+/g, '_');
 }
 
-// NEW helper: format backend category -> Title Case display (e.g. "external_tools" -> "External Tools")
+
 function formatCategoryForDisplay(cat?: string | null) {
   if (!cat) return '—';
-  const s = String(cat).trim().replace(/_/g, ' ');
+  // Find display name from API key
+  const apiKey = String(cat).trim();
+  const display = Object.entries(CATEGORY_TO_API).find(([displayName, apiVal]) => apiVal === apiKey);
+  if (display) return display[0];
+  // Fallback: Title Case
+  const s = apiKey.replace(/_/g, ' ');
   return s
     .split(/\s+/)
     .filter(Boolean)
@@ -65,13 +69,11 @@ function formatCategoryForDisplay(cat?: string | null) {
     .join(' ');
 }
 
-/* -----------------------
-   Resource card
-------------------------*/
+
 const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource; onDownload: (r: UIResource) => void; onDelete: (r: UIResource) => void }) => {
   const fileCount = resource.files?.length ?? (resource.downloadUrl ? 1 : 0);
   const description = resource.description || '';
-  const shouldScroll = description.length > 200;
+  const shouldScroll = description.length > 150;
   
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5 flex flex-col hover:shadow-xl transition duration-300 relative h-full">
@@ -80,22 +82,13 @@ const ResourceCard = ({ resource, onDownload, onDelete }: { resource: UIResource
           <FileText className="w-6 h-6 text-blue-600" />
         </div>
 
-        <div className="flex items-center gap-2 ">
+        <div className="flex items-center gap-2">
           <span className="text-xs font-medium py-1 px-3 rounded-full bg-gray-100 text-gray-700">
             {resource.fileType ?? 'file'}
           </span>
 
           {/* Gray delete button (replaces 3-dot menu) */}
-         <div className='hidden'>
-           <button
-            onClick={() => onDelete(resource)}
-            title="Delete resource"
-            className="flex  items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span className="text-sm hid">Delete</span>
-          </button>
-         </div>
+      
         </div>
       </div>
 
@@ -154,7 +147,7 @@ export default function AdminResources() {
   const apiError = apiState.error ?? null;
 
   const [resources, setResources] = useState<UIResource[]>([]);
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('All Categories');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -239,7 +232,8 @@ export default function AdminResources() {
       (resource.title ?? '').toLowerCase().includes(search) ||
       (resource.description ?? '').toLowerCase().includes(search);
 
-    if (activeCategory === 'All') {
+    // Fix: use exact match for 'All Categories'
+    if (activeCategory === 'All Categories') {
       return searchMatch;
     }
 
@@ -441,7 +435,7 @@ export default function AdminResources() {
      ============================ */
   async function handleDownload(resource: UIResource) {
     // Collect all downloadable files
-    const downloadableFiles: { name: string; url: string }[] = [];
+    let downloadableFiles: { name: string; url: string }[] = [];
 
     // Collect from files array
     if (Array.isArray(resource.files) && resource.files.length > 0) {
@@ -453,7 +447,7 @@ export default function AdminResources() {
         }
       }
     }
-    
+
     // Add downloadUrl if exists
     if (resource.downloadUrl) {
       const name = resource.downloadUrl.split('/').pop() || String(resource.title || 'file').replace(/\s+/g, '_');
@@ -468,6 +462,11 @@ export default function AdminResources() {
         downloadableFiles.push({ name, url });
       }
     }
+
+    // Remove duplicate files by URL
+    downloadableFiles = downloadableFiles.filter((file, index, self) =>
+      index === self.findIndex(f => f.url === file.url)
+    );
 
     if (downloadableFiles.length === 0) {
       Swal.fire('No files', 'No downloadable files found for this resource.', 'info');
@@ -645,11 +644,11 @@ export default function AdminResources() {
           <div className="relative mr-5 flex-grow lg:w-1/3">
             <input type="text" placeholder="Search Resources..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-base focus:ring-gray-900 focus:border-gray-900 transition shadow-sm" />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           </div>
 
           <div className="overflow-x-auto whitespace-nowrap">
-            <div className="inline-flex space-x-2 p-1 ">
+            <div className="inline-flex space-x-2 p-1   ">
               {categories.map((category) => (
                 <button key={category}
                   onClick={() => { setActiveCategory(category); setSearchTerm(''); }}
@@ -673,7 +672,10 @@ export default function AdminResources() {
           </div>
         )}
 
-       {(errorMessage || apiError) && (
+        {errorMessage && <div className="mb-4 text-sm text-red-600">{errorMessage}</div>}
+
+
+        {apiError && (
   <div className="mb-4 flex justify-center">
     <div className="w-full max-w-sm bg-white border border-gray-200 rounded-md p-3 text-center">
       <p className="text-xs font-semibold text-gray-800 mb-1">
@@ -746,7 +748,7 @@ export default function AdminResources() {
               </button>
             </div>
 
-            <form onSubmit={handleAddResource} className="p-6 space-y-4">
+            <form onSubmit={handleAddResource} className="p-4 space-y-4 ">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full px-4 py-3 border rounded-md text-sm bg-gray-50" placeholder="Title" />
@@ -776,7 +778,7 @@ export default function AdminResources() {
                 </label>
 
                 {selectedFiles.length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-40 overflow-y-auto pr-2">
                     {selectedFiles.map((s, i) => (
                       <div key={`${s.name}-${i}`} className="relative rounded-md overflow-hidden border">
                         {s.kind === 'image' && s.preview ? (
