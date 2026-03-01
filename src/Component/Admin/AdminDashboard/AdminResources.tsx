@@ -442,7 +442,7 @@ export default function AdminResources() {
      ============================ */
   async function handleDownload(resource: UIResource) {
     // Collect all downloadable files
-    const downloadableFiles: { name: string; url: string }[] = [];
+    let downloadableFiles: { name: string; url: string }[] = [];
 
     // Collect from files array
     if (Array.isArray(resource.files) && resource.files.length > 0) {
@@ -454,7 +454,7 @@ export default function AdminResources() {
         }
       }
     }
-    
+
     // Add downloadUrl if exists
     if (resource.downloadUrl) {
       const name = resource.downloadUrl.split('/').pop() || String(resource.title || 'file').replace(/\s+/g, '_');
@@ -469,6 +469,11 @@ export default function AdminResources() {
         downloadableFiles.push({ name, url });
       }
     }
+
+    // Remove duplicate files by URL
+    downloadableFiles = downloadableFiles.filter((file, index, self) =>
+      index === self.findIndex(f => f.url === file.url)
+    );
 
     if (downloadableFiles.length === 0) {
       Swal.fire('No files', 'No downloadable files found for this resource.', 'info');
