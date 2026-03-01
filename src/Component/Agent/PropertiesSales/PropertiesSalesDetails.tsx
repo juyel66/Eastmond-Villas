@@ -1842,15 +1842,15 @@ Description: ${property.description.substring(0, 200)}...
           )}
         </div>
 
-        {/* SEO & Marketing Information with Copy Buttons */}
-        <div className="flex justify-between items-center mb-3">
+       
+        {/* <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-bold text-gray-800">
             SEO & Marketing Information
           </h2>
           <CopyButton onClick={handleCopyAllSeoText} label="Copy All SEO" />
         </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-6">
-          {/* Meta Title with Copy Button */}
+         
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex-1">
               <p className="text-gray-500 text-sm font-medium mb-1">
@@ -1865,7 +1865,7 @@ Description: ${property.description.substring(0, 200)}...
             </div>
           </div>
 
-          {/* Meta Description with Copy Button */}
+        
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex-1">
               <p className="text-gray-500 text-sm font-medium mb-1">
@@ -1880,7 +1880,7 @@ Description: ${property.description.substring(0, 200)}...
             </div>
           </div>
 
-          {/* Keywords with Copy Button */}
+         
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex-1">
               <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
@@ -1905,7 +1905,7 @@ Description: ${property.description.substring(0, 200)}...
               <CopyButton onClick={handleCopyKeywords} label="Copy" />
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Availability Calendar Section */}
         {showCalendar && property?.id && (
