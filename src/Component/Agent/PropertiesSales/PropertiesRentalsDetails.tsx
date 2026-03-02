@@ -1,11 +1,13 @@
 // src/features/Properties/PropertiesRentalsDetails.tsx
 import React, { FC, useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft, Copy, X } from 'lucide-react';
+import { ChevronLeft, Copy, X, Download } from 'lucide-react';
 import { FaHandshakeSimple } from "react-icons/fa6";
 import { AiFillDollarCircle } from "react-icons/ai";
 import JSZip from 'jszip';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Import the Calendar component (make sure the path is correct)
 import Calendar from "../../../pages/Rents/Calendar";
@@ -53,7 +55,15 @@ interface Property {
   viewing_link: string;
 
   // misc
-  staff_name?: string;
+  staff?: Array<{
+    name: string;
+    details?: string;
+    role?: string;
+    email?: string;
+    phone?: string;
+  }>;
+  staff_name?: string; // Keep for backward compatibility
+  staff_details?: any;
   concierge_services: string[];
 
   // calendar accuracy field
@@ -71,6 +81,13 @@ interface Property {
   
   // Thumbnail field
   thumbnail_url?: string;
+  
+  // NEW FIELDS from API
+  booking_rate?: any[];
+  rules_and_etiquette?: string[];
+  check_in?: string;
+  check_out?: string;
+  check_in_check_out_policy?: string;
 }
 
 // Image interface
@@ -336,6 +353,24 @@ const CopyButton: FC<CopyButtonProps> = ({ onClick, label = "Copy" }) => (
   </button>
 );
 
+// --- DOWNLOAD BUTTON COMPONENT ---
+interface DownloadButtonProps {
+  onClick: () => void;
+  label?: string;
+  disabled?: boolean;
+}
+const DownloadButton: FC<DownloadButtonProps> = ({ onClick, label = "Download", disabled = false }) => (
+  <button
+    onClick={onClick}
+    type="button"
+    disabled={disabled}
+    className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded-lg hover:bg-teal-700 transition duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    <Download className="w-3 h-3" />
+    <span className=''>{label}</span>
+  </button>
+);
+
 const formatMoney = (value?: string | number) => {
   const n = typeof value === 'string' ? Number(value) : value;
   if (!n || Number.isNaN(n)) return '';
@@ -403,14 +438,6 @@ const VideoDownloadProgress: FC<VideoDownloadProgressProps> = ({
           {progress >= 80 && progress < 100 && "Finalizing download..."}
           {progress === 100 && isCompleted && "Download ready! Check your downloads folder."}
         </div>
-        
-        {/* Download Stats */}
-        {isDownloading && progress > 0 && progress < 100 && (
-          <div className="text-xs text-gray-600 flex justify-between">
-            {/* <span>Estimated time remaining: {Math.max(0, Math.round((100 - progress) * 0.3))}s</span>
-            <span>{Math.round(progress * 2.5)} KB / 250 KB</span> */}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -634,6 +661,277 @@ const getImageExtension = (blob: Blob, imageUrl: string): string => {
   return 'jpg';
 };
 
+// Function to generate PDF brochure with enhanced staff information
+const generatePDFBrochure = (property: Property) => {
+  const doc = new jsPDF();
+  let yPos = 20;
+  
+  // Title
+  doc.setFontSize(24);
+  doc.setTextColor(0, 102, 102); // Teal color
+  doc.text(property.title, 20, yPos);
+  yPos += 10;
+  
+  // Location
+  doc.setFontSize(12);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Location: ${property.location}`, 20, yPos);
+  yPos += 10;
+  
+  // Description
+  doc.setFontSize(16);
+  doc.setTextColor(0, 102, 102);
+  doc.text('Description', 20, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  const descriptionLines = doc.splitTextToSize(property.description.substring(0, 500) + '...', 170);
+  doc.text(descriptionLines, 20, yPos);
+  yPos += (descriptionLines.length * 5) + 15;
+  
+  // Check if we need a new page
+  if (yPos > 250) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
+  // Nightly Rates Table (if rental)
+  if (property.listing_type === 'rent' && property.booking_rate && property.booking_rate.length > 0) {
+    doc.setFontSize(16);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Nightly Rates', 20, yPos);
+    yPos += 8;
+    
+    // Prepare table data
+    const tableData = [];
+    for (let i = 0; i < property.booking_rate.length; i += 3) {
+      if (i + 2 < property.booking_rate.length) {
+        tableData.push([
+          property.booking_rate[i],
+          property.booking_rate[i + 1],
+          `USD$${property.booking_rate[i + 2]}.00`
+        ]);
+      }
+    }
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Rental Period', 'Minimum Stay', 'Rate Per Night']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 102], textColor: [255, 255, 255] },
+      margin: { left: 20, right: 20 },
+    });
+    
+    yPos = (doc as any).lastAutoTable.finalY + 15;
+  }
+  
+  // Check-in/out Information (if rental)
+  if (property.listing_type === 'rent' && (property.check_in || property.check_out || property.check_in_check_out_policy)) {
+    // Check if we need a new page
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Check-In & Check-Out', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    if (property.check_in) {
+      doc.text(`• Check-In Time: ${property.check_in}`, 25, yPos);
+      yPos += 6;
+    }
+    if (property.check_out) {
+      doc.text(`• Check-Out Time: ${property.check_out}`, 25, yPos);
+      yPos += 6;
+    }
+    if (property.check_in_check_out_policy) {
+      doc.text('Policy:', 25, yPos);
+      yPos += 6;
+      const policyLines = doc.splitTextToSize(property.check_in_check_out_policy, 160);
+      doc.text(policyLines, 30, yPos);
+      yPos += (policyLines.length * 5) + 10;
+    } else {
+      yPos += 10;
+    }
+  }
+  
+  // Rules & Etiquette (if rental and available)
+  if (property.listing_type === 'rent' && property.rules_and_etiquette && property.rules_and_etiquette.length > 0) {
+    // Check if we need a new page
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Rules & Etiquette', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    property.rules_and_etiquette.forEach((rule, index) => {
+      const ruleLines = doc.splitTextToSize(`${index + 1}. ${rule}`, 160);
+      doc.text(ruleLines, 25, yPos);
+      yPos += (ruleLines.length * 5) + 2;
+    });
+    yPos += 10;
+  }
+  
+  // Staff Information Section - NEW ENHANCED SECTION
+  if (property.staff && property.staff.length > 0) {
+    // Check if we need a new page
+    if (yPos > 220) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Staff Complement', 20, yPos);
+    yPos += 8;
+    
+    // Create staff table data
+    const staffTableData = property.staff.map(member => [
+      member.name,
+      member.details || '—'
+    ]);
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Position/Role', 'Details / Schedule']],
+      body: staffTableData,
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 102], textColor: [255, 255, 255] },
+      columnStyles: {
+        0: { cellWidth: 80 },
+        1: { cellWidth: 90 }
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    yPos = (doc as any).lastAutoTable.finalY + 15;
+  }
+  
+  // Amenities
+  // Check if we need a new page
+  if (yPos > 220) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
+  doc.setFontSize(16);
+  doc.setTextColor(0, 102, 102);
+  doc.text('Amenities', 20, yPos);
+  yPos += 8;
+  
+  // Outdoor Amenities
+  if (property.outdoor_amenities && property.outdoor_amenities.length > 0) {
+    doc.setFontSize(12);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Outdoor:', 25, yPos);
+    yPos += 6;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    property.outdoor_amenities.forEach((amenity, index) => {
+      if (index % 2 === 0) {
+        doc.text(`• ${amenity}`, 30, yPos);
+      } else {
+        doc.text(`• ${amenity}`, 100, yPos);
+        yPos += 5;
+      }
+    });
+    if (property.outdoor_amenities.length % 2 !== 0) yPos += 5;
+  }
+  
+  // Interior Amenities
+  if (property.interior_amenities && property.interior_amenities.length > 0) {
+    doc.setFontSize(12);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Interior:', 25, yPos);
+    yPos += 6;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    property.interior_amenities.forEach((amenity, index) => {
+      if (index % 2 === 0) {
+        doc.text(`• ${amenity}`, 30, yPos);
+      } else {
+        doc.text(`• ${amenity}`, 100, yPos);
+        yPos += 5;
+      }
+    });
+    if (property.interior_amenities.length % 2 !== 0) yPos += 5;
+  }
+  
+  // Signature Distinctions
+  if (property.signature_distinctions && property.signature_distinctions.length > 0) {
+    // Check if we need a new page
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Signature Distinctions:', 25, yPos);
+    yPos += 6;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    property.signature_distinctions.forEach((item, index) => {
+      doc.text(`• ${item}`, 30, yPos);
+      yPos += 5;
+    });
+    yPos += 5;
+  }
+  
+  // Concierge Services
+  if (property.concierge_services && property.concierge_services.length > 0) {
+    // Check if we need a new page
+    if (yPos > 230) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 102, 102);
+    doc.text('Concierge Services', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    property.concierge_services.forEach((service, index) => {
+      const serviceLines = doc.splitTextToSize(`• ${service}`, 160);
+      doc.text(serviceLines, 25, yPos);
+      yPos += (serviceLines.length * 5) + 2;
+    });
+    yPos += 5;
+  }
+  
+  // Calendar Accuracy (if available)
+  if (property.calendar_accuracy) {
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Calendar Accuracy: ${property.calendar_accuracy}%`, 20, 280);
+  }
+  
+  // Add footer with generation date
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text(`Generated on ${new Date().toLocaleDateString()}`, 20, 290);
+  
+  // Save the PDF
+  doc.save(`${property.title.replace(/\s+/g, '_')}_brochure.pdf`);
+};
+
 const PropertiesRentalsDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
@@ -855,7 +1153,7 @@ const PropertiesRentalsDetails: FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const url = `${API_BASE.replace(/\/+$/, '')}/villas/agent/properties/${encodeURIComponent(
+        const url = `${API_BASE.replace(/\/+$/, '')}/villas/properties/${encodeURIComponent(
           id
         )}/`;
         
@@ -966,13 +1264,24 @@ const PropertiesRentalsDetails: FC = () => {
         const signatureDistinctions = normalizeStringArray(p.signature_distinctions);
         const conciergeServices = normalizeStringArray(p.concierge_services);
         
-        // staff might be object or array
-        let staffName: string | undefined;
-        if (Array.isArray(p.staff) && p.staff.length > 0) {
-          staffName = p.staff[0]?.name ?? '';
-        } else if (p.staff && typeof p.staff === 'object') {
-          staffName = p.staff.name ?? '';
+        // Extract staff data - handle array of staff members
+        let staff: Array<{name: string; details?: string}> = [];
+        
+        if (Array.isArray(p.staff)) {
+          staff = p.staff.map((staffMember: any) => ({
+            name: staffMember.name || '',
+            details: staffMember.details || staffMember.role || staffMember.description || ''
+          }));
+        } else if (p.staff && typeof p.staff === 'object' && !Array.isArray(p.staff)) {
+          // Handle single staff object (fallback)
+          staff = [{
+            name: p.staff.name || '',
+            details: p.staff.details || p.staff.role || p.staff.description || ''
+          }];
         }
+
+        // Keep staff_name for backward compatibility (first staff member)
+        const staffName = staff.length > 0 ? staff[0].name : '';
 
         // Extract calendar_accuracy from API response
         const calendarAccuracy = p.calendar_accuracy || p.calendar_accuracy_percentage || '';
@@ -1034,7 +1343,9 @@ const PropertiesRentalsDetails: FC = () => {
           },
 
           viewing_link: p.calendar_link ?? p.viewing_link ?? p.calendar_url ?? '',
-          staff_name: staffName,
+          staff: staff, // Store all staff members
+          staff_name: staffName, // Keep for backward compatibility
+          staff_details: staff.length > 0 ? staff[0] : {},
           concierge_services: conciergeServices,
           
           // Add calendar_accuracy field
@@ -1043,6 +1354,13 @@ const PropertiesRentalsDetails: FC = () => {
           // Add videos field
           videos: videos,
           thumbnail_url: p.thumbnail_url,
+          
+          // NEW FIELDS from API
+          booking_rate: p.booking_rate,
+          rules_and_etiquette: p.rules_and_etiquette,
+          check_in: p.check_in,
+          check_out: p.check_out,
+          check_in_check_out_policy: p.check_in_check_out_policy,
           
           _raw: p,
         };
@@ -1566,8 +1884,75 @@ Description: ${property.description.substring(0, 200)}...
     }
   };
 
-  // --- Quick Action Handlers (matching screenshot labels) ---
-  const handleShowAmenities = () => {
+  // Function to copy staff information
+  const handleCopyStaffInfo = () => {
+    if (!property || !property.staff || property.staff.length === 0) {
+      showActionMessage('No staff information available.');
+      return;
+    }
+
+    let staffText = `Staff Complement (${property.staff.length} members):\n\n`;
+    
+    property.staff.forEach((member, index) => {
+      staffText += `${index + 1}. ${member.name}\n`;
+      if (member.details) {
+        staffText += `   Details: ${member.details}\n`;
+      }
+      staffText += '\n';
+    });
+
+    copyToClipboard(staffText, 'Staff information copied to clipboard!');
+  };
+
+  // Function to copy booking rates
+  const handleCopyBookingRates = () => {
+    if (!property || !property.booking_rate || property.booking_rate.length === 0) {
+      showActionMessage('No booking rates available to copy.');
+      return;
+    }
+
+    let ratesText = 'Nightly Rates:\n\n';
+    for (let i = 0; i < property.booking_rate.length; i += 3) {
+      if (i + 2 < property.booking_rate.length) {
+        ratesText += `Rental Period: ${property.booking_rate[i]}\n`;
+        ratesText += `Minimum Stay: ${property.booking_rate[i + 1]}\n`;
+        ratesText += `Nightly Rate: $${property.booking_rate[i + 2]}/night\n\n`;
+      }
+    }
+
+    copyToClipboard(ratesText, 'Booking rates copied to clipboard!');
+  };
+
+  // Function to copy rules and etiquette
+  const handleCopyRules = () => {
+    if (!property || !property.rules_and_etiquette || property.rules_and_etiquette.length === 0) {
+      showActionMessage('No rules available to copy.');
+      return;
+    }
+
+    const rulesText = property.rules_and_etiquette.join('\n• ');
+    copyToClipboard(`Rules & Etiquette:\n• ${rulesText}`, 'Rules copied to clipboard!');
+  };
+
+  // Function to copy check-in/out info
+  const handleCopyCheckInOut = () => {
+    if (!property) return;
+    
+    let infoText = 'Check-In & Check-Out Information:\n\n';
+    if (property.check_in) infoText += `Check-In Time: ${property.check_in}\n`;
+    if (property.check_out) infoText += `Check-Out Time: ${property.check_out}\n`;
+    if (property.check_in_check_out_policy) infoText += `\nPolicy:\n${property.check_in_check_out_policy}`;
+    
+    if (!property.check_in && !property.check_out && !property.check_in_check_out_policy) {
+      showActionMessage('No check-in/out information available.');
+      return;
+    }
+    
+    copyToClipboard(infoText, 'Check-in/out information copied to clipboard!');
+  };
+
+  // Scroll functions for sections
+  const handleScrollToAmenities = () => {
     const el = document.getElementById('outdoor-amenities-section');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1576,12 +1961,49 @@ Description: ${property.description.substring(0, 200)}...
     }
   };
 
-  const handleShowStaff = () => {
-    if (property?.staff_name) {
-      showActionMessage(`Staff: ${property.staff_name}`);
+  const handleScrollToStaff = () => {
+    const el = document.getElementById('staff-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      showActionMessage('No staff information available.');
+      showActionMessage('Staff section not found.');
     }
+  };
+
+  const handleScrollToBookingRates = () => {
+    const el = document.getElementById('booking-rates-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showActionMessage('Booking rates section not found.');
+    }
+  };
+
+  const handleScrollToRules = () => {
+    const el = document.getElementById('rules-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showActionMessage('Rules section not found.');
+    }
+  };
+
+  const handleScrollToCheckInOut = () => {
+    const el = document.getElementById('checkin-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showActionMessage('Check-in/out section not found.');
+    }
+  };
+
+  // --- Quick Action Handlers (matching screenshot labels) ---
+  const handleShowAmenities = () => {
+    handleScrollToAmenities();
+  };
+
+  const handleShowStaff = () => {
+    handleScrollToStaff();
   };
 
   const handleShowAvailability = () => {
@@ -1595,6 +2017,24 @@ Description: ${property.description.substring(0, 200)}...
         calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
+  };
+
+  // NEW: Handle Download Brochure
+  const handleDownloadBrochure = () => {
+    if (!property) return;
+    
+    try {
+      generatePDFBrochure(property);
+      Swal.fire({
+        icon: 'success',
+        title: ' Download successful.',
+        timer: 3000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      showActionMessage('Failed to generate brochure. Please try again.');
+    }
   };
 
   if (loading) {
@@ -1642,6 +2082,9 @@ Description: ${property.description.substring(0, 200)}...
   ].filter((item, index, self) => 
     item && item.trim() !== '' && self.indexOf(item) === index
   );
+
+  // Check if property is rental for conditional display
+  const isRental = property.listing_type === 'rent';
 
   return (
     <div className="min-h-screen p-4 bg-gray-50 font-sans">
@@ -1693,7 +2136,11 @@ Description: ${property.description.substring(0, 200)}...
               onClick={handleShowAllImages}
               disabled={propertyImages.length === 0}
             />
-          
+            <QuickActionButton
+              imgSrc="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765151173/Icon_8_kvhjox.png"
+              label="Download Brochure"
+              onClick={handleDownloadBrochure}
+            />
             <button
               onClick={handleVideoDownloadClick}
               disabled={propertyVideos.length === 0}
@@ -1776,7 +2223,6 @@ Description: ${property.description.substring(0, 200)}...
                 </div>
               </div>
 
-
               {/* Commission & Damage deposit */}
               <div className="flex flex-wrap items-center gap-6 mt-4 text-sm text-gray-700">
                 {property.commission_rate && (
@@ -1853,7 +2299,7 @@ Description: ${property.description.substring(0, 200)}...
           </button>
         </div>
 
-        {/* Outdoor Amenities with Copy Button - UPDATED TO SHOW ALL DATA */}
+        {/* Outdoor Amenities with Copy Button */}
         <div className="flex justify-between items-center mb-3">
           <h2
             id="outdoor-amenities-section"
@@ -1861,7 +2307,10 @@ Description: ${property.description.substring(0, 200)}...
           >
             Outdoor Amenities
           </h2>
-          <CopyButton onClick={handleCopyOutdoorAmenities} label="Copy Amenities" />
+          <div className="flex gap-2">
+        
+            <CopyButton onClick={handleCopyOutdoorAmenities} label="Copy Amenities" />
+          </div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
           {allOutdoorAmenities.length === 0 ? (
@@ -1885,66 +2334,137 @@ Description: ${property.description.substring(0, 200)}...
           )}
         </div>
 
-       
-        {/* <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-bold text-gray-800">
-            SEO & Marketing Information
-          </h2>
-          <CopyButton onClick={handleCopyAllSeoText} label="Copy All SEO" />
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 space-y-6">
-         
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div className="flex-1">
-              <p className="text-gray-500 text-sm font-medium mb-1">Meta Title</p>
-              <p className="text-gray-800 font-semibold">
-                {property.seo_info?.meta_title || 'Not available'}
-              </p>
+        {/* Staff Information Section - Shows ALL staff members */}
+        {property.staff && property.staff.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mb-3" id="staff-section">
+              <h2 className="text-xl font-bold text-gray-800">
+                Staff Complement 
+              </h2>
+              <div className="flex gap-2">
+               
+                <CopyButton onClick={handleCopyStaffInfo} label="Copy Staff Complement" />
+              </div>
             </div>
-            <div className="sm:mt-0">
-              <CopyButton onClick={handleCopyMetaTitle} label="Copy" />
+            <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {property.staff.map((member, index) => (
+                  <div key={index} className="flex items-start gap-3   rounded-lg">
+                  
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">{member.name}</p>
+                      {member.details && (
+                        <p className="text-sm text-gray-600 mt-1">{member.details}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
+        )}
 
-          
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div className="flex-1">
-              <p className="text-gray-500 text-sm font-medium mb-1">
-                Meta Description
-              </p>
-              <p className="text-gray-700">
-                {property.seo_info?.meta_description || 'Not available'}
-              </p>
+        {/* Nightly Rates Table Section (Rental Only) with Copy Button and Scroll */}
+        {isRental && property.booking_rate && property.booking_rate.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mb-3" id="booking-rates-section">
+              <h2 className="text-xl font-bold text-gray-800">
+                Nightly Rates Table
+              </h2>
+              <div className="flex gap-2">
+              
+                <CopyButton onClick={handleCopyBookingRates} label="Copy Nightly Rates" />
+              </div>
             </div>
-            <div className="sm:mt-0">
-              <CopyButton onClick={handleCopyMetaDescription} label="Copy" />
+            <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-4 py-2 text-left">Rental Period</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Minimum Stay</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Rate Per Night</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const rows = [];
+                    for (let i = 0; i < property.booking_rate.length; i += 3) {
+                      if (i + 2 < property.booking_rate.length) {
+                        rows.push(
+                          <tr key={i}>
+                            <td className="border border-gray-300 px-4 py-2">{property.booking_rate[i]}</td>
+                            <td className="border border-gray-300 px-4 py-2">{property.booking_rate[i + 1]}</td>
+                            <td className="border border-gray-300 px-4 py-2">USD${property.booking_rate[i + 2]}.00</td>
+                          </tr>
+                        );
+                      }
+                    }
+                    return rows;
+                  })()}
+                </tbody>
+              </table>
             </div>
-          </div>
+          </>
+        )}
 
-       
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div className="flex-1">
-              <p className="text-gray-500 text-sm font-medium mb-2">Keywords</p>
-              <div className="flex flex-wrap gap-2">
-                {property.seo_info?.keywords?.length > 0 ? (
-                  property.seo_info.keywords.map((keyword, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-full"
-                    >
-                      {keyword}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-500 text-sm">No keywords available</span>
+        {/* Rules & Etiquette Section (Rental Only) with Copy Button and Scroll */}
+        {isRental && property.rules_and_etiquette && property.rules_and_etiquette.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mb-3" id="rules-section">
+              <h2 className="text-xl font-bold text-gray-800">
+                Rules & Etiquette
+              </h2>
+              <div className="flex gap-2">
+                
+                <CopyButton onClick={handleCopyRules} label="Copy Rules" />
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
+              <ul className="list-disc pl-5 space-y-2">
+                {property.rules_and_etiquette.map((rule, index) => (
+                  <li key={index} className="text-gray-700">{rule}</li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
+
+        {/* Check-In & Check-Out Information Section (Rental Only) with Copy Button and Scroll */}
+        {isRental && (property.check_in || property.check_out || property.check_in_check_out_policy) && (
+          <>
+            <div className="flex justify-between items-center mb-3" id="checkin-section">
+              <h2 className="text-xl font-bold text-gray-800">
+                Check-In & Check-Out Information
+              </h2>
+              <div className="flex gap-2">
+                
+                <CopyButton onClick={handleCopyCheckInOut} label="Copy Check-In/Check-Out Info" />
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
+              <div className="space-y-3">
+                {property.check_in && (
+                  <div>
+                    <span className="font-semibold text-gray-700">Check-In Time:</span>
+                    <span className="ml-2 text-gray-600">{property.check_in}</span>
+                  </div>
+                )}
+                {property.check_out && (
+                  <div>
+                    <span className="font-semibold text-gray-700">Check-Out Time:</span>
+                    <span className="ml-2 text-gray-600">{property.check_out}</span>
+                  </div>
+                )}
+                {property.check_in_check_out_policy && (
+                  <div>
+                    <span className="font-semibold text-gray-700">Policy:</span>
+                    <p className="mt-1 text-gray-600">{property.check_in_check_out_policy}</p>
+                  </div>
                 )}
               </div>
             </div>
-            <div className="sm:mt-0">
-              <CopyButton onClick={handleCopyKeywords} label="Copy" />
-            </div>
-          </div>
-        </div> */}
+          </>
+        )}
 
         {/* Viewing Calendar / Schedule a Viewing */}
         <h2 className="text-xl font-bold text-gray-800 mb-3">
