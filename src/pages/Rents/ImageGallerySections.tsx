@@ -126,24 +126,38 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
         ×
       </button>
 
-      <button
-        onClick={onPrev}
-        disabled={currentImgIndex === 0}
-        className="absolute pb-2 cursor-pointer left-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
-      >
-        ‹
-      </button>
+      <div className="flex flex-col items-center w-full h-full px-2 md:px-16 py-4" style={{ maxHeight: "100vh" }}>
+        {/* Main Image container - arrows positioned relative to this */}
+        <div className="flex-1 relative flex items-center justify-center min-h-0 w-full">
+          {/* Prev button - always centered on image */}
+          <button
+            onClick={onPrev}
+            disabled={currentImgIndex === 0}
+            className="absolute left-2 top-1/2 -translate-y-1/2 cursor-pointer text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50 pb-1"
+          >
+            ‹
+          </button>
 
-      <div className="relative max-w-full max-h-full">
-        {/* Main Image - Use FULL image URL */}
-        <img
-          src={images[currentImgIndex]?.image || images[currentImgIndex]?.url || LOCAL_FALLBACK}
-          alt={`Gallery image ${currentImgIndex + 1}`}
-          className="w-full h-full object-contain rounded-lg"
-        />
+          <img
+            src={images[currentImgIndex]?.image || images[currentImgIndex]?.url || LOCAL_FALLBACK}
+            alt={`Gallery image ${currentImgIndex + 1}`}
+            className="max-w-full max-h-full object-contain rounded-lg"
+            style={{ maxHeight: "calc(100vh - 120px)" }}
+          />
 
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-          <div className="flex space-x-2 overflow-x-auto max-w-full px-4">
+          {/* Next button - always centered on image */}
+          <button
+            onClick={onNext}
+            disabled={currentImgIndex === images.length - 1}
+            className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50 pb-1"
+          >
+            ›
+          </button>
+        </div>
+
+        {/* Thumbnail strip - below image, not overlapping */}
+        <div className="flex-shrink-0 w-full flex justify-center py-2">
+          <div className="flex space-x-2 overflow-x-hide mt-2 max-w-full px-4">
             {images.map((img, index) => (
               <button
                 key={img.id}
@@ -154,7 +168,6 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
                     : "border border-gray-300"
                 }`}
               >
-                {/* Thumbnail Strip - Use THUMBNAIL URL */}
                 <img
                   src={img.thumbnail || img.thumbnail_url || LOCAL_FALLBACK}
                   alt={`Thumbnail ${index + 1}`}
@@ -164,18 +177,11 @@ const ImageModal = ({ images, currentIndex, onClose, onNext, onPrev }) => {
             ))}
           </div>
         </div>
-      </div>
 
-      <button
-        onClick={onNext}
-        disabled={currentImgIndex === images.length - 1}
-        className="absolute pb-2 cursor-pointer right-4 text-white text-3xl z-50 bg-black bg-opacity-50 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
-      >
-        ›
-      </button>
-
-      <div className="absolute bottom-2 left-0 right-0 text-center text-white text-sm">
-        Image {currentImgIndex + 1} of {images.length}
+        {/* Image counter */}
+        <div className="flex-shrink-0 text-white text-sm pb-1">
+          Image {currentImgIndex + 1} of {images.length}
+        </div>
       </div>
     </div>
   );
@@ -961,20 +967,21 @@ const ImageGallerySection = ({ villa }) => {
             Image Gallery - {media_images.length} Photos
           </h2>
 
-          {/* GALLERY - Shows THUMBNAILS */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* GALLERY - Shows FULL IMAGES */}
+          <div className="grid grid-cols-3 gap-4 items-start">
             {media_images.slice(0, 6).map(
               (img, index) => (
                 <div
                   key={img.id}
-                  className="aspect-4/3 bg-gray-200 rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
+                  className="bg-gray-100 rounded-lg shadow-sm cursor-pointer transition-transform hover:scale-105"
                   onClick={() => openImageModal(index)}
                 >
-                  {/* Use THUMBNAIL for gallery display */}
+                  {/* Full image - no crop, natural size */}
                   <img
-                    src={img.thumbnail || img.thumbnail_url || LOCAL_FALLBACK}
+                    src={img.thumbnail || img.url || img.thumbnail || LOCAL_FALLBACK}
                     alt={`Gallery image ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full md:h-48 h-28 block rounded-lg"
+                    style={{ display: "block" }}
                   />
                 </div>
               )
