@@ -45,7 +45,7 @@ const AgentNotificationPage: React.FC = () => {
     }
   };
 
-  // Click handler: mark as read (global optimistic + async)
+
   const handleClick = (notif: Notification) => {
     if (!notif.read) {
       // optimistic: update Redux item + unreadCount immediately
