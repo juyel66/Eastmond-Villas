@@ -23,7 +23,7 @@ const InspirationSection = () => {
           
         </div>
 
-        {/* Optional: Dark overlay for better text contrast */}
+
         <div className="absolute inset-0 bg-black/40"></div>
       </div>
     </div>
