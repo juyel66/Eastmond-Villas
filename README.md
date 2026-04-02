@@ -120,7 +120,7 @@ MIT License
 ## 👨‍💻 Author
 
 Md Juyel Rana  
-Frontend Developer  
+Full Stack Developer  
 
 ---
 
