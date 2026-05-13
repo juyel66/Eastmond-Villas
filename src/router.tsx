@@ -171,6 +171,7 @@ import Management from './pages/Management/Management';
 import Concierge from './pages/Concierge/Concierge';
 import ListWithUs from './pages/ListWithUs/ListWithUs';
 import About from './pages/About/About';
+import Developer from './pages/Developer/Developer';
 import Contact from './pages/Contact/Contact';
 import RentsDetails from './pages/Rents/RentsDetails';
 import SalesDetails from './pages/Sales/SalesDetails';
@@ -252,6 +253,7 @@ export const router = createBrowserRouter([
       { path: '/management', element: <Management /> },
       { path: '/concierge', element: <Concierge /> },
       { path: '/about', element: <About /> },
+      { path: '/developer', element: <Developer /> },
       { path: '/properties/:slug', element: <RentsDetails /> },
       { path: '/sales/:slug', element: <SalesDetails /> },
       { path: '/privacy-policy', element: <PrivacyPolicy /> },
@@ -268,7 +270,7 @@ export const router = createBrowserRouter([
   // --- Dashboard Routes (protected) ---
   {
     path: '/dashboard',
-    element: <DashboardPage />,
+    element: <DashboardPage />, 
     children: [
       { index: true, element: <DefaultDashboardRedirect /> },
 
