@@ -126,7 +126,7 @@ const Footer = () => {
       <div className="relative z-10 container mx-auto px-4 sm:px-6 md:px-8 -py-1 md:py-10 h-full flex flex-col justify-end">
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 -gap-1 md:gap-6">
-          {/* Logo Section - For tablet: col-span-2, For desktop: col-span-1 */}
+          
           <div className="flex justify-center md:justify-start items-center md:col-span-2 lg:col-span-1">
             <div className="text-center md:text-left">
               <div className="flex justify-center md:justify-start -mb-1 md:mb-4">
