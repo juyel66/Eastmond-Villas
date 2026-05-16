@@ -281,7 +281,7 @@ const Navbar = () => {
             Contact Us
           </Link>
 
-          {/* Mobile: Login or Logout — same styles kept */}
+         
           {isAuthenticated ? (
             <button
               onClick={() => {
