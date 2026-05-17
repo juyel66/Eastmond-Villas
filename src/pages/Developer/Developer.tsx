@@ -83,7 +83,7 @@ const Developer: React.FC = () => {
           transition={{ duration: 0.6 }}
             className="glass p-4 sm:p-6 lg:p-10 rounded-xl sm:rounded-2xl shadow-xl border border-white/10"
         >
-         
+          {/* Header with Name and Social Icons */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
               <h1 className="text-2xl text-center sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Developer Information</h1>
               <div className="hidden sm:flex flex-shrink-0">
@@ -113,7 +113,10 @@ const Developer: React.FC = () => {
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-1 sm:mb-2">Md Juyel Rana</h2>
                 <p className="text-base sm:text-lg text-slate-600 mb-3 sm:mb-4">Full Stack Developer</p>
 
-               
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-4 sm:mb-6">
+                Passionate about building scalable, modern web applications. Experienced in premium frontend and backend
+                systems, converting Figma to responsive React sites, and optimizing for performance and SEO.
+              </p>
 
               {/* Phone Section */}
                 <div className="mb-6 sm:mb-8 flex justify-center sm:justify-start items-center gap-2 sm:gap-3">
