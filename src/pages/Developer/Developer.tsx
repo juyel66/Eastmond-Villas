@@ -91,7 +91,7 @@ const Developer: React.FC = () => {
               </div>
             </div>
 
-          {/* Main Content */}
+         
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 lg:gap-10 mb-8 sm:mb-10">
             {/* Profile Image */}
               <div className="shrink-0 flex justify-center sm:justify-start">
