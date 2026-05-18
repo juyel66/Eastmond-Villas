@@ -104,7 +104,7 @@ const Developer: React.FC = () => {
               />
             </div>
 
-              {/* Mobile-only social icons under the image */}
+                
               <div className="flex sm:hidden justify-center mt-3 mb-2">
                 <SocialButtons />
               </div>
