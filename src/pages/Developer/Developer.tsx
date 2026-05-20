@@ -95,13 +95,7 @@ const Developer: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 lg:gap-10 mb-8 sm:mb-10">
             {/* Profile Image */}
               <div className="shrink-0 flex justify-center sm:justify-start">
-              <motion.img
-                src="/images/155250069.jpg"
-                alt="Md Juyel Rana"
-                  className="w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 rounded-xl sm:rounded-2xl object-cover border-4 border-white/40 shadow-2xl"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-              />
+         
             </div>
 
               {/* Mobile-only social icons under the image */}
