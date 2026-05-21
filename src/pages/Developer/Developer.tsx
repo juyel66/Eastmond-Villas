@@ -7,11 +7,7 @@ import SocialButtons from '@/components/dev/SocialButtons';
 const skills = [
   'Full Stack Development',
   'Frontend Development',
-  'Backend Development',
-  'React.js',
-  'Next.js',
-  'TypeScript',
-  'JavaScript',
+ 
   'Node.js',
   'Express.js',
   'MongoDB',
