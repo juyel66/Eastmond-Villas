@@ -8,7 +8,7 @@ const TermsAndConditions = () => {
     // Method 1: Direct window.location - most reliable
     window.location.href = mailtoLink;
     
-    // Method 2: Fallback with timeout
+   
     setTimeout(() => {
       // If still on same page, try window.open
       if (window.location.href !== mailtoLink) {
